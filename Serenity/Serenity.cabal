@@ -12,6 +12,8 @@ executable serenity
         unix,
         network,
         bytestring,
+        binary,
+        binary-strict,
         containers,
         parsec,
         deepseq,

@@ -23,10 +23,12 @@ main = withSocketsDo $ do
 	connection <- listen port
 	return ()
 
+	--sock <- socket AF_INET Datagram 0
+	--bindSocket sock (SockAddrInet port iNADDR_ANY)
 	--input_var <- newTVarIO (C.pack "start")
 	--forever $ read_input sock input_var
 
 read_input sock tvar = do
 	(packet, client) <- receive sock
-	atomically $ writeTVar tvar (p_data packet)
+	atomically $ writeTVar tvar (packet_data packet)
 	putStrLn $ "[" ++ (show client) ++ "] " ++ (show packet)

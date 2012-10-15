@@ -1,14 +1,19 @@
 module Main where
 
-import Test.QuickCheck (quickCheck)
-import Text.Printf
+import Test.Framework (defaultMain, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
 
-prop_reverseReverse :: [Char] -> Bool
-prop_reverseReverse s = (reverse . reverse) s == s
+import Test.QuickCheck
+import Test.HUnit
 
-main  = mapM_ (\(s,a) -> printf "%-25s: " s >> a) tests
+import qualified Test.Serenity.Network as Network
 
-tests = 
-	[	("reverse.reverse/id", quickCheck prop_reverseReverse)
-	,	("reverse.reverse/id", quickCheck prop_reverseReverse)
+main = defaultMain tests
+
+tests =
+	[	testGroup "Top Level"
+		[	testCase "A test of tests" (1 @=? 1)
+		]
+	,	Network.test_group
 	]

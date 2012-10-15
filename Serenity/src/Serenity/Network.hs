@@ -1,5 +1,6 @@
 module Serenity.Network (
-	Packet(..)
+	Connection (..)
+,	Packet (..)
 ,	receive
 ,	send
 ,	listen
@@ -11,10 +12,12 @@ import Network.Socket.ByteString hiding (send)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as C
 import System.Posix.IO
---import Data.Time.Clock.POSIX
+import Data.Time.Clock.POSIX
+
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import Control.Monad (liftM)
-import Control.Concurrent.STM
 
 import Serenity.Network.Packet
 
@@ -23,7 +26,7 @@ data Connection =
 	{	connection_socket :: Socket
 	,	connection_addr :: SockAddr
 	,	connection_id :: Int
-	--,	connection_sent :: TVar (Packet, POSIXTime)
+	,	connection_sent :: Set (Packet, POSIXTime)
 	,	connection_local_sequence ::  Int
 	,	connection_remote_sequence ::  Int
 	} 
@@ -33,6 +36,7 @@ initial_connection sock addr cid = Connected
 	{	connection_socket = sock
 	,	connection_addr = addr
 	,	connection_id = cid
+	,	connection_sent = Set.empty
 	,	connection_local_sequence = 1
 	,	connection_remote_sequence = 1
 	}
@@ -57,7 +61,6 @@ listen port = withSocketsDo $ do
 		else reject sock client
 
 accept sock client = do
-	print "accept"
 	return $ initial_connection sock client 12
 
 reject sock client = do

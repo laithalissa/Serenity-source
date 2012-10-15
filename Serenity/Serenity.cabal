@@ -14,6 +14,7 @@ executable serenity
         bytestring,
         binary,
         binary-strict,
+        time,
         containers,
         parsec,
         deepseq,
@@ -27,8 +28,19 @@ Test-Suite test-serenity
     type:           exitcode-stdio-1.0
     main-is:        Main.hs
     build-depends:  
-        base, 
+        base,
+        test-framework,
+        test-framework-quickcheck2,
+        test-framework-hunit,
         QuickCheck,
+        HUnit,
+        stm,
+        unix,
+        network,
+        bytestring,
+        binary,
+        binary-strict,
+        time,
         containers,
         parsec,
         deepseq,

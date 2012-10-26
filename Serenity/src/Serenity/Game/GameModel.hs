@@ -1,5 +1,5 @@
 
-module Serenity.Game.Server.GameModel
+module Serenity.Game.GameModel
 (
 ) where
 

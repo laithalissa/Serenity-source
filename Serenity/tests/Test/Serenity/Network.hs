@@ -12,6 +12,7 @@ import Serenity.Network
 
 test_group = testGroup "Network Tests" 
 	[	testCase "Test a listening process accepts a connection" test_acceptance
+	,	testCase "Test two processes can exchange info over a connection" test_send_receive
 	]
 
 is_connected :: Connection -> Bool
@@ -25,23 +26,33 @@ read_until_just tvar = atomically $ do
 		Nothing -> retry
 		Just output -> return output
 
-server_client_fixture server client input = do
-	output_tvar <- atomically $ newTVar input
+server_client_fixture :: IO a -> IO () -> IO a
+server_client_fixture server_body client = do
+	output_tvar <- atomically $ newTVar Nothing
 	forkIO $ server output_tvar
 	forkIO client
-	read_until_just output_tvar
+	read_until_just output_tvar where
+		server tvar = do
+			input <- server_body
+			atomically $ writeTVar tvar $ Just input
 
 test_acceptance = do
-	connection <- server_client_fixture server client (Nothing :: Maybe Connection)
-	True @=? (is_connected connection)
+	connection <- server_client_fixture server client
+	is_connected connection @?= True
 	where
-		client :: IO ()
+		client = do connect 9900; return ();
+		server = do connection <- listen 9900; return connection
+
+test_send_receive = do
+	string <- server_client_fixture server client
+	string @?= "some input"
+	where
 		client = do
-			connection <- connect 9900
+			connection <- connect 9902
+			--send "some input"
 			return ()
 
-		server :: TVar (Maybe Connection) -> IO ()
-		server tvar = do
-			connection <- listen 9900
-			atomically $ writeTVar tvar $ Just connection
-			return ()
+		server = do
+			connection <- listen 9902
+			--receive
+			return "some input"

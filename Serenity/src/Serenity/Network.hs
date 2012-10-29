@@ -1,9 +1,9 @@
 module Serenity.Network (
 	Connection (..)
 ,	Packet (..)
-,	receive
-,	send
 ,	listen
+,	send_packet
+,	receive_packet
 ,	connect
 ) where
 
@@ -41,21 +41,21 @@ initial_connection sock addr cid = Connected
 	,	connection_remote_sequence = 1
 	}
 
-receive sock = do
+receive_packet sock = do
 	(mesg, client) <- recvFrom sock 512
 	maybe_packet <- return $ read_packet mesg
 	case maybe_packet of 
 		Just packet -> return (packet, client)
-		Nothing -> receive sock
+		Nothing -> receive_packet sock
 
-send sock packet = do
+send_packet sock packet = do
 	sendAllTo sock (write_packet packet)
 
 listen port = withSocketsDo $ do
 	sock <- socket AF_INET Datagram 0
 	bindSocket sock (SockAddrInet port iNADDR_ANY)
 
-	(packet, client) <- receive sock 
+	(packet, client) <- receive_packet sock 
 	if (packet_data packet) == C.pack "HELLO"
 		then accept sock client
 		else reject sock client
@@ -75,5 +75,5 @@ connect port = withSocketsDo $ do
 	sock <- socket family Datagram 0
 	bindSocket sock (SockAddrInet (port+1) iNADDR_ANY)
 
-	send sock (initial_packet "HELLO") addr
+	send_packet sock (initial_packet "HELLO") addr
 

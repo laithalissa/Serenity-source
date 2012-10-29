@@ -29,6 +29,6 @@ main = withSocketsDo $ do
 	--forever $ read_input sock input_var
 
 read_input sock tvar = do
-	(packet, client) <- receive sock
+	(packet, client) <- receive_packet sock
 	atomically $ writeTVar tvar (packet_data packet)
 	putStrLn $ "[" ++ (show client) ++ "] " ++ (show packet)

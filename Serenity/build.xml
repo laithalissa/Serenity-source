@@ -1,8 +1,11 @@
 
 <project default="all">
 
-  <property name="binary" value="dist/build/serenity/serenity"/>
 
+  <property name="run.dir" value="run"/>
+  <property name="res.dir" value="resources"/>
+  <property name="cabalBuild.file" value="dist/build/serenity/serenity"/>
+  <property name="run.file" value="serenity"/>
 
   <target name="all" depends="build, test, runServer"/>
 
@@ -10,6 +13,7 @@
 	<exec executable="cabal" failonerror="true">
 	  <arg value="clean"/>
 	</exec>
+	<delete dir="${run.dir}"/>
   </target>
 
   <target name="build" depends="clean">
@@ -28,14 +32,23 @@
 	</exec>
   </target>
 
-  <target name="runServer" depends="build">
-	<exec executable="${binary}" failonerror="true">
+  <target name="runPrepare">
+	<mkdir dir="${run.dir}"/>
+	<copy todir="${run.dir}">
+	  <fileset dir="${res.dir}"/>
+	</copy>
+	<copy todir="${run.dir}" file="${cabalBuild.file}"/>
+	<chmod file="${run.dir}/${run.file}" perm="a+x"/>
+  </target>
+
+  <target name="runServer" depends="build, test, runPrepare">
+	<exec executable="${run.dir}/${run.file}" failonerror="true">
 	  <arg value="server"/>
 	</exec>
   </target>
 
-  <target name="runClient" depends="build">
-	<exec executable="${binary}" failonerror="true">
+  <target name="runClient" depends="build, test, runPrepare">
+	<exec executable="${run.dir}/${run.file}" failonerror="true">
 	  <arg value="client"/>
 	</exec>
   </target>

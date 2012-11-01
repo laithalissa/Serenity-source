@@ -3,9 +3,14 @@ module Serenity.Network.Packet (
 ,	initial_packet
 ,	read_packet
 ,	write_packet
+,	get_packet_data
+,	receive_packet
+,	send_packet
 )
 where
 
+import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect)
+import Network.Socket.ByteString hiding (send)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as C
 import Data.Word (Word32)
@@ -39,11 +44,22 @@ write_packet packet = B.concat $ BL.toChunks $ runPut $ do
 	putWord32be $ packet_ack packet
 	putByteString $ packet_data packet
 
---pad32 = C.pack . (printf "%032i")
-
 initial_packet string = Packet 
 	{	packet_prot = fromIntegral $ 1
 	,	packet_seq  = fromIntegral $ 1
 	,	packet_ack  = fromIntegral $ 1
 	,	packet_data = C.pack string
 	}
+
+get_packet_data :: Packet -> String
+get_packet_data Packet {packet_data = d} = C.unpack d
+
+receive_packet sock = do
+	(mesg, client) <- recvFrom sock 512
+	maybe_packet <- return $ read_packet mesg
+	case maybe_packet of 
+		Just packet -> return (packet, client)
+		Nothing -> receive_packet sock
+
+send_packet sock packet = do
+	sendAllTo sock (write_packet packet)

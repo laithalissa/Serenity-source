@@ -15,10 +15,6 @@ test_group = testGroup "Network Tests"
 	,	testCase "Test two processes can exchange info over a connection" test_send_receive
 	]
 
-is_connected :: Connection -> Bool
-is_connected Connected {} = True
-is_connected _ = False
-
 read_until_just :: TVar (Maybe a) -> IO a
 read_until_just tvar = atomically $ do 
 	maybe_output <- readTVar tvar
@@ -40,19 +36,22 @@ test_acceptance = do
 	connection <- server_client_fixture server client
 	is_connected connection @?= True
 	where
-		client = do connect 9900; return ();
-		server = do connection <- listen 9900; return connection
+		client = do run_connect port; return ();
+		server = do connection <- run_listen port; return connection
+		port = 9900
 
 test_send_receive = do
 	string <- server_client_fixture server client
 	string @?= "some input"
 	where
 		client = do
-			connection <- connect 9902
-			--send "some input"
+			connection <- run_connect port
+			run_transport (send_ "some input") connection
 			return ()
 
 		server = do
-			connection <- listen 9902
-			--receive
-			return "some input"
+			connection <- run_listen port
+			string <- eval_transport (receive_) connection
+			return string
+
+		port = 9902

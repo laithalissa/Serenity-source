@@ -8,10 +8,10 @@ module Serenity.Network.Transport (
 ,	eval_transport
 ,	run_connect
 ,	run_listen
-,	connect_
-,	listen_
-,	send_
-,	receive_
+,	connect
+,	listen
+,	send
+,	receive
 ,	is_connected
 ,	get_connection
 ) where
@@ -67,17 +67,17 @@ bind_outbound_socket port host = withSocketsDo $ do
 	return (sock, addr, family)
 
 class Monad m => MonadTransport m where
-	connect_ :: PortNumber -> m ()
-	listen_  :: PortNumber -> m ()
-	send_ :: String -> m ()
-	receive_ :: m String
+	connect :: PortNumber -> m ()
+	listen  :: PortNumber -> m ()
+	send :: String -> m ()
+	receive :: m String
 	get_connection :: m Connection
 
 newtype Transport a = Transport (StateT Connection IO a)
 	deriving (Functor, Monad, MonadIO, MonadState Connection)
 
 instance MonadTransport (Transport) where
-	connect_ port = do 
+	connect port = do 
 		connection <- get
 		case connection of
 			Connected {} -> return ()
@@ -87,7 +87,7 @@ instance MonadTransport (Transport) where
 				liftIO $ send_packet sock (initial_packet "HELLO") addr
 				return ()
 
-	listen_ port = do 
+	listen port = do 
 		connection <- liftIO (withSocketsDo $ do
 			sock <- socket AF_INET Datagram 0
 			bindSocket sock (SockAddrInet port iNADDR_ANY)
@@ -98,19 +98,19 @@ instance MonadTransport (Transport) where
 				else return Unconnected)
 		put connection
 
-	send_ string = do
+	send string = do
 		connection <- get
 		liftIO $ send_packet 
 			(connection_socket connection) 
 			(initial_packet string) 
 			(connection_addr connection)
 
-	get_connection = get
-
-	receive_ = do
+	receive = do
 		connection <- get
 		(packet, client) <- liftIO $ receive_packet (connection_socket connection)
 		return $ get_packet_data packet
+
+	get_connection = get
 
 instance (Monoid a) => Monoid (Transport a) where
 	mempty = return mempty
@@ -130,5 +130,5 @@ run_one f = do
 	(_, connection) <- run_transport f Unconnected
 	return connection
 
-run_connect port = run_one (connect_ port)
-run_listen port = run_one (listen_ port)
+run_connect port = run_one (connect port)
+run_listen port = run_one (listen port)

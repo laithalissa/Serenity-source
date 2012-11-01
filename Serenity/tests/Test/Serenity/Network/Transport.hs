@@ -47,18 +47,18 @@ test_send_receive = do
 	where
 		client = do
 			connection <- run_connect port
-			run_transport (send_ "some input") connection
+			run_transport (send "some input") connection
 			return ()
 
 		server = do
 			connection <- run_listen port
-			string <- eval_transport (receive_) connection
+			string <- eval_transport (receive) connection
 			return string
 
 		port = 9902
 
 test_connect_when_already_connected = do
 	connection1 <- run_connect port
-	connection2 <- eval_transport (do connect_ port; get_connection) connection1
+	connection2 <- eval_transport (do connect port; get_connection) connection1
 	connection1 @=? connection2 where
 		port = 9904

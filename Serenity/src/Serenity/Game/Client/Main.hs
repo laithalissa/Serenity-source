@@ -3,8 +3,8 @@ module Serenity.Game.Client.Main (
 ) 
 where
 
-import Serenity.Network
+import Serenity.Network.Transport
 
 main = do
-	connection <- connect 9900
+	connection <- run_connect 9900
 	return ()

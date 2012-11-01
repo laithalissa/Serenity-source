@@ -1,4 +1,4 @@
-module Test.Serenity.Network (test_group) where
+module Test.Serenity.Network.Transport (test_group) where
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit (testCase)
@@ -8,11 +8,12 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent
 import Test.HUnit
 
-import Serenity.Network
+import Serenity.Network.Transport
 
 test_group = testGroup "Network Tests" 
 	[	testCase "Test a listening process accepts a connection" test_acceptance
 	,	testCase "Test two processes can exchange info over a connection" test_send_receive
+	,	testCase "Connecting when already connecting shouldn't change connection" test_connect_when_already_connected
 	]
 
 read_until_just :: TVar (Maybe a) -> IO a
@@ -55,3 +56,9 @@ test_send_receive = do
 			return string
 
 		port = 9902
+
+test_connect_when_already_connected = do
+	connection1 <- run_connect port
+	connection2 <- eval_transport (do connect_ port; get_connection) connection1
+	connection1 @=? connection2 where
+		port = 9904

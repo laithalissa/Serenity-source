@@ -12,7 +12,8 @@ import Network.Socket.ByteString
 import qualified Data.ByteString.Char8 as C
 import System.Posix.IO
 
-import Serenity.Network
+import Serenity.Network.Transport
+import Serenity.Network.Packet
 
 port = 9900
 
@@ -20,7 +21,7 @@ main = withSocketsDo $ do
 	putStrLn "---Serenity Server V0.1---"
 	putStrLn $ "Accepting connections on port " ++ (show port) ++ "..."
 
-	connection <- listen port
+	connection <- run_listen port
 	return ()
 
 	--sock <- socket AF_INET Datagram 0

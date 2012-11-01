@@ -26,7 +26,7 @@ data Packet = Packet
 	,	packet_seq  :: Word32
 	,	packet_ack  :: Word32
 	,	packet_data :: C.ByteString
-	} deriving Show
+	} deriving (Show, Eq)
 
 read_packet :: ByteString -> Maybe Packet
 read_packet bytes = case (fst $ read_packet' bytes) of 

@@ -1,13 +1,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Serenity.Network (
+module Serenity.Network.Transport (
 	Connection (..)
 ,	Packet (..)
-,	listen
-,	send_packet
-,	receive_packet
-,	connect
 ,	run_transport
 ,	eval_transport
 ,	run_connect
@@ -17,12 +13,11 @@ module Serenity.Network (
 ,	send_
 ,	receive_
 ,	is_connected
+,	get_connection
 ) where
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect)
 import Network.Socket.ByteString hiding (send)
-import Data.ByteString.Char8 (ByteString)
-import qualified Data.ByteString.Char8 as C
 import System.Posix.IO
 import Data.Time.Clock.POSIX
 
@@ -33,7 +28,7 @@ import Control.Monad (liftM)
 import Control.Monad.State
 import Data.Monoid
 
-import Serenity.Network.Packet
+import Serenity.Network.Packet (Packet(..), initial_packet, receive_packet, send_packet, get_packet_data)
 
 data Connection = 
 	Connected 
@@ -44,7 +39,7 @@ data Connection =
 	,	connection_local_sequence ::  Int
 	,	connection_remote_sequence ::  Int
 	} 
-	| Unconnected
+	| Unconnected deriving (Show, Eq)
 
 initial_connection sock addr cid = Connected 
 	{	connection_socket = sock
@@ -58,26 +53,6 @@ initial_connection sock addr cid = Connected
 is_connected :: Connection -> Bool
 is_connected Connected {} = True
 is_connected _ = False
-
-listen port = withSocketsDo $ do
-	sock <- socket AF_INET Datagram 0
-	bindSocket sock (SockAddrInet port iNADDR_ANY)
-
-	(packet, client) <- receive_packet sock 
-	if (get_packet_data packet) == "HELLO"
-		then return $ initial_connection sock client 12
-		else return Unconnected
-
-connect port = withSocketsDo $ do
-	addr_info <- liftM head $ liftM (filter (\x -> addrFamily x == AF_INET)) $ 
-		getAddrInfo Nothing (Just "localhost") (Just (show port))
-	let addr = addrAddress addr_info
-	let family = addrFamily addr_info
-
-	sock <- socket family Datagram 0
-	bindSocket sock (SockAddrInet (port+1) iNADDR_ANY)
-
-	send_packet sock (initial_packet "HELLO") addr
 
 bind_outbound_socket port host = withSocketsDo $ do
 	addr_info <- 
@@ -96,6 +71,7 @@ class Monad m => MonadTransport m where
 	listen_  :: PortNumber -> m ()
 	send_ :: String -> m ()
 	receive_ :: m String
+	get_connection :: m Connection
 
 newtype Transport a = Transport (StateT Connection IO a)
 	deriving (Functor, Monad, MonadIO, MonadState Connection)
@@ -112,7 +88,14 @@ instance MonadTransport (Transport) where
 				return ()
 
 	listen_ port = do 
-		connection <- liftIO (listen port)
+		connection <- liftIO (withSocketsDo $ do
+			sock <- socket AF_INET Datagram 0
+			bindSocket sock (SockAddrInet port iNADDR_ANY)
+
+			(packet, client) <- receive_packet sock 
+			if (get_packet_data packet) == "HELLO"
+				then return $ initial_connection sock client 12
+				else return Unconnected)
 		put connection
 
 	send_ string = do
@@ -121,6 +104,8 @@ instance MonadTransport (Transport) where
 			(connection_socket connection) 
 			(initial_packet string) 
 			(connection_addr connection)
+
+	get_connection = get
 
 	receive_ = do
 		connection <- get

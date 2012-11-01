@@ -1,0 +1,47 @@
+
+<project default="all">
+
+  <property name="binary" value="dist/build/serenity/serenity"/>
+
+
+  <target name="all" depends="build, test, runServer"/>
+
+  <target name="clean">
+	<exec executable="cabal" failonerror="true">
+	  <arg value="clean"/>
+	</exec>
+  </target>
+
+  <target name="build" depends="clean">
+	<exec executable="cabal" failonerror="true">
+	  <arg value="configure"/>
+	  <arg value="--enable-tests"/>
+	</exec>
+	<exec executable="cabal" failonerror="true">
+	  <arg value="build"/>
+	</exec>
+  </target>
+
+  <target name="test" depends="build">
+	<exec executable="cabal" failonerror="true">
+	  <arg value="test"/>
+	</exec>
+  </target>
+
+  <target name="runServer" depends="build">
+	<exec executable="${binary}" failonerror="true">
+	  <arg value="server"/>
+	</exec>
+  </target>
+
+  <target name="runClient" depends="build">
+	<exec executable="${binary}" failonerror="true">
+	  <arg value="client"/>
+	</exec>
+  </target>
+
+
+
+	
+
+</project>

@@ -1,5 +1,6 @@
 module Serenity.Game.Server.Main (
-	main
+	main,
+        port
 ) 
 where
 
@@ -13,15 +14,20 @@ import qualified Data.ByteString.Char8 as C
 import System.Posix.IO
 
 import Serenity.Network
+import qualified Serenity.Game.Server.GameSupervisor as GameSupervisor
+
 
 port = 9900
 
-main = withSocketsDo $ do 
-	putStrLn "---Serenity Server V0.1---"
-	putStrLn $ "Accepting connections on port " ++ (show port) ++ "..."
+main = do
+  GameSupervisor.start "Kill all" ["client 1", "client 2"]
 
-	connection <- listen port
-	return ()
+-- main = withSocketsDo $ do 
+-- 	putStrLn "---Serenity Server V0.1---"
+-- 	putStrLn $ "Accepting connections on port " ++ (show port) ++ "..."
+
+-- 	connection <- listen port
+-- 	return ()
 
 	--sock <- socket AF_INET Datagram 0
 	--bindSocket sock (SockAddrInet port iNADDR_ANY)

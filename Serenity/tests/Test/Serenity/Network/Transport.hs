@@ -37,7 +37,7 @@ test_acceptance = do
 	connection <- server_client_fixture server client
 	is_connected connection @?= True
 	where
-		client = do run_connect port; return ();
+		client = do run_connect "localhost" port; return ();
 		server = do connection <- run_listen port; return connection
 		port = 9900
 
@@ -46,7 +46,7 @@ test_send_receive = do
 	string @?= "some input"
 	where
 		client = do
-			connection <- run_connect port
+			connection <- run_connect "localhost" port
 			run_transport (send "some input") connection
 			return ()
 
@@ -58,7 +58,7 @@ test_send_receive = do
 		port = 9902
 
 test_connect_when_already_connected = do
-	connection1 <- run_connect port
-	connection2 <- eval_transport (do connect port; get_connection) connection1
+	connection1 <- run_connect "localhost" port
+	connection2 <- eval_transport (do connect "localhost" port; get_connection) connection1
 	connection1 @=? connection2 where
 		port = 9904

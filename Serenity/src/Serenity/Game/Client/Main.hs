@@ -6,5 +6,5 @@ where
 import Serenity.Network.Transport
 
 main = do
-	connection <- run_connect 9900
+	connection <- run_connect "localhost" 9900
 	return ()

@@ -54,7 +54,7 @@ is_connected :: Connection -> Bool
 is_connected Connected {} = True
 is_connected _ = False
 
-bind_outbound_socket port host = withSocketsDo $ do
+bind_outbound_socket host port = withSocketsDo $ do
 	addr_info <- 
 		liftM head $ 
 		liftM (filter (\x -> addrFamily x == AF_INET)) $ 
@@ -67,7 +67,7 @@ bind_outbound_socket port host = withSocketsDo $ do
 	return (sock, addr, family)
 
 class Monad m => MonadTransport m where
-	connect :: PortNumber -> m ()
+	connect :: String -> PortNumber -> m ()
 	listen  :: PortNumber -> m ()
 	send :: String -> m ()
 	receive :: m String
@@ -77,12 +77,12 @@ newtype Transport a = Transport (StateT Connection IO a)
 	deriving (Functor, Monad, MonadIO, MonadState Connection)
 
 instance MonadTransport (Transport) where
-	connect port = do 
+	connect host port = do 
 		connection <- get
 		case connection of
 			Connected {} -> return ()
 			Unconnected -> do
-				(sock, addr, family) <- liftIO $ bind_outbound_socket port "localhost"
+				(sock, addr, family) <- liftIO $ bind_outbound_socket host port
 				put $ initial_connection sock addr 13
 				liftIO $ send_packet sock (initial_packet "HELLO") addr
 				return ()
@@ -130,5 +130,5 @@ run_one f = do
 	(_, connection) <- run_transport f Unconnected
 	return connection
 
-run_connect port = run_one (connect port)
-run_listen port = run_one (listen port)
+run_connect host port = run_one $ connect host port
+run_listen port = run_one $ listen port

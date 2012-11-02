@@ -31,6 +31,9 @@
 	<exec executable="cabal" failonerror="true">
 	  <arg value="test"/>
 	</exec>
+	<concat>
+	  <fileset file="dist/test/Serenity-0.1-test-serenity.log"/>
+	</concat>
   </target>
 
   <target name="runPrepare">

@@ -7,7 +7,7 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck
 import Test.HUnit
 
-import qualified Test.Serenity.Network as Network
+import qualified Test.Serenity.Network.Transport as Transport
 
 main = defaultMain tests
 
@@ -15,5 +15,5 @@ tests =
 	[	testGroup "Top Level"
 		[	testCase "A test of tests" (1 @=? 1)
 		]
-	,	Network.test_group
+	,	Transport.test_group
 	]

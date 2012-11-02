@@ -13,28 +13,16 @@ import Network.Socket.ByteString
 import qualified Data.ByteString.Char8 as C
 import System.Posix.IO
 
-import Serenity.Network
-import qualified Serenity.Game.Server.GameSupervisor as GameSupervisor
-
+import Serenity.Network.Transport
+import Serenity.Network.Packet
 
 port = 9900
 
 main = do
-  GameSupervisor.start
-
--- main = withSocketsDo $ do 
--- 	putStrLn "---Serenity Server V0.1---"
--- 	putStrLn $ "Accepting connections on port " ++ (show port) ++ "..."
-
--- 	connection <- listen port
--- 	return ()
-
-	--sock <- socket AF_INET Datagram 0
-	--bindSocket sock (SockAddrInet port iNADDR_ANY)
-	--input_var <- newTVarIO (C.pack "start")
-	--forever $ read_input sock input_var
+	connection <- run_listen port
+	return ()
 
 read_input sock tvar = do
-	(packet, client) <- receive sock
+	(packet, client) <- receive_packet sock
 	atomically $ writeTVar tvar (packet_data packet)
 	putStrLn $ "[" ++ (show client) ++ "] " ++ (show packet)

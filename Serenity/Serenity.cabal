@@ -9,6 +9,7 @@ executable serenity
     build-depends:   
         base,
         stm,
+        mtl,
         unix,
         network,
         bytestring,
@@ -35,6 +36,7 @@ Test-Suite test-serenity
         QuickCheck,
         HUnit,
         stm,
+        mtl,
         unix,
         network,
         bytestring,

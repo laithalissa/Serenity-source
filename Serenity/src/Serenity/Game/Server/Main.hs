@@ -20,7 +20,7 @@ import qualified Serenity.Game.Server.GameSupervisor as GameSupervisor
 port = 9900
 
 main = do
-  GameSupervisor.start "Kill all" ["client 1", "client 2"]
+  GameSupervisor.start
 
 -- main = withSocketsDo $ do 
 -- 	putStrLn "---Serenity Server V0.1---"

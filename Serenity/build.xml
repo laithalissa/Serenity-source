@@ -6,7 +6,8 @@
   <property name="res.dir" value="resources"/>
   <property name="cabalBuild.file" value="dist/build/serenity/serenity"/>
   <property name="run.file" value="serenity"/>
-
+  <property name="run.server.args" value="+RTS -K1G -RTS server"/>
+  <property name="run.client.args" value="+RTS -K1G -RTS client"/>
   <target name="all" depends="build, test, runServer"/>
 
   <target name="clean">
@@ -42,19 +43,17 @@
   </target>
 
   <target name="runServer" depends="build, test, runPrepare">
+	<echo message="starting server with args '${run.server.args}'"/>
 	<exec executable="${run.dir}/${run.file}" failonerror="true">
-	  <arg value="server"/>
+	  <arg line="${run.server.args}"/>
 	</exec>
   </target>
 
   <target name="runClient" depends="build, test, runPrepare">
+	<echo message="starting client with args '${run.client.args}'"/>
 	<exec executable="${run.dir}/${run.file}" failonerror="true">
-	  <arg value="client"/>
+	  <arg line="${run.client.args"/>
 	</exec>
   </target>
-
-
-
-	
 
 </project>

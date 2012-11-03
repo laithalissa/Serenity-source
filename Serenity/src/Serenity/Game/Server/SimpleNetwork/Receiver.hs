@@ -6,6 +6,7 @@ module Serenity.Game.Server.SimpleNetwork.Receiver
 
 import Control.Concurrent.STM.TVar
 import Control.Monad.STM
+import System.Timeout(timeout)
 
 import qualified Serenity.Network.Transport as T
 
@@ -16,7 +17,11 @@ connect port = do
   return (BasicReceiver connectionRef)
 
 class Receiver a where
+  -- |receives a messages from a client. blocks until a message is received.
   receive :: a -> IO String
+  
+  -- |receives a message from a client. takes an additional parameter of timeout, in milliseconds. Will return with either the message has been received or the timeout has expired.
+  receiveTimeout :: a -> Int -> IO (Maybe String)
   
 data BasicReceiver = BasicReceiver {
   pointer :: TVar T.Connection
@@ -27,7 +32,8 @@ instance Receiver BasicReceiver where
     connection <- readTVarIO (pointer basicReceiver)
     T.eval_transport(T.receive) connection
     
-
+  receiveTimeout basicReceiver waitTime = timeout (waitTime*1000) (receive basicReceiver)
+    
 
 
 

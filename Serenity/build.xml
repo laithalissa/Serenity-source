@@ -1,21 +1,57 @@
 
-<project default="all">
+<project name="Serenity" default="runBoth">
 
 
   <property name="run.dir" value="run"/>
   <property name="res.dir" value="resources"/>
   <property name="cabalBuild.file" value="dist/build/serenity/serenity"/>
   <property name="run.file" value="serenity"/>
-  <property name="run.server.args" value="+RTS -K1G -RTS server"/>
-  <property name="run.client.args" value="+RTS -K1G -RTS client"/>
-  <target name="all" depends="build, test, runServer"/>
+  <property name="run.rts.args" value="-K1G"/>
 
-  <target name="clean">
+  <target name="clean" description="deletes all temporary build files">
 	<exec executable="cabal" failonerror="true">
 	  <arg value="clean"/>
 	</exec>
 	<delete dir="${run.dir}"/>
   </target>
+
+  <target name="test" depends="build" description="run all unit tests">
+	<exec executable="cabal" failonerror="true">
+	  <arg value="test"/>
+	</exec>
+	<concat>
+	  <fileset file="dist/test/Serenity-0.1-test-serenity.log"/>
+	</concat>
+  </target>
+
+  <target name="runServer" depends="build, test, runPrepare" description="runs the server">
+	<antcall target="run">
+	  <param name="param" value="server"/>
+	</antcall>
+  </target>
+
+  <target name="runClient" depends="build, test, runPrepare" description="runs the client">
+	<antcall target="run">
+	  <param name="param" value="client"/>
+	</antcall>
+  </target>
+
+  <target name="runBoth" depends="build, test, runPrepare" description="runs both the server and client on seperate threads">
+	<parallel threadCount="2">
+	  <antcall target="run">
+		<param name="param" value="server"/>
+	  </antcall>
+	  <sequential>
+		<sleep seconds="1"/>
+		<antcall target="run">
+		  <param name="param" value="client"/>
+		</antcall>
+	  </sequential>
+	</parallel>
+  </target>
+
+
+  <!-- minor targets -->
 
   <target name="build" depends="clean">
 	<exec executable="cabal" failonerror="true">
@@ -27,14 +63,6 @@
 	</exec>
   </target>
 
-  <target name="test" depends="build">
-	<exec executable="cabal" failonerror="true">
-	  <arg value="test"/>
-	</exec>
-	<concat>
-	  <fileset file="dist/test/Serenity-0.1-test-serenity.log"/>
-	</concat>
-  </target>
 
   <target name="runPrepare">
 	<mkdir dir="${run.dir}"/>
@@ -45,18 +73,13 @@
 	<chmod file="${run.dir}/${run.file}" perm="a+x"/>
   </target>
 
-  <target name="runServer" depends="build, test, runPrepare">
-	<echo message="starting server with args '${run.server.args}'"/>
+  <!-- helper targets -->
+  <target name="run">
+	<echo message ="executing with args ${param} (RTS args: ${run.rts.args})"/>
 	<exec executable="${run.dir}/${run.file}" failonerror="true">
-	  <arg line="${run.server.args}"/>
+	  <arg line="+RTS ${run.rts.args} -RTS ${param}"/>
 	</exec>
   </target>
 
-  <target name="runClient" depends="build, test, runPrepare">
-	<echo message="starting client with args '${run.client.args}'"/>
-	<exec executable="${run.dir}/${run.file}" failonerror="true">
-	  <arg line="${run.client.args"/>
-	</exec>
-  </target>
 
 </project>

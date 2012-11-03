@@ -11,7 +11,7 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent
 import Test.HUnit
 
-import qualified Serenity.Game.Server.Main as Main
+import qualified Serenity.Game.Server.Server as Server
 
 tests = testGroup "Server Main Tests" [
               testCase "Test the test is acting like a test" testMyTest

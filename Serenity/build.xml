@@ -2,41 +2,38 @@
 <project name="Serenity" default="runBoth">
 
 
-  <property name="run.dir" value="run"/>
+  <property name="environment.dir" value="environment"/>
   <property name="res.dir" value="resources"/>
   <property name="cabalBuild.file" value="dist/build/serenity/serenity"/>
-  <property name="run.file" value="serenity"/>
-  <property name="run.rts.args" value="-K1G"/>
+  <property name="cabalTest.file" value="dist/build/test-serenity/test-serenity"/>
+  <property name="run.file" value="${environment.dir}/serenity"/>
+  <property name="rts.args" value="-K1G"/>
+  <property name="test.file" value="${environment.dir}/serenity-test"/>
 
   <target name="clean" description="deletes all temporary build files">
 	<exec executable="cabal" failonerror="true">
 	  <arg value="clean"/>
 	</exec>
-	<delete dir="${run.dir}"/>
+	<delete dir="${environment.dir}"/>
   </target>
 
-  <target name="test" depends="build" description="run all unit tests">
-	<exec executable="cabal" failonerror="true">
-	  <arg value="test"/>
-	</exec>
-	<concat>
-	  <fileset file="dist/test/Serenity-0.1-test-serenity.log"/>
-	</concat>
+  <target name="test" depends="build, prepareEnvironment" description="run all unit tests">
+	<exec executable="${test.file}" failonerror="true"/>
   </target>
 
-  <target name="runServer" depends="build, test, runPrepare" description="runs the server">
+  <target name="runServer" depends="build, test, prepareEnvironment" description="runs the server">
 	<antcall target="run">
 	  <param name="param" value="server"/>
 	</antcall>
   </target>
 
-  <target name="runClient" depends="build, test, runPrepare" description="runs the client">
+  <target name="runClient" depends="build, test, prepareEnvironment" description="runs the client">
 	<antcall target="run">
 	  <param name="param" value="client"/>
 	</antcall>
   </target>
 
-  <target name="runBoth" depends="build, test, runPrepare" description="runs both the server and client on seperate threads">
+  <target name="runBoth" depends="build, test, prepareEnvironment" description="runs both the server and client on seperate threads">
 	<parallel threadCount="2">
 	  <antcall target="run">
 		<param name="param" value="server"/>
@@ -63,21 +60,22 @@
 	</exec>
   </target>
 
-
-  <target name="runPrepare">
-	<mkdir dir="${run.dir}"/>
-	<copy todir="${run.dir}">
+  <target name="prepareEnvironment">
+	<mkdir dir="${environment.dir}"/>
+	<copy todir="${environment.dir}">
 	  <fileset dir="${res.dir}"/>
 	</copy>
-	<copy todir="${run.dir}" file="${cabalBuild.file}"/>
-	<chmod file="${run.dir}/${run.file}" perm="a+x"/>
+	<copy toFile="${run.file}" file="${cabalBuild.file}"/>
+	<chmod file="${run.file}" perm="a+x"/>
+	<copy toFile="${test.file}" file="${cabalTest.file}"/>
+	<chmod file="${test.file}" perm="a+x"/>
   </target>
 
   <!-- helper targets -->
   <target name="run">
-	<echo message ="executing with args ${param} (RTS args: ${run.rts.args})"/>
-	<exec executable="${run.dir}/${run.file}" failonerror="true">
-	  <arg line="+RTS ${run.rts.args} -RTS ${param}"/>
+	<echo message ="executing with args ${param} (RTS args: ${rts.args})"/>
+	<exec executable="${run.file}" failonerror="true">
+	  <arg line="+RTS ${rts.args} -RTS ${param}"/>
 	</exec>
   </target>
 

@@ -9,5 +9,3 @@ import Serenity.Game.Server.Network
 main = do
 	connection <- runConnect "localhost" 9900
 	return ()
-
-

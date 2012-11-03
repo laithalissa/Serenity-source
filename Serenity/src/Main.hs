@@ -17,3 +17,4 @@ main = do
             "client" -> Client.main
             "" -> putStrLn "first argument must either be 'server' or 'client'"
             _ -> putStrLn ("unknown arg '" ++ arg ++ "', first argument must either be 'server' or 'client'")
+

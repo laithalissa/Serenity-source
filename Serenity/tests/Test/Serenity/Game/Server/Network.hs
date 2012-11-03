@@ -3,12 +3,19 @@ module Test.Serenity.Game.Server.Network (networkTests) where
 
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.HUnit (testCase)
+<<<<<<< HEAD
 import Test.HUnit(assertEqual, assertFailure)
 
 import Control.Concurrent(forkIO, threadDelay, myThreadId)
 import Control.Concurrent.STM.TVar(newTVarIO, )
 import Serenity.Game.Server.Network
 import Data.List(delete)
+=======
+import Test.HUnit(assertEqual)
+
+import Serenity.Game.Server.Network
+
+>>>>>>> updated ant build so it will run the tests with the environment folder with its resources, ant build script refactored, much cleaner, refactored the Receiver/Sender modules into a single abstract Socket concept within the Server/Network module, added a test for the Server/Network module
 
 networkTests :: Test
 networkTests = testGroup testName tests
@@ -18,6 +25,7 @@ testName = "Server Network Tests"
 
 tests :: [Test]
 tests = 
+<<<<<<< HEAD
   [ testMessageSentByClientSameAsMessageReceievedByServer    
     -- testMultipleClients 
   ]
@@ -73,3 +81,11 @@ testMultipleClients = testCase "Test multiple clients" theTest
     
     
     
+=======
+  [ testClientCanConnectToServer    
+  ]
+  
+  
+testClientCanConnectToServer :: Test
+testClientCanConnectToServer = testCase "Test client can connect to server" (assertEqual "2 == 2?" 2 2)
+>>>>>>> updated ant build so it will run the tests with the environment folder with its resources, ant build script refactored, much cleaner, refactored the Receiver/Sender modules into a single abstract Socket concept within the Server/Network module, added a test for the Server/Network module

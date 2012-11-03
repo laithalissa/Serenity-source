@@ -3,8 +3,10 @@ module Serenity.Game.Client.Main (
 ) 
 where
 
-import Serenity.Network.Transport
+
+import Serenity.Game.Server.SimpleNetwork.Sender
 
 main = do
 	connection <- runConnect "localhost" 9900
 	return ()
+

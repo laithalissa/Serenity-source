@@ -44,7 +44,7 @@ Test-Suite test-serenity
         binary,
         binary-strict,
         time,
-        containers,
+        containers >= 0.5.0.0,
         parsec,
         deepseq,
         array,

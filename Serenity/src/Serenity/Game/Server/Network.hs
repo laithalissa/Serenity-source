@@ -39,16 +39,28 @@ class Socket a where
   -- |receives a message from a client. takes an additional parameter of timeout, in milliseconds. Will return with either the message has been received or the timeout has expired.
   listenTimeout :: a -> Int -> IO (Maybe String)
 
+  getAddress :: a -> IO String
+
 
 data NetworkSocket = NetworkSocket { pointer :: TVar T.Connection }
 
 instance Socket NetworkSocket where
+  
+  getAddress socket = do
+    connection <- readTVarIO (pointer socket)
+    (return . show . T.connection_addr) connection
   
   send socket message = do
     beforeConnection <- readTVarIO (pointer socket)
     (_, afterConnection) <- T.run_transport (T.send message) beforeConnection
     atomically $ writeTVar (pointer socket) afterConnection
 
+  -- listen socket = do
+  --   beforeConnection <- readTVarIO (pointer socket)
+  --   (msg, afterConnection) <- T.eval_transport (do T.receive; T.get_connection) beforeConnection
+  --   atomically $ writeTVar (pointer socket) afterConnection
+  --   return msg
+    
   listen socket = do
     connection <- readTVarIO (pointer socket)
     T.eval_transport(T.receive) connection

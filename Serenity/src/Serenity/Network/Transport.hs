@@ -15,6 +15,7 @@ module Serenity.Network.Transport (
 ,	is_connected
 ,	get_connection
 ,	liftIO
+,	Transport
 ) where
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect)

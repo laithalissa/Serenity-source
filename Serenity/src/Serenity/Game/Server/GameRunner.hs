@@ -3,8 +3,8 @@ module Serenity.Game.Server.GameRunner where
 
 import qualified Data.Set as Set
 
-import Serenity.Game.World.World
-
+import qualified Serenity.Game.World.World as W
+import qualified Serenity.Game.Server.World as SW
 
 main :: IO ()
 main = let messages = initMessages

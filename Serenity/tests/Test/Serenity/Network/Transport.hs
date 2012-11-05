@@ -8,6 +8,7 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent
 import Test.HUnit
 
+import Test.Serenity.Network (server_client_fixture)
 import Serenity.Network.Transport
 
 test_group = testGroup "Network Tests" 
@@ -15,23 +16,6 @@ test_group = testGroup "Network Tests"
 	,	testCase "Test two processes can exchange info over a connection" test_send_receive
 	,	testCase "Connecting when already connecting shouldn't change connection" test_connect_when_already_connected
 	]
-
-read_until_just :: TVar (Maybe a) -> IO a
-read_until_just tvar = atomically $ do 
-	maybe_output <- readTVar tvar
-	case maybe_output of
-		Nothing -> retry
-		Just output -> return output
-
-server_client_fixture :: IO a -> IO () -> IO a
-server_client_fixture server_body client = do
-	output_tvar <- atomically $ newTVar Nothing
-	forkIO $ server output_tvar
-	forkIO client
-	read_until_just output_tvar where
-		server tvar = do
-			input <- server_body
-			atomically $ writeTVar tvar $ Just input
 
 test_acceptance = do
 	connection <- server_client_fixture server client

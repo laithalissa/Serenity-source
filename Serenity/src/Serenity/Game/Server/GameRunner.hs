@@ -10,10 +10,6 @@ import Serenity.Game.Model.Common
 import Serenity.Game.Model.Entity
 import Serenity.Game.Model.GameMap
 
-
-import qualified Serenity.Game.World.World as W
-import qualified Serenity.Game.Server.World as SW
-
 main :: IO ()
 main = let messages = initMessages
            world = W.initialize gameMap :: PW.PrototypeWorld

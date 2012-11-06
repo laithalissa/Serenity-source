@@ -13,9 +13,6 @@ data ClientMessage = ClientMessage {
      command :: ClientCommand                
 }
 
-
-
-
 data WorldDelta = 
      EntityAdded String |
      EntityDeleted Int deriving(Show)

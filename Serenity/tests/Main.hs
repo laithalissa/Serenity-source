@@ -1,6 +1,6 @@
 module Main where
 
-import Test.Framework (defaultMain, testGroup)
+import Test.Framework (defaultMainWithArgs, testGroup)
 import Test.Framework.Providers.HUnit (testCase)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 
@@ -12,7 +12,12 @@ import qualified Test.Serenity.Network.Transport as Transport
 import qualified Test.Serenity.Network.Utility as Network_Utility
 import qualified Test.Serenity.Network.Message as Message
 
-main = defaultMain allTests
+main = defaultMainWithArgs allTests htf_args
+
+htf_args = 
+	[	"--maximum-generated-tests=5000"
+	,	"--maximum-unsuitable-generated-tests=3000"
+	]
 
 allTests =
 	[	testGroup "Top Level"

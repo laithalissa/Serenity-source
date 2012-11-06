@@ -1,4 +1,4 @@
-module Test.Serenity.Network.Transport (test_group) where
+module Test.Serenity.Network.Transport (tests) where
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit (testCase)
@@ -11,7 +11,7 @@ import Test.HUnit
 import Test.Serenity.Network (server_client_fixture)
 import Serenity.Network.Transport
 
-test_group = testGroup "Network Tests" 
+tests = testGroup "Network Tests" 
 	[	testCase "Test a listening process accepts a connection" test_acceptance
 	,	testCase "Test two processes can exchange info over a connection" test_send_receive
 	,	testCase "Connecting when already connecting shouldn't change connection" test_connect_when_already_connected

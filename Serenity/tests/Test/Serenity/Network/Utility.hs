@@ -1,4 +1,4 @@
-module Test.Serenity.Network.Utility (test_group) where
+module Test.Serenity.Network.Utility (tests) where
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit (testCase)
@@ -12,7 +12,7 @@ import Test.Serenity.Network (server_client_fixture)
 import Serenity.Network.Transport
 import Serenity.Network.Utility
 
-test_group = testGroup "Network Utility Tests" 
+tests = testGroup "Network Utility Tests" 
 	[	testCase "Test test_get_transport_channels returns two empty channels" test_get_transport_channels
 	,	testCase "Test input placed in the input channel is sent" test_send_channel
 	,	testCase "Test input sent arrives in the receive channel" test_receive_channel

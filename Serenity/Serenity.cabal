@@ -35,6 +35,7 @@ Test-Suite test-serenity
         test-framework-hunit,
         QuickCheck,
         HUnit,
+        derive,
         stm,
         mtl,
         unix,

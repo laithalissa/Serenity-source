@@ -1,6 +1,5 @@
 
-module Test.Serenity.Game.Server.Main
-( test_group )
+module Test.Serenity.Game.Server.Main (tests)
 where
 
 
@@ -14,7 +13,7 @@ import Test.HUnit
 
 import qualified Serenity.Game.Server.Main as Main
 
-test_group = testGroup "Server Main Tests" [
+tests = testGroup "Server Main Tests" [
               testCase "Test the test is acting like a test" testMyTest
               ]
 

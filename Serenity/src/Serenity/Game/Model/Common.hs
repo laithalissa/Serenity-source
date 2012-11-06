@@ -2,7 +2,8 @@
 module Serenity.Game.Model.Common
 ( Location
 , Direction
-, Resources
+, Size
+, Resources(..)
 ) where
 
 

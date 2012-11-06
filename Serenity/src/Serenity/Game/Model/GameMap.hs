@@ -1,31 +1,35 @@
 
 module Serenity.Game.Model.GameMap
-(
+( GameMap(..)
+, Planet(..)
+, SpaceLane(..)
 ) where
 
 import Serenity.Game.Model.Common(Location, Direction, Resources, Size)
 
 
-data GameMap = GameMap
-{ name :: String
+data GameMap = GameMap{ 
+  name :: String
 , size :: Size
 , spawnPoints :: [(Location)]
 , planets :: [Planet]
 , spaceLanes :: [SpaceLane]
 }
 
-data Planet = Planet 
-{ id :: Int
+data Planet = Planet { 
+  planetName :: String
 , planetType :: String -- specifies which size / texture to use
 , location :: Location
 , direction :: Direction
 , resources :: Resources
 }
 
-data SpaceLane = SpaceLane 
-{ planetId1 :: Int
-, planetId2 :: Int
+data SpaceLane = SpaceLane { 
+  planetName1 :: String
+, planetName2 :: String
 }
+
+
 
 
 

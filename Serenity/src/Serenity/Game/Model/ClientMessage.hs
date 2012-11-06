@@ -1,6 +1,7 @@
 
 module Serenity.Game.Model.ClientMessage where
 
+import Serenity.Game.Model.Entity
 
 data ClientCommand = 
      EmptyCommand |
@@ -12,9 +13,6 @@ data ClientMessage = ClientMessage {
      command :: ClientCommand                
 }
 
-data ClientMessage = ClientMessage {
-      
-}
 
 data WorldDelta = 
      EntityAdded String |

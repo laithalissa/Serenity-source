@@ -11,6 +11,7 @@ import qualified Test.Serenity.Game.Server.Main as ServerMain
 import qualified Test.Serenity.Network.Transport as Transport
 import qualified Test.Serenity.Network.Utility as Network_Utility
 import qualified Test.Serenity.Network.Message as Message
+import qualified Test.Serenity.Network.Packet as Packet
 
 main = defaultMainWithArgs allTests htf_args
 
@@ -23,8 +24,9 @@ allTests =
 	[	testGroup "Top Level"
 		[	testCase "A test of tests" (1 @=? 1)
 		]
-	,	ServerMain.tests
+	,	Packet.tests
 	,	Transport.tests
 	,	Network_Utility.tests
 	,	Message.tests
+	,	ServerMain.tests
 	]

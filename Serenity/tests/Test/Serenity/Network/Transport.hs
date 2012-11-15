@@ -10,6 +10,7 @@ import Test.HUnit
 
 import Test.Serenity.Network (server_client_fixture)
 import Serenity.Network.Transport
+import qualified Serenity.Network.Message as Message
 
 tests = testGroup "Network Tests" 
 	[	testCase "Test a listening process accepts a connection" test_acceptance
@@ -27,11 +28,11 @@ test_acceptance = do
 
 test_send_receive = do
 	string <- server_client_fixture server client
-	string @?= "some input"
+	string @?= Message.Empty
 	where
 		client = do
 			connection <- run_connect "localhost" port
-			run_transport (send "some input") connection
+			run_transport (send Message.Empty) connection
 			return ()
 
 		server = do

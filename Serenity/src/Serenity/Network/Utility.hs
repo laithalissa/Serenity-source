@@ -8,7 +8,10 @@ import Control.Monad (forever)
 
 import Serenity.Network.Transport
 
-get_transport_channels :: Transport (TChan String, TChan String)
+import Serenity.Network.Message (Message)
+import qualified Serenity.Network.Message as Message
+
+get_transport_channels :: Transport (TChan Message, TChan Message, TVar Connection)
 get_transport_channels = do
 	inbox  <- liftIO newTChanIO
 	outbox <- liftIO newTChanIO
@@ -16,11 +19,13 @@ get_transport_channels = do
 	connection_tvar <- liftIO $ newTVarIO connection
 	liftIO $ forkIO $ forever $ inbox_loop inbox connection_tvar
 	liftIO $ forkIO $ forever $ outbox_loop outbox connection_tvar
-	return (inbox, outbox)
+	return (inbox, outbox, connection_tvar)
 	where
 		outbox_loop outbox connection_tvar = do
-			message <- liftIO $ atomically $ readTChan outbox
-			connection <- atomically $ readTVar connection_tvar
+			(message, connection) <- atomically $ do
+				message <- readTChan outbox
+				connection <- readTVar connection_tvar
+				return (message, connection)
 			eval_transport (send message) connection
 
 		inbox_loop inbox connection_tvar = do

@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Serenity.Network.Transport (
 	Connection (..)
@@ -30,7 +31,12 @@ import Control.Monad (liftM)
 import Control.Monad.State
 import Data.Monoid
 
-import Serenity.Network.Packet (Packet(..), initial_packet, receive_packet, send_packet, get_packet_data)
+import Serenity.Network.Packet
+
+import Data.Binary (Binary)
+
+import Serenity.Network.Message (Message)
+import qualified Serenity.Network.Message as Message
 
 data Connection = 
 	Connected 
@@ -71,14 +77,14 @@ bind_outbound_socket host port = withSocketsDo $ do
 class Monad m => MonadTransport m where
 	connect :: String -> PortNumber -> m ()
 	listen  :: PortNumber -> m ()
-	send :: String -> m ()
-	receive :: m String
+	send :: Message -> m ()
+	receive :: m Message
 	get_connection :: m Connection
 
 newtype Transport a = Transport (StateT Connection IO a)
 	deriving (Functor, Monad, MonadIO, MonadState Connection)
 
-instance MonadTransport (Transport) where
+instance MonadTransport Transport where
 	connect host port = do 
 		connection <- get
 		case connection of
@@ -86,7 +92,7 @@ instance MonadTransport (Transport) where
 			Unconnected -> do
 				(sock, addr, family) <- liftIO $ bind_outbound_socket host port
 				put $ initial_connection sock addr 13
-				liftIO $ send_packet sock (initial_packet "HELLO") addr
+				liftIO $ send_packet sock emptySynPacket addr
 				return ()
 
 	listen port = do 
@@ -95,7 +101,7 @@ instance MonadTransport (Transport) where
 			bindSocket sock (SockAddrInet port iNADDR_ANY)
 
 			(packet, client) <- receive_packet sock 
-			if (get_packet_data packet) == "HELLO"
+			if Syn `elem` (getFlags packet)
 				then return $ initial_connection sock client 12
 				else return Unconnected)
 		put connection
@@ -132,5 +138,9 @@ run_one f = do
 	(_, connection) <- run_transport f Unconnected
 	return connection
 
+run_connect :: String -> PortNumber -> IO Connection
 run_connect host port = run_one $ connect host port
+
+run_listen :: PortNumber -> IO Connection
 run_listen port = run_one $ listen port
+

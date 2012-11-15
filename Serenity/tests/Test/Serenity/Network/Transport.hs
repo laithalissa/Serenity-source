@@ -8,63 +8,63 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent
 import Test.HUnit
 
-import Test.Serenity.Network (server_client_fixture)
+import Test.Serenity.Network (serverClientFixture)
 import Serenity.Network.Transport
 import qualified Serenity.Network.Message as Message
 
 tests = testGroup "Network Tests" 
-	[	testCase "Test a listening process accepts a connection" test_acceptance
-	,	testCase "Test two processes can exchange info over a connection" test_send_receive
-	,	testCase "Test two processes can exchange info over a connection both ways" test_send_receive_duplex
-	,	testCase "Connecting when already connecting shouldn't change connection" test_connect_when_already_connected
+	[	testCase "Test a listening process accepts a connection" testAcceptance
+	,	testCase "Test two processes can exchange info over a connection" testSendReceive
+	,	testCase "Test two processes can exchange info over a connection both ways" testSendReceiveDuplex
+	,	testCase "Connecting when already connecting shouldn't change connection" testConnectWhenAlreadyConnected
 	]
 
-test_acceptance = do
-	connection <- server_client_fixture server client
-	is_connected connection @?= True
+testAcceptance = do
+	connection <- serverClientFixture server client
+	isConnected connection @?= True
 	where
-		client = do run_connect "localhost" port; return ();
-		server = do connection <- run_listen port; return connection
+		client = do runConnect "localhost" port; return ();
+		server = do connection <- runListen port; return connection
 		port = 9900
 
-test_send_receive = do
-	message <- server_client_fixture server client
+testSendReceive = do
+	message <- serverClientFixture server client
 	message @?= Message.Empty
 	where
 		client = do
-			connection <- run_connect "localhost" port
-			run_transport (send Message.Empty) connection
+			connection <- runConnect "localhost" port
+			runTransport (send Message.Empty) connection
 			return ()
 
 		server = do
-			connection <- run_listen port
-			message <- eval_transport (receive) connection
+			connection <- runListen port
+			message <- evalTransport (receive) connection
 			return message
 
 		port = 9902
 
-test_send_receive_duplex = do
-	message <- server_client_fixture server client
+testSendReceiveDuplex = do
+	message <- serverClientFixture server client
 	message @?= Message.Empty
 	where
 		client = do
-			connection <- run_connect "localhost" port
-			run_transport (send Message.Empty) connection
-			message <- eval_transport (receive) connection
-			run_transport (send message) connection
+			connection <- runConnect "localhost" port
+			runTransport (send Message.Empty) connection
+			message <- evalTransport (receive) connection
+			runTransport (send message) connection
 			return ()
 
 		server = do
-			connection <- run_listen port
-			message <- eval_transport (receive) connection
-			run_transport (send message) connection
-			message2 <- eval_transport (receive) connection
+			connection <- runListen port
+			message <- evalTransport (receive) connection
+			runTransport (send message) connection
+			message2 <- evalTransport (receive) connection
 			return message2
 
 		port = 9898
 
-test_connect_when_already_connected = do
-	connection1 <- run_connect "localhost" port
-	connection2 <- eval_transport (do connect "localhost" port; get_connection) connection1
+testConnectWhenAlreadyConnected = do
+	connection1 <- runConnect "localhost" port
+	connection2 <- evalTransport (do connect "localhost" port; getConnection) connection1
 	connection1 @=? connection2 where
 		port = 9904

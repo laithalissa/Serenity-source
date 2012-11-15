@@ -1,5 +1,5 @@
 module Test.Serenity.Network (
-	server_client_fixture
+	serverClientFixture
 ) where
 
 
@@ -7,19 +7,19 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
 import Control.Concurrent
 
-read_until_just :: TVar (Maybe a) -> IO a
-read_until_just tvar = atomically $ do 
-	maybe_output <- readTVar tvar
-	case maybe_output of
+readUntilJust :: TVar (Maybe a) -> IO a
+readUntilJust tvar = atomically $ do 
+	maybeOutput <- readTVar tvar
+	case maybeOutput of
 		Nothing -> retry
 		Just output -> return output
 
-server_client_fixture :: IO a -> IO () -> IO a
-server_client_fixture server_body client = do
-	output_tvar <- atomically $ newTVar Nothing
-	forkIO $ server output_tvar
+serverClientFixture :: IO a -> IO () -> IO a
+serverClientFixture serverBody client = do
+	outputTvar <- atomically $ newTVar Nothing
+	forkIO $ server outputTvar
 	forkIO client
-	read_until_just output_tvar where
+	readUntilJust outputTvar where
 		server tvar = do
-			input <- server_body
+			input <- serverBody
 			atomically $ writeTVar tvar $ Just input

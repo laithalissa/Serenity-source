@@ -26,4 +26,4 @@ tests = testGroup "Network Packet Tests"
 	]
 
 propertyFlagsAreSetCorrectly :: [Flag] -> Bool
-propertyFlagsAreSetCorrectly flags = Set.fromList (getFlags $ setFlags flags (initial_packet Empty)) == Set.fromList flags
+propertyFlagsAreSetCorrectly flags = Set.fromList (getFlags $ setFlags flags (initialPacket Empty)) == Set.fromList flags

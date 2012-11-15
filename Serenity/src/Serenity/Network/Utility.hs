@@ -11,24 +11,24 @@ import Serenity.Network.Transport
 import Serenity.Network.Message (Message)
 import qualified Serenity.Network.Message as Message
 
-get_transport_channels :: Transport (TChan Message, TChan Message, TVar Connection)
-get_transport_channels = do
+getTransportChannels :: Transport (TChan Message, TChan Message, TVar Connection)
+getTransportChannels = do
 	inbox  <- liftIO newTChanIO
 	outbox <- liftIO newTChanIO
-	connection <- get_connection
-	connection_tvar <- liftIO $ newTVarIO connection
-	liftIO $ forkIO $ forever $ inbox_loop inbox connection_tvar
-	liftIO $ forkIO $ forever $ outbox_loop outbox connection_tvar
-	return (inbox, outbox, connection_tvar)
+	connection <- getConnection
+	connectionTvar <- liftIO $ newTVarIO connection
+	liftIO $ forkIO $ forever $ inboxLoop inbox connectionTvar
+	liftIO $ forkIO $ forever $ outboxLoop outbox connectionTvar
+	return (inbox, outbox, connectionTvar)
 	where
-		outbox_loop outbox connection_tvar = do
+		outboxLoop outbox connectionTvar = do
 			(message, connection) <- atomically $ do
 				message <- readTChan outbox
-				connection <- readTVar connection_tvar
+				connection <- readTVar connectionTvar
 				return (message, connection)
-			eval_transport (send message) connection
+			evalTransport (send message) connection
 
-		inbox_loop inbox connection_tvar = do
-			connection <- atomically $ readTVar connection_tvar
-			message <- eval_transport (receive) connection
+		inboxLoop inbox connectionTvar = do
+			connection <- atomically $ readTVar connectionTvar
+			message <- evalTransport (receive) connection
 			atomically $ writeTChan inbox message

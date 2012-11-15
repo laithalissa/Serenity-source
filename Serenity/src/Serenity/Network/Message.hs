@@ -22,12 +22,12 @@ data Message =
 
 instance Binary Message where
 	put message = do
-		putWord16be message_id
+		putWord16be messageId
 		putMessage message where
-			(message_id, putMessage) = putMessageAndID message
+			(messageId, putMessage) = putMessageAndID message
 	get = do
-		message_id <- getWord16be
-		getMessage message_id
+		messageId <- getWord16be
+		getMessage messageId
 
 putMessageAndID message = case message of
 	Empty             -> (0, \_ -> return ())

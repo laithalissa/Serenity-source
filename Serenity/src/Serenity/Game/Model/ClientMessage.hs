@@ -2,10 +2,10 @@
 module Serenity.Game.Model.ClientMessage where
 
 import Serenity.Game.Model.Entity
+import Serenity.Game.Model.Common
 
 data ClientCommand = 
-     EmptyCommand |
-     CreateEntityCommand Entity
+     MoveShip { shipId :: Int, target :: Location }
      deriving(Show)
 
 data ClientMessage = ClientMessage {

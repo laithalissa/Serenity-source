@@ -2,13 +2,16 @@
 module Serenity.Game.Server.Server where
 
 import Serenity.Game.Server.Network
-import Serenity.Game.Server.GameRunner as GR
+import qualified Serenity.Game.Server.GameRunner as GR
+import qualified Serenity.Game.Server.Gravity as Gravity
+
 
 masterClientPort = 9000
 slaveClientPort = 9050
 
 start :: IO ()
-start = GR.main
+--start = GR.main
+start = Gravity.main
 
 start2 :: IO ()
 start2 = do

@@ -2,7 +2,8 @@
 module Serenity.Game.Server.World where
 
 --import Serenity.Game.Model.Common(Location)
-import Serenity.Game.Model.ClientMessage(ClientMessage, WorldDelta)
+import Serenity.Game.Model.ClientMessage(ClientMessage)
+import Serenity.Game.Model.WorldDelta(WorldDelta)
 import Serenity.Game.Model.GameMap(GameMap)
 
 

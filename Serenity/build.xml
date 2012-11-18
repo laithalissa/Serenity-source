@@ -52,6 +52,11 @@
 
   <target name="build" depends="clean">
 	<exec executable="cabal" failonerror="true">
+	  <arg value="install"/>
+	  <arg value="--only-dependencies"/>
+	  <arg value="--enable-tests"/>
+	</exec>
+	<exec executable="cabal" failonerror="true">
 	  <arg value="configure"/>
 	  <arg value="--enable-tests"/>
 	</exec>

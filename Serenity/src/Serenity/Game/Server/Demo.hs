@@ -11,19 +11,17 @@ import qualified Data.Map as Map
 main :: IO ()
 main = do
         assetManager <- loadAssets
-        play gDisplay gColor gUPS gWorld (gRender assetManager) gInput gUpdate
+        gWorld <- return (initialize assetManager gameMap :: SimpleWorld)
+        play gDisplay gColor gUPS gWorld gRender gInput gUpdate
   where
     gDisplay = InWindow "Serenity"
                       (500,500) 
                       (100,100)
     gColor = black
     gUPS = 5
-    gWorld = "hello"
-    gRender assetManager world = case (Map.lookup "planet1" assetManager) of
-      Just planet1 -> planet1
-      Nothing -> text "can't load planet"
+    gRender world = render world
     gInput input world = world
-    gUpdate delta world = world
+    gUpdate delta world = updateFromTimeDelta delta world
     
     gameMap = GameMap {
         gameMapName = "My First Map",
@@ -54,7 +52,7 @@ type EntityId = Int
 type Location = (Float, Float)
 type Direction = (Float, Float)
 type Size = (Int, Int)
-type TimeDuration = Int -- milliseconds
+type TimeDuration = Float -- milliseconds
 type Resources = (Int, Int, Int)
 data PlayerCommand = 
   StayStillCommand { stayStillShipId :: EntityId } |
@@ -103,4 +101,6 @@ instance World SimpleWorld where
                 }
   updateFromTimeDelta delta world = world
   updateFromCommand command world = world
-  render world = text "sup"
+  render world = case (Map.lookup "planet1" (worldAssetManager world)) of
+      Just planet1 -> planet1
+      Nothing -> text "can't load planet"

@@ -8,15 +8,16 @@ runFile="serenity"
 rtsArgs="-K1G"
 
 clean:
-	cabal clean
+	rm -rf dist
 	rm -rf ${environmentDir}
+	cabal clean
 
 build:
-	cabal configure --enable-tests
+	cabal configure 
 	cabal build
 
 prepareEnvironment:
-	mkdir ${environmentDir}
+	mkdir -p ${environmentDir}
 	cp -r ${resDir}/* ${environmentDir}
 	cp ${cabalBuildFile} "${environmentDir}/${runFile}"
 	chmod a+x "${environmentDir}/${runFile}"

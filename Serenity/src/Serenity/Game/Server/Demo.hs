@@ -7,16 +7,17 @@ import Graphics.Gloss(Display(..))
 import Graphics.Gloss.Interface.IO.Game(playIO)
 import Graphics.Gloss.Data.Color(black, red)
 import Graphics.Gloss.Data.Picture(Picture(Bitmap), text, color, loadBMP, scale, pictures, translate, line)
-import Graphics.Gloss.Interface.Pure.Game(SpecialKey(..), Key(..), Event(..), KeyState(..))
+import Graphics.Gloss.Interface.Pure.Game(SpecialKey(..), Key(..), Event(..), KeyState(..), MouseButton(..))
 import Data.Maybe(Maybe(..), fromJust)
 import qualified Data.Map as Map
 
-windowSize = (800, 600)
+runWindowSize = (800, 600)
+
 main :: IO ()
 main = do
         assetManager <- loadAssets
-        gWorld <- return (initialize assetManager windowSize gameMap :: SimpleWorld)
-        playIO (gDisplay windowSize) gColor gUPS gWorld gRender gInput gUpdate
+        gWorld <- return (initialize assetManager runWindowSize gameMap :: SimpleWorld)
+        playIO (gDisplay runWindowSize) gColor gUPS gWorld gRender gInput gUpdate
   where
     gDisplay windowSize = InWindow "Serenity"
                       windowSize 
@@ -32,6 +33,9 @@ main = do
         (Char 's', Down) -> updateFromCommand (scroll 0 (-5)) world        
         (Char 'a', Down) -> updateFromCommand (scroll (-5) 0) world        
         (Char 'd', Down) -> updateFromCommand (scroll 5 0) world                
+        (MouseButton LeftButton, Down) -> do
+          print $ "mouse at " ++ (show $ moveCommand mouseX mouseY)
+          return world
         _ -> return world
       _ -> return world  
       where  
@@ -45,11 +49,16 @@ main = do
                                         (vw world),
                                         (vh world)
                                        ) 
+                                       
+        moveCommand mx my = ClientMoveOrder 0 $ worldLocationFromWindow (mx, my) world
 
+        
         vx SimpleWorld{worldViewPort=(x,y,w,h)} = x
         vy SimpleWorld{worldViewPort=(x,y,w,h)} = y
         vw SimpleWorld{worldViewPort=(x,y,w,h)} = w                                               
         vh SimpleWorld{worldViewPort=(x,y,w,h)} = h    
+        
+        
             
     gUpdate delta world = updateFromTimeDelta delta world
         
@@ -87,8 +96,12 @@ type TimeDuration = Float -- milliseconds
 type Resources = (Int, Int, Int)
 type ViewPort = (Float, Float, Float, Float)
 data ClientMessage = ClientScroll ViewPort | 
-                     ClientMoveOrder { clientMoveOrderShipId :: EntityId } |
+                     ClientMoveOrder 
+                     {               clientMoveOrderShipId :: EntityId 
+                     ,               clientMoveOrderLocation :: Location
+                     } |
                      ClientStillOrder { clientStillShipId :: EntityId }
+                     deriving(Show, Eq)
 
 data ShipOrder =
   StayStillOrder |
@@ -155,7 +168,7 @@ instance World SimpleWorld where
                 , entities=[ Ship {     shipId=0 
                                   ,     shipLocation=(40,50)
                                   ,     shipDirection=(0,1)                   
-                                  ,     shipAcceleration=(0, 1)                    
+                                  ,     shipAcceleration=(0, 1)                                                    
                                   ,     shipOrder=StayStillOrder                       
                                   }                
                            ]               
@@ -171,25 +184,27 @@ instance World SimpleWorld where
     _ -> return world
   
   render world = do
-    finalWorldImage <- return $ (translateWorld . scaleWorld . renderInWorld) world
-    background <- return $ scaleBMPImage (windowWidth, windowHeight) (getAssetW "background" world)
+    finalWorldImage <- return $ (drawWorldToWindow . renderInWorld) world
+    background <- return $ scaleBMPImage (ww, wh) (getAssetW "background" world)
     return $ pictures [background, finalWorldImage]
 
 
     where
-      translateWorld = translate (-viewPortX) (-viewPortY) . translate (-(windowWidth/2)) (-(windowHeight/2))
-      scaleWorld = scale (windowWidth/viewPortWidth) (windowHeight/viewPortHeight)
+      
+      
+      drawWorldToWindow = translateWorld . scaleWorld
       -- translateWorld = translate (-(windowWidth/2)) (-(windowHeight/2))
       -- scaleWorld = scale (windowWidth/worldWidth) (windowHeight/worldHeight)
-      worldWidth = (fst . gameMapSize . worldGameMap) world
-      worldHeight = (snd . gameMapSize . worldGameMap) world
-      windowWidth = (fromIntegral . fst . worldWindowSize) world
-      windowHeight = (fromIntegral . snd . worldWindowSize) world
-      viewPortX = toList4 (worldViewPort world) !! 0
-      viewPortY = toList4 (worldViewPort world) !! 1      
-      viewPortWidth = toList4 (worldViewPort world) !! 2      
-      viewPortHeight = toList4 (worldViewPort world) !! 3      
+      scaleWorld = scale (ww/vpw) (wh/vph)
+      translateWorld = translate (-((ww/vpw)*vpx + (ww/2))) (-((wh/vph)*vpy + (wh/2)))
       
+      ww = fst $ windowSize world
+      wh = snd $ windowSize world
+      vpx = fst $ viewPortLocation world
+      vpy = snd $ viewPortLocation world      
+      vpw = fst $ viewPortSize world
+      vph = snd $ viewPortSize world
+                          
       renderInWorld world = pictures $ [ pictures $ map spaceLaneF (worldSpaceLanes world)
                                        , pictures $ map planetF (worldPlanets world)
                                        ]  
@@ -215,6 +230,49 @@ toList2 (a1, a2) = [a1, a2]
 toList3 (a1, a2, a3) = [a1, a2, a3]
 toList4 (a1, a2, a3, a4) = [a1, a2, a3, a4]
 
+viewPortLocation :: SimpleWorld -> Location
+viewPortLocation world = (viewPortX, viewPortY)
+  where
+    viewPortX = toList4 (worldViewPort world) !! 0
+    viewPortY = toList4 (worldViewPort world) !! 1      
+    
+viewPortSize :: SimpleWorld -> Size    
+viewPortSize world = (viewPortWidth, viewPortHeight)
+  where
+    viewPortWidth = toList4 (worldViewPort world) !! 2      
+    viewPortHeight = toList4 (worldViewPort world) !! 3      
+
+windowSize :: SimpleWorld -> Size
+windowSize SimpleWorld{worldWindowSize=(w,h)} = (fromIntegral w, fromIntegral h) 
+
+worldLocationFromWindow :: (Float, Float) -> SimpleWorld -> (Float, Float)
+worldLocationFromWindow (windowX, windowY) world = (worldX, worldY) 
+  where
+    worldX = (vw / ww)*(windowX + (ww/2)) + vx
+    worldY = (vh / wh)*(windowY + (wh/2)) + vy
+
+    ww = fst $ windowSize world
+    wh = snd $ windowSize world 
+    vx = fst $ viewPortLocation world
+    vy = snd $ viewPortLocation world
+    vw = fst $ viewPortSize world
+    vh = snd $ viewPortSize world
+
+windowLocationFromWorld :: (Float, Float) -> SimpleWorld -> (Float, Float)
+windowLocationFromWorld (worldX, worldY) world = (windowX, windowY)
+  where
+    windowX = ((ww * (worldX-vx)) / vw) - (ww/2)
+    windowY = ((wh * (worldY-vy)) / vh) - (wh/2)
+    
+    ww = fst $ windowSize world
+    wh = snd $ windowSize world 
+    vx = fst $ viewPortLocation world
+    vy = snd $ viewPortLocation world
+    vw = fst $ viewPortSize world
+    vh = snd $ viewPortSize world
+
+worldSize :: SimpleWorld -> Size
+worldSize = gameMapSize . worldGameMap
 
 
 

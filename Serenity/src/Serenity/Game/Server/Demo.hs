@@ -6,8 +6,9 @@ import Prelude hiding ((.), id)
 import Graphics.Gloss(Display(..))
 import Graphics.Gloss.Interface.IO.Game(playIO)
 import Graphics.Gloss.Data.Color(black, red)
-import Graphics.Gloss.Data.Picture(Picture(Bitmap), text, color, loadBMP, scale, pictures, translate)
+import Graphics.Gloss.Data.Picture(Picture(Bitmap), text, color, loadBMP, scale, pictures, translate, line)
 import Graphics.Gloss.Interface.Pure.Game(SpecialKey(..), Key(..), Event(..))
+import Data.Maybe(Maybe(..), fromJust)
 import qualified Data.Map as Map
 
 windowSize = (800, 600)
@@ -32,9 +33,10 @@ main = do
         gameMapName = "My First Map",
         gameMapSize = (100, 100),
         gameMapSpawnPoints=[(50, 50)],
-        gameMapPlanets = [ createPlanet "Earth" (10, 10)                                             , createPlanet "Mars" (50, 50)   
-                         , createPlanet "Pluto" (90, 90)                                             ],
-        gameMapSpaceLanes=[]
+        gameMapPlanets = [ createPlanet "Earth" (50, 50)                                             , createPlanet "Mars" (10, 10)   
+                         , createPlanet "Pluto" (90, 10)                                             ],
+        gameMapSpaceLanes=[ SpaceLane "Earth" "Mars"
+                          ]
         }
       where
         createPlanet name location = Planet name "HUGE" location (0,1) (10, 20, 30)
@@ -142,21 +144,36 @@ instance World SimpleWorld where
       windowWidth = (fromIntegral . fst . worldWindowSize) world
       windowHeight = (fromIntegral . snd . worldWindowSize) world
       
-      renderInWorld world = pictures $ map f (worldPlanets world)
-
-      f planet = translate planetX planetY $ scaleBMPImage planetSize (getAssetW "planet1" world)
+      renderInWorld world = pictures $ [ pictures $ map spaceLaneF (worldSpaceLanes world)
+                                       , pictures $ map planetF (worldPlanets world)
+                                       ]  
+      
+      planetF planet = translate planetX planetY $ scaleBMPImage planetSize (getAssetW "planet1" world)
         where
           planetX = (fst . planetLocation) planet
           planetY = (snd . planetLocation) planet
-      imgSize (Bitmap width height _ _) = (width, height)
+      
+      spaceLaneF spaceLane@(SpaceLane p1 p2) = line [ (pX p1, pY p1)
+                                                    , (pX p2, pY p2) 
+                                                    ]
+        where
+          pX pName = (fst . planetLocation . getPlanet pName) world
+          pY pName = (snd . planetLocation . getPlanet pName) world
 
 
 
 
 ---------- SimpleWorld helper function ----------
 
+getPlanet :: String -> SimpleWorld -> Planet
+getPlanet name = fromJust . Map.lookup name . Map.fromList . map (\p->(planetName p, p)) . worldPlanets
+
+
 worldPlanets :: SimpleWorld -> [Planet]
 worldPlanets = gameMapPlanets . worldGameMap
+
+worldSpaceLanes :: SimpleWorld -> [SpaceLane]
+worldSpaceLanes = gameMapSpaceLanes . worldGameMap
 
 scaleBMPImage :: (Float, Float) -> Picture -> Picture
 scaleBMPImage (nWidth, nHeight) image@(Bitmap width height _ _) = scale (nWidth/(fromIntegral width)) 

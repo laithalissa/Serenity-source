@@ -7,7 +7,7 @@ import Graphics.Gloss(Display(..))
 import Graphics.Gloss.Interface.IO.Game(playIO)
 import Graphics.Gloss.Data.Color(black, red)
 import Graphics.Gloss.Data.Picture(Picture(Bitmap), text, color, loadBMP, scale, pictures, translate, line)
-import Graphics.Gloss.Interface.Pure.Game(SpecialKey(..), Key(..), Event(..))
+import Graphics.Gloss.Interface.Pure.Game(SpecialKey(..), Key(..), Event(..), KeyState(..))
 import Data.Maybe(Maybe(..), fromJust)
 import qualified Data.Map as Map
 
@@ -24,9 +24,24 @@ main = do
     gColor = black
     gUPS = 5
     gRender world = render world
-    gInput input world = case input of
-      _ -> return world
-    
+    gInput event world = case event of
+      EventKey key keyState modifiers (mouseX, mouseY) -> case (key, keyState) of
+        (Char '-', Down) -> updateFromCommand (zoom (-1)) world
+        (Char '+', Down) -> updateFromCommand (zoom 1) world        
+        _ -> return world
+      _ -> return world  
+      where  
+        zoom delta = ClientScroll ((vx world) + (delta/2), 
+                                   (vy world) + (delta/2),
+                                   (vw world) - delta,
+                                   (vh world) - delta
+                                  )
+          where
+            vx SimpleWorld{worldViewPort=(x,y,w,h)} = x
+            vy SimpleWorld{worldViewPort=(x,y,w,h)} = y
+            vw SimpleWorld{worldViewPort=(x,y,w,h)} = w                                               
+            vh SimpleWorld{worldViewPort=(x,y,w,h)} = h    
+            
     gUpdate delta world = updateFromTimeDelta delta world
         
     gameMap = GameMap {
@@ -61,11 +76,14 @@ type Size = (Float, Float)
 type TimeDuration = Float -- milliseconds
 type Resources = (Int, Int, Int)
 type ViewPort = (Float, Float, Float, Float)
-data ClientMessage = ClientMove ViewPort | ClientShipOrder ShipOrder
+data ClientMessage = ClientScroll ViewPort | 
+                     ClientMoveOrder { clientMoveOrderShipId :: EntityId } |
+                     ClientStillOrder { clientStillShipId :: EntityId }
 
 data ShipOrder =
-  StayStillOrder { stayStillOrderShipId :: EntityId } |
-  MoveOrder { moveOrderShipId :: EntityId, moveOrderLocation :: Location }
+  StayStillOrder |
+  MoveOrder { moveOrderLocation :: Location }
+  deriving(Show, Eq)
 
 
 class World a where
@@ -105,7 +123,7 @@ data Entity =
   ,    shipDirection :: Direction
   ,    shipAcceleration :: Direction               
   ,    shipOrder :: ShipOrder
-  }
+  } deriving (Show, Eq)
     
 
 ---------- Simple World ----------
@@ -115,6 +133,7 @@ planetSize = (5, 5)
 
 data SimpleWorld = SimpleWorld
      {           worldGameMap :: GameMap
+     ,           entities :: [Entity] 
      ,           worldAssetManager :: AssetManager
      ,           worldViewPort :: ViewPort
      ,           worldWindowSize :: (Int, Int) 
@@ -123,12 +142,23 @@ data SimpleWorld = SimpleWorld
 instance World SimpleWorld where
   initialize assetManager windowSize gameMap = 
     SimpleWorld { worldGameMap=gameMap
+                , entities=[ Ship {     shipId=0 
+                                  ,     shipLocation=(40,50)
+                                  ,     shipDirection=(0,1)                   
+                                  ,     shipAcceleration=(0, 1)                    
+                                  ,     shipOrder=StayStillOrder                       
+                                  }                
+                           ]               
                 , worldAssetManager=assetManager                                
                 , worldViewPort=(0.0, 0.0, (fst $ gameMapSize gameMap), (snd $  gameMapSize gameMap))                  
                 , worldWindowSize=windowSize                
                 }
   updateFromTimeDelta delta world = return world
-  updateFromCommand command world = return world
+  updateFromCommand command world = case command of
+    ClientScroll viewport -> do
+      print $ "changing view port to " ++ (show viewport)
+      return world{worldViewPort=viewport}
+    _ -> return world
   
   render world = do
     finalWorldImage <- return $ (translateWorld . scaleWorld . renderInWorld) world

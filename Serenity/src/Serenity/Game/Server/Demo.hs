@@ -26,8 +26,12 @@ main = do
     gRender world = render world
     gInput event world = case event of
       EventKey key keyState modifiers (mouseX, mouseY) -> case (key, keyState) of
-        (Char '-', Down) -> updateFromCommand (zoom (-1)) world
-        (Char '+', Down) -> updateFromCommand (zoom 1) world        
+        (Char 'e', Down) -> updateFromCommand (zoom (-5)) world
+        (Char 'q', Down) -> updateFromCommand (zoom 5) world        
+        (Char 'w', Down) -> updateFromCommand (scroll 0 5) world
+        (Char 's', Down) -> updateFromCommand (scroll 0 (-5)) world        
+        (Char 'a', Down) -> updateFromCommand (scroll (-5) 0) world        
+        (Char 'd', Down) -> updateFromCommand (scroll 5 0) world                
         _ -> return world
       _ -> return world  
       where  
@@ -36,11 +40,16 @@ main = do
                                    (vw world) - delta,
                                    (vh world) - delta
                                   )
-          where
-            vx SimpleWorld{worldViewPort=(x,y,w,h)} = x
-            vy SimpleWorld{worldViewPort=(x,y,w,h)} = y
-            vw SimpleWorld{worldViewPort=(x,y,w,h)} = w                                               
-            vh SimpleWorld{worldViewPort=(x,y,w,h)} = h    
+        scroll dx dy = ClientScroll ((vx world) + dx,
+                                        (vy world) + dy,
+                                        (vw world),
+                                        (vh world)
+                                       ) 
+
+        vx SimpleWorld{worldViewPort=(x,y,w,h)} = x
+        vy SimpleWorld{worldViewPort=(x,y,w,h)} = y
+        vw SimpleWorld{worldViewPort=(x,y,w,h)} = w                                               
+        vh SimpleWorld{worldViewPort=(x,y,w,h)} = h    
             
     gUpdate delta world = updateFromTimeDelta delta world
         
@@ -48,7 +57,8 @@ main = do
         gameMapName = "My First Map",
         gameMapSize = (100, 100),
         gameMapSpawnPoints=[(50, 50)],
-        gameMapPlanets = [ createPlanet "Earth" (50, 50)                                             , createPlanet "Mars" (10, 10)   
+        gameMapPlanets = [ createPlanet "Earth" (50, 50)                                             
+                         , createPlanet "Mars" (10, 10)   
                          , createPlanet "Pluto" (90, 10)                                             ],
         gameMapSpaceLanes=[ SpaceLane "Earth" "Mars"
                           ]
@@ -167,12 +177,18 @@ instance World SimpleWorld where
 
 
     where
-      translateWorld = translate (-(windowWidth/2)) (-(windowHeight/2))
-      scaleWorld = scale (windowWidth/worldWidth) (windowHeight/worldHeight)
+      translateWorld = translate (-viewPortX) (-viewPortY) . translate (-(windowWidth/2)) (-(windowHeight/2))
+      scaleWorld = scale (windowWidth/viewPortWidth) (windowHeight/viewPortHeight)
+      -- translateWorld = translate (-(windowWidth/2)) (-(windowHeight/2))
+      -- scaleWorld = scale (windowWidth/worldWidth) (windowHeight/worldHeight)
       worldWidth = (fst . gameMapSize . worldGameMap) world
       worldHeight = (snd . gameMapSize . worldGameMap) world
       windowWidth = (fromIntegral . fst . worldWindowSize) world
       windowHeight = (fromIntegral . snd . worldWindowSize) world
+      viewPortX = toList4 (worldViewPort world) !! 0
+      viewPortY = toList4 (worldViewPort world) !! 1      
+      viewPortWidth = toList4 (worldViewPort world) !! 2      
+      viewPortHeight = toList4 (worldViewPort world) !! 3      
       
       renderInWorld world = pictures $ [ pictures $ map spaceLaneF (worldSpaceLanes world)
                                        , pictures $ map planetF (worldPlanets world)
@@ -194,6 +210,13 @@ instance World SimpleWorld where
 
 
 ---------- SimpleWorld helper function ----------
+
+toList2 (a1, a2) = [a1, a2]
+toList3 (a1, a2, a3) = [a1, a2, a3]
+toList4 (a1, a2, a3, a4) = [a1, a2, a3, a4]
+
+
+
 
 getPlanet :: String -> SimpleWorld -> Planet
 getPlanet name = fromJust . Map.lookup name . Map.fromList . map (\p->(planetName p, p)) . worldPlanets

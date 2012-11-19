@@ -129,7 +129,9 @@ instance World SimpleWorld where
   updateFromCommand command world = return world
   
   render world = do
-    return $ (translateWorld . scaleWorld . renderInWorld) world
+    finalWorldImage <- return $ (translateWorld . scaleWorld . renderInWorld) world
+    background <- return $ scaleBMPImage (windowWidth, windowHeight) (getAssetW "background" world)
+    return $ pictures [background, finalWorldImage]
 
 
     where

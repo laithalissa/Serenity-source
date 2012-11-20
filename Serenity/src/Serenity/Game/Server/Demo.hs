@@ -17,6 +17,7 @@ import Serenity.Game.Model.ShipClass(ShipClass(..), WeaponSlotType(..))
 import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.ShipOrder(ShipOrder(..))
 import Serenity.Game.Model.Entity(Entity(..))
+import Serenity.Game.Server.KeyboardState(KeyboardState, initKeyboardState, handleKeyEvent, isKeyDown)
 
 runWindowSize = (800, 600)
 
@@ -153,7 +154,8 @@ data SimpleWorld = SimpleWorld
      ,           worldEntities :: [Entity] 
      ,           worldAssetManager :: AssetManager
      ,           worldViewPort :: ViewPort
-     ,           worldWindowSize :: (Int, Int) 
+     ,           worldWindowSize :: (Int, Int)                                     
+     ,           worldKeyboardState :: KeyboardState
      } deriving(Show,Eq)
 
 instance World SimpleWorld where
@@ -169,6 +171,7 @@ instance World SimpleWorld where
                 , worldAssetManager=assetManager                                
                 , worldViewPort=(0.0, 0.0, (fst $ gameMapSize gameMap), (snd $  gameMapSize gameMap))                  
                 , worldWindowSize=windowSize                
+                , worldKeyboardState=initKeyboardState                  
                 }
   updateFromTimeDelta delta world = return world
   updateFromCommand command world = case command of

@@ -6,7 +6,7 @@ import Prelude hiding ((.), id)
 import Graphics.Gloss(Display(..))
 import Graphics.Gloss.Interface.IO.Game(playIO)
 import Graphics.Gloss.Data.Color(black, red)
-import Graphics.Gloss.Data.Picture(Picture(Bitmap), text, color, loadBMP, scale, pictures, translate, line)
+import Graphics.Gloss.Data.Picture(Picture(Bitmap), text, color, loadBMP, scale, pictures, translate, line, Point, Path)
 import Graphics.Gloss.Interface.Pure.Game(SpecialKey(..), Key(..), Event(..), KeyState(..), MouseButton(..))
 import Data.Maybe(Maybe(..), fromJust)
 import qualified Data.Map as Map
@@ -33,9 +33,7 @@ main = do
         (Char 's', Down) -> updateFromCommand (scroll 0 (-5)) world        
         (Char 'a', Down) -> updateFromCommand (scroll (-5) 0) world        
         (Char 'd', Down) -> updateFromCommand (scroll 5 0) world                
-        (MouseButton LeftButton, Down) -> do
-          print $ "mouse at " ++ (show $ moveCommand mouseX mouseY)
-          return world
+        (MouseButton LeftButton, Down) -> updateFromCommand (moveCommand mouseX mouseY) world
         _ -> return world
       _ -> return world  
       where  
@@ -73,7 +71,7 @@ main = do
                           ]
         }
       where
-        createPlanet name location = Planet name "HUGE" location (0,1) (10, 20, 30)
+        createPlanet name location = Planet name "planet1" location (0,1) (10, 20, 30)
         
 
 
@@ -82,12 +80,30 @@ loadAssets :: IO AssetManager
 loadAssets = do
   planet1 <- loadBMP "planet1.bmp"
   background <- loadBMP "background.bmp"
-  return $ Map.fromList [("planet1", planet1), ("background", background)]
+  ship1 <- loadBMP "ship1.bmp"
+  ship2 <- loadBMP "ship2.bmp"
+  return $ AssetManager (Map.fromList [       ("planet1", scaleBMPImage planetSize planet1)
+                        ,       ("background", background)
+                        ,       ("ship1", scaleBMPImage shipSize ship1) 
+                        ,       ("ship2", scaleBMPImage shipSize ship2)        
+                        ])
+                        (Map.fromList [])
+
+
+
+planetSize :: (Float, Float)
+planetSize = (5, 5)
+      
+shipSize ::(Float, Float)
+shipSize = (3, 3)
+      
 
 
 ---------- model ----------
 
-type AssetManager = Map.Map String Picture
+
+
+
 type EntityId = Int
 type Location = (Float, Float)
 type Direction = (Float, Float)
@@ -136,6 +152,32 @@ data SpaceLane = SpaceLane
      , spaceLanePlanet2 :: String
      } deriving(Show, Eq)
 
+data WeaponSlotType = SideWeaponType | TurretWeaponType | SpecialWeaponType deriving(Show, Eq)
+
+type Polygon = [Point]
+data ShipClass = ShipClass 
+     {         shipClassName :: String,
+               collisionPolygon :: Polygon,
+               image :: Picture,
+               centreOfRotation :: Location,
+               systemSlotLocations :: [(Location, Direction)],
+               weaponSlotLocations :: [(Location, 
+                                        Direction, 
+                                        WeaponSlotType)] 
+     } deriving(Show, Eq)
+
+
+data AssetManager = AssetManager
+     {            assetManagerPictures :: Map.Map String Picture
+     ,            assetManagerShipClasses :: Map.Map String ShipClass
+     } deriving(Eq, Show)
+
+getPicture :: String -> AssetManager -> Picture
+getPicture name assetManager = case (Map.lookup name (assetManagerPictures assetManager)) of
+  Just asset -> asset
+  Nothing -> color red $ text ("Couldn't load asset " ++ name)
+                          
+  
 
 ---------- Entities ----------
 
@@ -151,12 +193,10 @@ data Entity =
 
 ---------- Simple World ----------
 
-planetSize :: (Float, Float)
-planetSize = (5, 5)
 
 data SimpleWorld = SimpleWorld
      {           worldGameMap :: GameMap
-     ,           entities :: [Entity] 
+     ,           worldEntities :: [Entity] 
      ,           worldAssetManager :: AssetManager
      ,           worldViewPort :: ViewPort
      ,           worldWindowSize :: (Int, Int) 
@@ -165,7 +205,7 @@ data SimpleWorld = SimpleWorld
 instance World SimpleWorld where
   initialize assetManager windowSize gameMap = 
     SimpleWorld { worldGameMap=gameMap
-                , entities=[ Ship {     shipId=0 
+                , worldEntities=[ Ship {     shipId=0 
                                   ,     shipLocation=(40,50)
                                   ,     shipDirection=(0,1)                   
                                   ,     shipAcceleration=(0, 1)                                                    
@@ -186,30 +226,28 @@ instance World SimpleWorld where
   render world = do
     finalWorldImage <- return $ (drawWorldToWindow . renderInWorld) world
     background <- return $ scaleBMPImage (ww, wh) (getAssetW "background" world)
+--    background <- return $ (getAssetW "background" world)
     return $ pictures [background, finalWorldImage]
 
 
     where
-      
-      
       drawWorldToWindow = translateWorld . scaleWorld
-      -- translateWorld = translate (-(windowWidth/2)) (-(windowHeight/2))
-      -- scaleWorld = scale (windowWidth/worldWidth) (windowHeight/worldHeight)
       scaleWorld = scale (ww/vpw) (wh/vph)
       translateWorld = translate (-((ww/vpw)*vpx + (ww/2))) (-((wh/vph)*vpy + (wh/2)))
       
-      ww = fst $ windowSize world
-      wh = snd $ windowSize world
-      vpx = fst $ viewPortLocation world
-      vpy = snd $ viewPortLocation world      
-      vpw = fst $ viewPortSize world
-      vph = snd $ viewPortSize world
+      ww = windowWidth world
+      wh = windowHeight world
+      vpx = viewPortX world
+      vpy = viewPortY world      
+      vpw = viewPortWidth world
+      vph = viewPortHeight world
                           
       renderInWorld world = pictures $ [ pictures $ map spaceLaneF (worldSpaceLanes world)
                                        , pictures $ map planetF (worldPlanets world)
+                                       , pictures $ map entityF (worldEntities world) 
                                        ]  
       
-      planetF planet = translate planetX planetY $ scaleBMPImage planetSize (getAssetW "planet1" world)
+      planetF planet = translate planetX planetY $ getAssetW (planetType planet) world
         where
           planetX = (fst . planetLocation) planet
           planetY = (snd . planetLocation) planet
@@ -217,9 +255,14 @@ instance World SimpleWorld where
       spaceLaneF spaceLane@(SpaceLane p1 p2) = line [ (pX p1, pY p1)
                                                     , (pX p2, pY p2) 
                                                     ]
+                                                       
         where
           pX pName = (fst . planetLocation . getPlanet pName) world
           pY pName = (snd . planetLocation . getPlanet pName) world
+          
+      entityF entity = case entity of
+        Ship{} -> translate (fst $ shipLocation entity)
+                            (snd $ shipLocation entity) $ getAssetW "ship1" world
 
 
 
@@ -242,8 +285,27 @@ viewPortSize world = (viewPortWidth, viewPortHeight)
     viewPortWidth = toList4 (worldViewPort world) !! 2      
     viewPortHeight = toList4 (worldViewPort world) !! 3      
 
+viewPortX :: SimpleWorld -> Float
+viewPortX = fst . viewPortLocation
+
+viewPortY :: SimpleWorld ->Float
+
+viewPortY = snd . viewPortLocation
+
+viewPortWidth :: SimpleWorld -> Float
+viewPortWidth = fst . viewPortSize
+
+viewPortHeight :: SimpleWorld -> Float
+viewPortHeight = snd . viewPortSize
+
 windowSize :: SimpleWorld -> Size
 windowSize SimpleWorld{worldWindowSize=(w,h)} = (fromIntegral w, fromIntegral h) 
+
+windowWidth :: SimpleWorld -> Float
+windowWidth = fst . windowSize
+
+windowHeight :: SimpleWorld -> Float
+windowHeight = snd . windowSize
 
 worldLocationFromWindow :: (Float, Float) -> SimpleWorld -> (Float, Float)
 worldLocationFromWindow (windowX, windowY) world = (worldX, worldY) 
@@ -274,8 +336,6 @@ windowLocationFromWorld (worldX, worldY) world = (windowX, windowY)
 worldSize :: SimpleWorld -> Size
 worldSize = gameMapSize . worldGameMap
 
-
-
 getPlanet :: String -> SimpleWorld -> Planet
 getPlanet name = fromJust . Map.lookup name . Map.fromList . map (\p->(planetName p, p)) . worldPlanets
 
@@ -295,7 +355,5 @@ getAssetW :: String -> SimpleWorld -> Picture
 getAssetW name world = getAsset name (worldAssetManager world)
 
 getAsset :: String -> AssetManager -> Picture
-getAsset name assetManager = case (Map.lookup name assetManager) of
-  Just asset -> asset
-  Nothing -> color red $ text ("Couldn't load asset " ++ name)
+getAsset name assetManager = getPicture name assetManager
   

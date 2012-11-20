@@ -22,10 +22,10 @@ prepareEnvironment:
 	cp ${cabalBuildFile} "${environmentDir}/${runFile}"
 	chmod a+x "${environmentDir}/${runFile}"
 
-runServer: build prepareEnvironment
-	make runServerAgain
+run: build prepareEnvironment
+	make cached
 
-runServerAgain:
+cached:
 	cd ${environmentDir}; \
 	./${runFile} server
 

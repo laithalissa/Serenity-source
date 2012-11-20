@@ -1,7 +1,7 @@
 
 module Serenity.Game.Model.Common where
 
-
+type TimeDuration = Float -- milliseconds
 type Location = (Float, Float)
 type Path = [Location]
 type Polygon = [Location]

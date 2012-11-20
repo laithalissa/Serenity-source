@@ -12,7 +12,7 @@ import Data.Maybe(Maybe(..), fromJust)
 import qualified Data.Map as Map
 
 import Serenity.Game.Model.GameMap(GameMap(..), Planet(..), SpaceLane(..))
-import Serenity.Game.Model.Common(Resources(..))
+import Serenity.Game.Model.Common(Resources(..), TimeDuration, Location, Path, Polygon, Direction, Size)
 import Serenity.Game.Model.ShipClass(ShipClass(..), WeaponSlotType(..)) 
 
 runWindowSize = (800, 600)
@@ -117,10 +117,7 @@ shipSize = (3, 3)
 
 
 type EntityId = Int
-type Location = (Float, Float)
-type Direction = (Float, Float)
-type Size = (Float, Float)
-type TimeDuration = Float -- milliseconds
+
 type ViewPort = (Float, Float, Float, Float)
 data ClientMessage = ClientScroll ViewPort | 
                      ClientMoveOrder 

@@ -18,6 +18,7 @@ import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.ShipOrder(ShipOrder(..))
 import Serenity.Game.Model.Entity(Entity(..))
 import Serenity.Game.Server.KeyboardState(KeyboardState, initKeyboardState, handleKeyEvent, isKeyDown)
+import Serenity.Game.Server.World(World(..), AssetManager(..))
 
 runWindowSize = (800, 600)
 
@@ -124,19 +125,11 @@ shipSize = (3, 3)
 
 
 
-class World a where
-      initialize :: AssetManager -> (Int, Int) -> GameMap -> a
-      updateFromTimeDelta :: TimeDuration -> a -> IO a
-      updateFromCommand :: ClientMessage -> a -> IO a
-      render :: a -> IO Picture
       
 
 
 
-data AssetManager = AssetManager
-     {            assetManagerPictures :: Map.Map String Picture
-     ,            assetManagerShipClasses :: Map.Map String ShipClass
-     } deriving(Eq, Show)
+
 
 getPicture :: String -> AssetManager -> Picture
 getPicture name assetManager = case (Map.lookup name (assetManagerPictures assetManager)) of

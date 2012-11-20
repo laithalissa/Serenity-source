@@ -4,8 +4,8 @@ module Serenity.Game.Client.Main (
 where
 
 
-import Serenity.Game.Server.Network
-
+--import Serenity.Game.Server.Network
+import Serenity.Network.Transport
+main :: IO ()
 main = do
-	connection <- runConnect "localhost" 9900
 	return ()

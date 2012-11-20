@@ -19,7 +19,7 @@ module Serenity.Network.Transport
 ,	Transport
 ) where
 
-import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect)
+import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect, isConnected)
 import Network.Socket.ByteString hiding (send)
 import System.Posix.IO
 import Data.Time.Clock.POSIX

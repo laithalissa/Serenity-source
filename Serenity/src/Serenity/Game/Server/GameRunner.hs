@@ -13,29 +13,3 @@ import qualified Serenity.Game.Server.Demo as D
 main :: IO ()
 main = D.main
 
--- main = let messages = initMessages
---            world = W.initialize gameMap :: PW.PrototypeWorld
---        in  (print . snd . W.updateCycle messages 0) world     
-
-
--- initMessages = 
---              [ ClientMessage {  clientId="Joseph"
---                              ,  command=MoveShip 0 (25, 25) 
---                              }
---              ]
-
--- gameMap = GameMap {
---             name = "My First Map",
---             size = (100, 100),
---             spawnPoints=[(50, 50)],
---             planets = [Planet {
---                          planetName="Earth", 
---                          planetType="HUGE", 
---                          location=(50,50), 
---                          direction=(0,1), 
---                          resources=Resources {
---                                       fuel=10,
---                                       antiMatter=20,
---                                       metal=30}}],
---             spaceLanes=[]}
-

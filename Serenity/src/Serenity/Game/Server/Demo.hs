@@ -16,7 +16,7 @@ import Serenity.Game.Model.Common(Resources(..), TimeDuration, Location, Path, P
 import Serenity.Game.Model.ShipClass(ShipClass(..), WeaponSlotType(..)) 
 import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.ShipOrder(ShipOrder(..))
-
+import Serenity.Game.Model.Entity(Entity(..))
 
 runWindowSize = (800, 600)
 
@@ -142,18 +142,7 @@ getPicture name assetManager = case (Map.lookup name (assetManagerPictures asset
   Just asset -> asset
   Nothing -> color red $ text ("Couldn't load asset " ++ name)
                           
-  
 
----------- Entities ----------
-
-data Entity = 
-  Ship 
-  {    shipId :: EntityId
-  ,    shipLocation :: Location
-  ,    shipDirection :: Direction
-  ,    shipAcceleration :: Direction               
-  ,    shipOrder :: ShipOrder
-  } deriving (Show, Eq)
     
 
 ---------- Simple World ----------
@@ -173,7 +162,7 @@ instance World SimpleWorld where
                 , worldEntities=[ Ship {     shipId=0 
                                   ,     shipLocation=(40,50)
                                   ,     shipDirection=(0,1)                   
-                                  ,     shipAcceleration=(0, 1)                                                    
+                                  ,     shipSpeed=(0, 1) 
                                   ,     shipOrder=StayStillOrder                       
                                   }                
                            ]               

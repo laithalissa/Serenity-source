@@ -9,7 +9,7 @@ data Entity =
      {    shipId :: Int
      ,    shipLocation :: Location
      ,    shipDirection :: Direction
-     ,    shipSpeed :: Float
+     ,    shipSpeed :: Direction
      ,    shipOrder :: ShipOrder 
      } |
      Gun { 
@@ -23,10 +23,5 @@ data Entity =
             location :: Location,
             direction :: Direction,
             speed :: Float
-            }
-            |
-     Planet {
-            planetName :: String,
-            owner :: Maybe String
             } deriving (Show, Ord, Eq)
 

@@ -11,6 +11,9 @@ import Graphics.Gloss.Interface.Pure.Game(SpecialKey(..), Key(..), Event(..), Ke
 import Data.Maybe(Maybe(..), fromJust)
 import qualified Data.Map as Map
 
+import Serenity.Game.Model.GameMap(GameMap(..), Planet(..), SpaceLane(..))
+import Serenity.Game.Model.Common(Resources(..))
+
 runWindowSize = (800, 600)
 
 main :: IO ()
@@ -71,7 +74,15 @@ main = do
                           ]
         }
       where
-        createPlanet name location = Planet name "planet1" location (0,1) (10, 20, 30)
+        createPlanet name location = 
+          Planet 
+          {      planetName=name
+          ,      planetType="planet1"                  
+          ,      planetLocation=location                  
+          ,      planetDirection=(0,1)                      
+          ,      planetResources=Resources{fuel=10, antiMatter=10, metal=10}                       
+          }        
+
         
 
 
@@ -109,7 +120,6 @@ type Location = (Float, Float)
 type Direction = (Float, Float)
 type Size = (Float, Float)
 type TimeDuration = Float -- milliseconds
-type Resources = (Int, Int, Int)
 type ViewPort = (Float, Float, Float, Float)
 data ClientMessage = ClientScroll ViewPort | 
                      ClientMoveOrder 
@@ -131,26 +141,26 @@ class World a where
       updateFromCommand :: ClientMessage -> a -> IO a
       render :: a -> IO Picture
       
-data GameMap = GameMap { 
-  gameMapName :: String
-, gameMapSize :: Size
-, gameMapSpawnPoints :: [(Location)]
-, gameMapPlanets :: [Planet]
-, gameMapSpaceLanes :: [SpaceLane]
-} deriving(Show, Eq)
+-- data GameMap = GameMap { 
+--   gameMapName :: String
+-- , gameMapSize :: Size
+-- , gameMapSpawnPoints :: [(Location)]
+-- , gameMapPlanets :: [Planet]
+-- , gameMapSpaceLanes :: [SpaceLane]
+-- } deriving(Show, Eq)
 
-data Planet = Planet { 
-  planetName :: String
-, planetType :: String -- specifies which size / texture to use
-, planetLocation :: Location
-, planetDirection :: Direction
-, planetResources :: Resources
-} deriving(Show, Eq)
+-- data Planet = Planet { 
+--   planetName :: String
+-- , planetType :: String -- specifies which size / texture to use
+-- , planetLocation :: Location
+-- , planetDirection :: Direction
+-- , planetResources :: Resources
+-- } deriving(Show, Eq)
 
-data SpaceLane = SpaceLane 
-     { spaceLanePlanet1 :: String
-     , spaceLanePlanet2 :: String
-     } deriving(Show, Eq)
+-- data SpaceLane = SpaceLane 
+--      { spaceLanePlanet1 :: String
+--      , spaceLanePlanet2 :: String
+--      } deriving(Show, Eq)
 
 data WeaponSlotType = SideWeaponType | TurretWeaponType | SpecialWeaponType deriving(Show, Eq)
 

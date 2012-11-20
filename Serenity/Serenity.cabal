@@ -21,7 +21,8 @@ executable serenity
         deepseq,
         array,
         astar,
-        gloss == 1.7.6.6
+        gloss == 1.7.6.6,
+        netwire == 4.0.5
     hs-source-dirs: src
     ghc-options:    -W -threaded -rtsopts
 
@@ -49,5 +50,6 @@ Test-Suite test-serenity
         deepseq,
         array,
         astar,
-        gloss == 1.7.*
+        gloss == 1.7.*,
+        netwire == 4.0.5
     hs-source-dirs: tests, src

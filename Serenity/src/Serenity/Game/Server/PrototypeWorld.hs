@@ -7,11 +7,12 @@ import Serenity.Game.Model.ClientMessage()
 import qualified Serenity.Game.Model.GameMap as GM
 import qualified Serenity.Game.Model.Entity as E
 import qualified Serenity.Game.Model.ClientMessage as CM
+import qualified Serenity.Game.Model.ShipOrder as SO
                                          
 
 data PrototypeWorld = PrototypeWorld {
      gameMap :: GM.GameMap,
-     entities :: [E.Entity]
+     entityManager :: EntityManager
 } deriving(Show, Eq)
 
 instance World PrototypeWorld where
@@ -19,14 +20,7 @@ instance World PrototypeWorld where
     initialize gameMap = 
         PrototypeWorld{
             gameMap=gameMap,
-            entities=[
-                E.Ship { 
-                    E.shipId=0, 
-                    E.location=(50,50),
-                    E.direction=(0,1),
-                    E.speed=(1)
-                }
-            ]
+            entityManager= EntityManager [createShip]
         }
 
 
@@ -38,7 +32,9 @@ instance World PrototypeWorld where
 
          
     updateFromClient message world = case (CM.command message) of
-        (CM.MoveShip shipId target) -> world{ entities=map f (entities world) }
+        (CM.MoveShip shipId target) -> world{ 
+                     entityManager = EntityManager (map f (entities (entityManager world)))
+          }
           where
             f entity = if (E.shipId entity) == shipId
                          then entity{E.location=target}
@@ -49,5 +45,22 @@ instance World PrototypeWorld where
 
 
 
+----- Entities -------------
+
+createShip :: E.Entity
+createShip = E.Ship {E.shipId=0, 
+                     E.shipLocation=(10,10),
+                     E.shipDirection=(0,1),
+                     E.shipSpeed=1.5,
+                     E.shipOrder=SO.NoOrder
+                    }
+
+
+----- Entity Manager ----------
+    
+data EntityManager = EntityManager {
+  entities :: [E.Entity] 
+} deriving(Eq, Ord, Show)                 
+          
 
 

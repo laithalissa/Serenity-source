@@ -1,15 +1,17 @@
 
 module Serenity.Game.Model.Entity where
 
+import Serenity.Game.Model.ShipOrder
 import Serenity.Game.Model.Common
 
 data Entity = 
-     Ship { 
-          shipId :: Int,
-          location :: Location,
-          direction :: Direction,
-          speed :: Float
-          } |
+     Ship 
+     {    shipId :: Int
+     ,    shipLocation :: Location
+     ,    shipDirection :: Direction
+     ,    shipSpeed :: Float
+     ,    shipOrder :: ShipOrder 
+     } |
      Gun { 
          shipId :: Int,
          weaponSlotIndex :: Int

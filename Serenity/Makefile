@@ -23,6 +23,9 @@ prepareEnvironment:
 	chmod a+x "${environmentDir}/${runFile}"
 
 runServer: build prepareEnvironment
+	make runServerAgain
+
+runServerAgain:
 	cd ${environmentDir}; \
 	./${runFile} server
 

@@ -12,8 +12,11 @@ import Data.Maybe(Maybe(..), fromJust)
 import qualified Data.Map as Map
 
 import Serenity.Game.Model.GameMap(GameMap(..), Planet(..), SpaceLane(..))
-import Serenity.Game.Model.Common(Resources(..), TimeDuration, Location, Path, Polygon, Direction, Size)
+import Serenity.Game.Model.Common(Resources(..), TimeDuration, Location, Path, Polygon, Direction, Size, EntityId, ViewPort)
 import Serenity.Game.Model.ShipClass(ShipClass(..), WeaponSlotType(..)) 
+import Serenity.Game.Model.ClientMessage(ClientMessage(..))
+import Serenity.Game.Model.ShipOrder(ShipOrder(..))
+
 
 runWindowSize = (800, 600)
 
@@ -116,21 +119,8 @@ shipSize = (3, 3)
 
 
 
-type EntityId = Int
 
-type ViewPort = (Float, Float, Float, Float)
-data ClientMessage = ClientScroll ViewPort | 
-                     ClientMoveOrder 
-                     {               clientMoveOrderShipId :: EntityId 
-                     ,               clientMoveOrderLocation :: Location
-                     } |
-                     ClientStillOrder { clientStillShipId :: EntityId }
-                     deriving(Show, Eq)
 
-data ShipOrder =
-  StayStillOrder |
-  MoveOrder { moveOrderLocation :: Location }
-  deriving(Show, Eq)
 
 
 class World a where
@@ -140,19 +130,6 @@ class World a where
       render :: a -> IO Picture
       
 
-
-
-type Polygon = [Point]
--- data ShipClass = ShipClass 
---      {         shipClassName :: String,
---                collisionPolygon :: Polygon,
---                image :: Picture,
---                centreOfRotation :: Location,
---                systemSlotLocations :: [(Location, Direction)],
---                weaponSlotLocations :: [(Location, 
---                                         Direction, 
---                                         WeaponSlotType)] 
---      } deriving(Show, Eq)
 
 
 data AssetManager = AssetManager

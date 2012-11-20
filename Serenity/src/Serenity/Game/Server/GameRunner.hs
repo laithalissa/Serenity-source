@@ -3,7 +3,6 @@ module Serenity.Game.Server.GameRunner where
 
 import qualified Data.Set as Set
 
-import qualified Serenity.Game.Server.PrototypeWorld as PW
 import qualified Serenity.Game.Server.World as W
 import Serenity.Game.Model.ClientMessage
 import Serenity.Game.Model.Common

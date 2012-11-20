@@ -18,16 +18,22 @@ import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.ShipOrder(ShipOrder(..))
 import Serenity.Game.Model.Entity(Entity(..))
 import Serenity.Game.Server.KeyboardState(KeyboardState, initKeyboardState, handleKeyEvent, isKeyDown)
-import Serenity.Game.Server.World(World(..), AssetManager(..))
+import Serenity.Game.Server.GameState(Assets(..), DefaultAssets(..))
+import Serenity.Game.Server.GameState(Game(..), DefaultGame, Assets(..), DefaultAssets)
 
 runWindowSize = (800, 600)
 
 main :: IO ()
 main = do
-        assetManager <- loadAssets
-        gWorld <- return (initialize assetManager runWindowSize gameMap :: SimpleWorld)
-        playIO (gDisplay runWindowSize) gColor gUPS gWorld gRender gInput gUpdate
+        -- assetManager <- loadAssets
+        -- gWorld <- return (initialize assetManager runWindowSize gameMap :: SimpleWorld)
+        -- playIO (gDisplay runWindowSize) gColor gUPS gWorld gRender gInput gUpdate
+  
+        assets <- createAssets 
+        play (gDisplay runWindowSize) gColor gUPS (gameInitialize runWindowSize gameMap) gameRender gameHandleInput gameStep
   where
+    createAssets :: IO DefaultAssets
+    createAssets = assetsInitialize
     gDisplay windowSize = InWindow "Serenity"
                       windowSize 
                       (100,100)
@@ -93,18 +99,18 @@ main = do
 
 
 
-loadAssets :: IO AssetManager
-loadAssets = do
-  planet1 <- loadBMP "planet1.bmp"
-  background <- loadBMP "background.bmp"
-  ship1 <- loadBMP "ship1.bmp"
-  ship2 <- loadBMP "ship2.bmp"
-  return $ AssetManager (Map.fromList [       ("planet1", scaleBMPImage planetSize planet1)
-                        ,       ("background", background)
-                        ,       ("ship1", scaleBMPImage shipSize ship1) 
-                        ,       ("ship2", scaleBMPImage shipSize ship2)        
-                        ])
-                        (Map.fromList [])
+-- loadAssets :: IO AssetManager
+-- loadAssets = do
+--   planet1 <- loadBMP "planet1.bmp"
+--   background <- loadBMP "background.bmp"
+--   ship1 <- loadBMP "ship1.bmp"
+--   ship2 <- loadBMP "ship2.bmp"
+--   return $ AssetManager (Map.fromList [       ("planet1", scaleBMPImage planetSize planet1)
+--                         ,       ("background", background)
+--                         ,       ("ship1", scaleBMPImage shipSize ship1) 
+--                         ,       ("ship2", scaleBMPImage shipSize ship2)        
+--                         ])
+--                         (Map.fromList [])
 
 
 
@@ -127,15 +133,6 @@ shipSize = (3, 3)
 
       
 
-
-
-
-
-getPicture :: String -> AssetManager -> Picture
-getPicture name assetManager = case (Map.lookup name (assetManagerPictures assetManager)) of
-  Just asset -> asset
-  Nothing -> color red $ text ("Couldn't load asset " ++ name)
-                          
 
     
 

@@ -1,23 +1,18 @@
 
 module Serenity.Game.Model.ShipClass where
 
-import qualified Graphics.Gloss.Data.Picture as GlossPicture
-
-import qualified Serenity.Game.ShipModel as ShipModel
-
-type DirectionVector = (Float, Float)
-type PositionVector = (Float, Float)
-type Polygon = [PositionVector]
+import Graphics.Gloss.Data.Picture(Picture)
+import Serenity.Game.Model.Common(Location, Polygon, Direction)
 
 
+data WeaponSlotType = SideWeaponType | TurretWeaponType | SpecialWeaponType deriving(Show, Eq)
 
-data ShipClass = ShipClass 
-{ shipClassName :: String,
-  collisionPolygon :: Polygon,
-  image :: GlossPicture.Picture,
-  centreOfRotation :: PositionVector,
-  systemSlotLocations :: [(PositionVector, DirectionVector)],
-  weaponSlotLocations :: [(PositionVector, 
-                           DirectionVecotor, 
-                           ShipMode.WeaponSlotType)] 
-}
+data ShipClass = 
+  ShipClass 
+  {         shipClassName :: String,
+            collisionPolygon :: Polygon,
+            image :: Picture,
+            centreOfRotation :: Location,
+            systemSlotLocations :: [(Location, Direction)],
+            weaponSlotLocations :: [(Location, Direction, WeaponSlotType)] 
+  } deriving(Show, Eq)

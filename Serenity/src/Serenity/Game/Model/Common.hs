@@ -1,13 +1,10 @@
 
-module Serenity.Game.Model.Common
-( Location
-, Direction
-, Size
-, Resources(..)
-) where
+module Serenity.Game.Model.Common where
 
 
 type Location = (Float, Float)
+type Path = [Location]
+type Polygon = [Location]
 type Direction = (Float, Float)
 type Orientation = (Float, Float, Float, Float)
 type Size = (Float, Float)

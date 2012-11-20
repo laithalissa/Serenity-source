@@ -13,6 +13,7 @@ import qualified Data.Map as Map
 
 import Serenity.Game.Model.GameMap(GameMap(..), Planet(..), SpaceLane(..))
 import Serenity.Game.Model.Common(Resources(..))
+import Serenity.Game.Model.ShipClass(ShipClass(..), WeaponSlotType(..)) 
 
 runWindowSize = (800, 600)
 
@@ -141,40 +142,20 @@ class World a where
       updateFromCommand :: ClientMessage -> a -> IO a
       render :: a -> IO Picture
       
--- data GameMap = GameMap { 
---   gameMapName :: String
--- , gameMapSize :: Size
--- , gameMapSpawnPoints :: [(Location)]
--- , gameMapPlanets :: [Planet]
--- , gameMapSpaceLanes :: [SpaceLane]
--- } deriving(Show, Eq)
 
--- data Planet = Planet { 
---   planetName :: String
--- , planetType :: String -- specifies which size / texture to use
--- , planetLocation :: Location
--- , planetDirection :: Direction
--- , planetResources :: Resources
--- } deriving(Show, Eq)
 
--- data SpaceLane = SpaceLane 
---      { spaceLanePlanet1 :: String
---      , spaceLanePlanet2 :: String
---      } deriving(Show, Eq)
-
-data WeaponSlotType = SideWeaponType | TurretWeaponType | SpecialWeaponType deriving(Show, Eq)
 
 type Polygon = [Point]
-data ShipClass = ShipClass 
-     {         shipClassName :: String,
-               collisionPolygon :: Polygon,
-               image :: Picture,
-               centreOfRotation :: Location,
-               systemSlotLocations :: [(Location, Direction)],
-               weaponSlotLocations :: [(Location, 
-                                        Direction, 
-                                        WeaponSlotType)] 
-     } deriving(Show, Eq)
+-- data ShipClass = ShipClass 
+--      {         shipClassName :: String,
+--                collisionPolygon :: Polygon,
+--                image :: Picture,
+--                centreOfRotation :: Location,
+--                systemSlotLocations :: [(Location, Direction)],
+--                weaponSlotLocations :: [(Location, 
+--                                         Direction, 
+--                                         WeaponSlotType)] 
+--      } deriving(Show, Eq)
 
 
 data AssetManager = AssetManager

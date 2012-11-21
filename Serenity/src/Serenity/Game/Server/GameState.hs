@@ -42,9 +42,9 @@ class (Show inputFilter) => InputFilter inputFilter where
   
 type WindowSize = (Int, Int)
 class Graphics graphics where
-	graphicsInitialize :: DefaultAssets -> WindowSize -> graphics
+	graphicsInitialize :: DefaultWorld -> DefaultAssets -> WindowSize -> graphics
         graphicsHandleMessage :: GraphicsMessage -> graphics -> graphics
-        graphicsRender :: DefaultWorld -> graphics -> Picture
+        graphicsRender :: DefaultGame -> graphics -> Picture
     
         graphicsViewPortSize :: graphics -> ViewPort
 
@@ -123,11 +123,11 @@ instance Game DefaultGame DefaultWorld DefaultGraphics DefaultInputFilter where
 	gameInitialize assets windowSize gameMap =        
         	DefaultGame  
                 {	defaultGameWorld=(worldInitialize gameMap) :: DefaultWorld
-		,	defaultGameGraphics=(graphicsInitialize assets windowSize) :: DefaultGraphics
+		,	defaultGameGraphics=(graphicsInitialize (worldInitialize gameMap) assets windowSize) :: DefaultGraphics
 		,	defaultGameInputFilter=inputFilterInitialize :: DefaultInputFilter
 		}                                    	
 
-	gameRender game = graphicsRender (defaultGameWorld game) (defaultGameGraphics game)
+	gameRender game = graphicsRender game (defaultGameGraphics game)
         
         gameHandleInput event game = 
 		case (inputFilterHandleInput event . defaultGameInputFilter) game of
@@ -178,20 +178,26 @@ instance Graphics DefaultGraphics where
   	graphicsWindowSize = defaultGraphicsWindowSize
 	graphicsViewPortSize = defaultGraphicsViewPort  
 
-	graphicsInitialize assets windowSize =
+	graphicsInitialize world assets windowSize =
 		DefaultGraphics          
-		{	defaultGraphicsAssets=assets                
-		,	defaultGraphicsWindowSize=windowSize                                              
-		,	defaultGraphicsViewPort=(0, 0, 100, 100)
-                }                                                  
+		{	defaultGraphicsAssets=assets
+		,	defaultGraphicsWindowSize=windowSize
+		,	defaultGraphicsViewPort=(	0
+						,	0
+						,	(fst . gameMapSize . worldGameMap) world
+						,	(snd . gameMapSize . worldGameMap) world
+						)
+                }
                 
 	graphicsHandleMessage message graphics = graphics
         
-	graphicsRender world graphics = pictures 
+	graphicsRender game graphics = pictures 
 		[	background
 		,	(drawWorldToWindow . renderInWorld) world
 		]
 			where
+				world = defaultGameWorld game
+
 				background = assetsGetPictureSize "background" ww wh (defaultGraphicsAssets graphics)
 				drawWorldToWindow = translateWorld . scaleWorld
 				scaleWorld = scale (ww/vpw) (wh/vph)

@@ -1,11 +1,9 @@
-
 module Serenity.Game.Client.World where
 
-import Serenity.Game.World.World
+import Serenity.Game.Client.UIState
 
-class World a where
-    updateFromWorldDelta :: WorldDelta -> a -> a
-    
-
-
-
+data World = World
+	{ messages :: [String] -- XXX should be Messages
+	, uiState :: UIState World
+	}
+	deriving Show

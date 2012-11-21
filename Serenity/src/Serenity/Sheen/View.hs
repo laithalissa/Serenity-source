@@ -1,116 +1,93 @@
 module Serenity.Sheen.View
-(	View (..)
-,	makeView
-,	draw
-,	click
-,	playIOZero
-)
+	( View (..)
+	, makeView
+	, drawView
+	, handleViewEvent
+	, changeView
+	)
 where
 
 import Graphics.Gloss
-import Graphics.Gloss.Interface.IO.Game
+import Graphics.Gloss.Data.Extent
+import Graphics.Gloss.Interface.Pure.Game
 
 import Data.List (sortBy)
 import Data.Ord (comparing)
-import Data.Maybe (isNothing, catMaybes)
-import Control.Applicative (pure, (<*>))
-import Control.Monad (liftM)
+import Data.Maybe (catMaybes)
 
-type Size = (Float, Float)
-type Rect = (Size, Size)
+import Serenity.Sheen.UIEvent
+import Serenity.Sheen.Util
 
 data View world = View 
-	{	subviews        :: [View world]
-	,	frame           :: Rect
-	,	zPosition      :: Int
-	,	backgroundFill :: Maybe Color
-	,	depict          :: Maybe (Size -> world -> Picture)
-	,	respond         :: Maybe (Event -> world -> world)
+	{ viewID :: String
+	, subviews :: [View world]
+	, frame :: Extent
+	, zIndex :: Int
+	, background :: Maybe Color
+	, depict :: Maybe (world -> Picture)
+	, eventHandler :: Maybe (UIEvent -> world -> world)
 	}
 
-makeView :: Size -> Size -> View world
-makeView width height = View 
-	{	frame = (width, height)
-	,	subviews = []
-	,	zPosition = 0
-	,	backgroundFill = Nothing
-	,	depict = Nothing
-	,	respond = Nothing
+instance Show (View a) where
+	show (View { viewID = id, subviews = sub, background = bg }) = id ++ ": " ++ show bg ++ show (map show sub)
+
+makeView :: (Int, Int, Int, Int) -> View world
+makeView (xmin, xmax, ymin, ymax) = View 
+	{ viewID = ""
+	, frame = makeExtent ymax ymin xmax xmin
+	, subviews = []
+	, zIndex = 0
+	, background = Nothing
+	, depict = Nothing
+	, eventHandler = Nothing
 	}
 
-draw :: View world -> world -> Picture
-draw view@View{subviews=subs, frame=((x,y),(width,height)), backgroundFill=c, depict=d} world = 
-	Translate x y $ Pictures $ background c ++ self d ++ children where
-		self (Just dep) = [dep (width,height) world]
-		self Nothing = []
-		background (Just color) = [coloredPolygon color (width, height)]
-		background Nothing = []
-		children = map (\view -> draw view world) orderedSubs
-		orderedSubs = sortBy (comparing zPosition) subs
-
-coloredPolygon :: Color -> Size -> Picture
-coloredPolygon c (width, height) = Color c $ Polygon [(0,0), (0, height), (width, height), (width, 0)]
-
-click :: Event -> View world -> Maybe (world -> world)
-click (EventMotion _) _ = Nothing
-click event@(EventKey _ _ _ (eventX,eventY)) view@View{subviews=subs, frame=((viewX,viewY),(viewWidth,viewHeight))} =
-	if clickInBounds 
-		then case subviewResponses of 
-			aResponse:_ -> Just aResponse 
-			[]           -> respond view <*> (Just event)
-		else Nothing 
+drawView :: View world -> world -> Picture
+drawView view world = Translate (fromIntegral xmin) (fromIntegral ymin) $ Pictures $ bg ++ pict ++ children
 	where
-		clickInBounds = and [viewX<eventX, eventX<viewX+viewWidth, viewY<eventY, eventY<viewY+viewHeight]
-		orderedSubs = sortBy (comparing (negate . zPosition)) subs
-		subviewResponses = catMaybes $ map (click $ translateEvent (-viewX) (-viewY) event) orderedSubs
+	(ymax, ymin, xmax, xmin) = takeExtent $ frame view
 
-playIOZero display@(InWindow windowName (sizeX, sizeY) position) color steps initialWorld depict respond evolve = 
-	playIO display color steps initialWorld 
-	(\world -> do x <- depict world; return $ Translate (fromIntegral $ -sizeX `div` 2) (fromIntegral $ -sizeY `div` 2) x;)
-	(\event -> \world -> respond (translateEvent (fromIntegral $ sizeX `div` 2) (fromIntegral $ sizeY `div` 2) event) world)
-	evolve 
+	bg = case background view of
+		Just colour -> [coloredRectangle colour (fromIntegral xmax, fromIntegral ymax)]
+		Nothing -> []
 
-translateEvent x y (EventKey key state modifiers (eventX, eventY)) = (EventKey key state modifiers (eventX + x, eventY + y))
-translateEvent x y (EventMotion (eventX, eventY)) = (EventMotion (eventX + x, eventY + y))
+	pict = case depict view of
+		Just f -> [f world]
+		Nothing -> []
 
-----------------------------------------------------------------------------------------------------------------------------
--- Example --
+	children = map (\v -> drawView v world) (orderViews $ subviews view)
 
-main = playIOZero
-	(InWindow "ViewTest" (500, 500) (0,40)) black 1 0
-	(\world -> return $ draw mainView world) 
-	(\event -> \world -> case (click event mainView) of Nothing -> return world; Just function -> return $ function world)
-	(\float -> \world -> return world)
+handleViewEvent :: Event -> View world -> world -> world
+handleViewEvent event view =
+	case eventToUIEvent event of
+		Just uiEvent -> case getEventHandler uiEvent view of
+					Just handler -> handler uiEvent
+					Nothing -> id
+		Nothing -> id
 
-mainView = (makeView (0,0) (500,500))
-	{	subviews = [secondaryView1, secondaryView2, secondaryView3]
-	,	backgroundFill = Just yellow
-	,	depict   = Just $ \(width,height) -> \word -> Translate 100 100 $ Text (show word)
-	}
+getEventHandler :: UIEvent -> View world -> Maybe (UIEvent -> world -> world)
+getEventHandler event@(ViewClick point _) view = 
+	if eventInView then
+		case subviewHandlers of
+			[] -> eventHandler view
+			hs -> Just (last hs)
+	else
+		Nothing
 
-secondaryView1 = (makeView (400,400) (100,100))
-	{	subviews = [secondaryView2]
-	,	backgroundFill = Just blue
-	,	respond = Just (\event -> \world -> world + 5)
-	}
+	where
+	eventInView = pointInExtent (frame view) point
+	subviewHandlers = catMaybes $ map (getEventHandler $ translateUIEvent (-xmin) (-ymin) event) $ orderViews (subviews view)
+	(_, ymin, _, xmin) = takeExtent $ frame view
 
-secondaryView2 = (makeView (0,0) (100,50))
-	{	subviews = [circleView1, circleView2]
-	,	backgroundFill = Just green
-	,	respond = Just (\event -> \world -> world + 50)
-	}
+getEventHandler _ _ = Nothing
 
-secondaryView3 = (makeView (380,380) (40,40))
-	{	backgroundFill = Just red
-	,	zPosition = -1
-	,	respond = Just (\event -> \world -> world + 500)
-	}
+orderViews :: [View world] -> [View world]
+orderViews = sortBy (comparing zIndex)
 
-circleView1 = (makeView (33,25) (10,10))
-	{	depict   = Just $ \(width,height) -> \word -> Color red $ Translate 5 5 $ ThickCircle 5 10
-	,	respond = Just (\event -> \world -> world + 5000)
-	}
+translateUIEvent x y (ViewClick (clickX, clickY) button) = ViewClick newPoint button
+	where newPoint = (clickX + (fromIntegral x), clickY + (fromIntegral y))
 
-circleView2 = (makeView (66,25) (10, 10))
-	{	depict   = Just $ \(width,height) -> \word -> Color yellow $ Translate 5 5 $ ThickCircle 5 10
-	}
+changeView :: String -> (View a -> View a) -> View a -> View a
+changeView id f view
+	| viewID view == id = f view
+	| otherwise = view { subviews = map (changeView id f) (subviews view) }

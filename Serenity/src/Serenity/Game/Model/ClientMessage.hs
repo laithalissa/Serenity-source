@@ -4,7 +4,7 @@ module Serenity.Game.Model.ClientMessage where
 import Serenity.Game.Model.Entity
 import Serenity.Game.Model.Common
 
-data ClientMessage = 
+data ClientMessage =
 	ClientMessageGraphics GraphicsMessage |
 	ClientMessageWorld WorldMessage
 	deriving(Show, Eq)                                               

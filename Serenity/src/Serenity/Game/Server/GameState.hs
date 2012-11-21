@@ -9,7 +9,7 @@ import Graphics.Gloss.Data.Picture(Picture(..), loadBMP, text, color, pictures, 
 import Graphics.Gloss.Data.Color(red)
 import Graphics.Gloss.Interface.Pure.Game(SpecialKey(..), Key(..), Event(..), KeyState(..), MouseButton(..))
 
-import Serenity.Game.Model.ClientMessage(ClientMessage(..), GraphicsMessage, WorldMessage)
+import Serenity.Game.Model.ClientMessage(ClientMessage(..), GraphicsMessage(..), WorldMessage(..))
 import Serenity.Game.Model.WorldDelta(WorldDelta)
 import Serenity.Game.Model.GameMap(GameMap(..), Planet(..), SpaceLane(..))
 import Serenity.Game.Model.Common(TimeDuration, ViewPort)
@@ -177,7 +177,6 @@ instance Graphics DefaultGraphics where
 
   	graphicsWindowSize = defaultGraphicsWindowSize
 	graphicsViewPortSize = defaultGraphicsViewPort  
-
 	graphicsInitialize world assets windowSize =
 		DefaultGraphics          
 		{	defaultGraphicsAssets=assets
@@ -257,12 +256,12 @@ data DefaultInputFilter =
 instance InputFilter DefaultInputFilter where                 
 	inputFilterInitialize = DefaultInputFilter  
         
-	inputFilterHandleInput event inputFilter = (Nothing, inputFilter)        
-        
-        
-
-scaleBMP :: Float -> Float -> Picture -> Picture
-scaleBMP w h image@(Blank) = Blank
+	inputFilterHandleInput event inputFilter =
+		(Just $ handleInput event, inputFilter) 
+		where
+			handleInput (EventKey key keyState modifiers mouse) = case key of
+				Char 'w' -> (ClientMessageGraphics $ ClientScroll (10,10,50,50))
+			handleInput _ = (ClientMessageGraphics $ ClientScroll (0, 0, 50, 50)) 
 
 
 
@@ -271,7 +270,9 @@ scaleBMPImage (nWidth, nHeight) image@(Blank) = image
 scaleBMPImage (nWidth, nHeight) image@(Translate width height subImage) = 
 	translate width height $ scaleBMPImage (nWidth, nHeight) subImage
 scaleBMPImage (nWidth, nHeight) image@(Scale scaleX scaleY subImage) =
-	scale scaleX scaleY $ scaleBMPImage (nWidth/scaleX, nHeight/scaleY) subImage
+	scale scaleX scaleY $ scaleBMPImage 
+		(nWidth/scaleX, nHeight/scaleY) 
+		subImage
 scaleBMPImage (nWidth, nHeight) image@(Rotate rotation subImage) =
 	rotate rotation $ scaleBMPImage (nWidth, nHeight) subImage
 scaleBMPImage (nWidth, nHeight) image@(Pictures subImages) =

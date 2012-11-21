@@ -188,6 +188,7 @@ instance Graphics DefaultGraphics where
 						)
                 }
                 
+	graphicsHandleMessage (ClientScroll viewport) graphics = graphics{defaultGraphicsViewPort=viewport}
 	graphicsHandleMessage message graphics = graphics
         
 	graphicsRender game graphics = pictures 
@@ -261,7 +262,8 @@ instance InputFilter DefaultInputFilter where
 		where
 			handleInput (EventKey key keyState modifiers mouse) = case key of
 				Char 'w' -> (ClientMessageGraphics $ ClientScroll (10,10,50,50))
-			handleInput _ = (ClientMessageGraphics $ ClientScroll (0, 0, 50, 50)) 
+				Char _ -> (ClientMessageGraphics $ ClientScroll (0,0,100,100))
+			handleInput _ = (ClientMessageGraphics $ ClientScroll (0, 0, 100, 100)) 
 
 
 

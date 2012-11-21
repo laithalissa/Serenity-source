@@ -7,17 +7,16 @@ import Serenity.Game.Model.Common
 data ClientMessage =
 	ClientMessageGraphics GraphicsMessage |
 	ClientMessageWorld WorldMessage
-	deriving(Show, Eq)                                               
-
+	deriving(Show, Eq)
 
 data GraphicsMessage = ClientScroll ViewPort deriving(Show, Eq)
 
-data WorldMessage = 	
-	ClientMoveOrder 
-	{	clientMoveOrderShipId :: EntityId 
+data WorldMessage =
+	ClientMoveOrder
+	{	clientMoveOrderShipId :: EntityId
 	,	clientMoveOrderLocation :: Location
 	} |
-	ClientStillOrder 
-	{	clientStillShipId :: EntityId 
+	ClientStillOrder
+	{	clientStillShipId :: EntityId
 	}
 	deriving(Show, Eq)

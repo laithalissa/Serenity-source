@@ -48,7 +48,7 @@ drawView view world = Translate (fromIntegral xmin) (fromIntegral ymin) $ Pictur
 	(ymax, ymin, xmax, xmin) = takeExtent $ frame view
 
 	bg = case background view of
-		Just colour -> [coloredRectangle colour (fromIntegral xmax, fromIntegral ymax)]
+		Just colour -> [coloredRectangle colour (fromIntegral $ xmax - xmin, fromIntegral $ ymax - ymin)]
 		Nothing -> []
 
 	pict = case depict view of
@@ -59,7 +59,7 @@ drawView view world = Translate (fromIntegral xmin) (fromIntegral ymin) $ Pictur
 
 handleViewEvent :: Event -> View world -> world -> world
 handleViewEvent event view =
-	case eventToUIEvent event of
+	case eventToUIEvent $ translateEvent (fromIntegral $ 1024 `div` 2) (fromIntegral $ 768 `div` 2) event of
 		Just uiEvent -> case getEventHandler uiEvent view of
 					Just handler -> handler uiEvent
 					Nothing -> id
@@ -84,6 +84,11 @@ getEventHandler _ _ = Nothing
 orderViews :: [View world] -> [View world]
 orderViews = sortBy (comparing zIndex)
 
+translateEvent :: Float -> Float -> Event -> Event
+translateEvent x y (EventKey key state modifiers (eventX, eventY)) = (EventKey key state modifiers (eventX + x, eventY + y))
+translateEvent x y (EventMotion (eventX, eventY)) = (EventMotion (eventX + x, eventY + y))
+
+translateUIEvent :: Int -> Int -> UIEvent -> UIEvent
 translateUIEvent x y (ViewClick (clickX, clickY) button) = ViewClick newPoint button
 	where newPoint = (clickX + (fromIntegral x), clickY + (fromIntegral y))
 

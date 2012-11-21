@@ -19,7 +19,9 @@ initWorld :: World
 initWorld = World [] mainView
 
 drawWorld :: World -> IO Picture
-drawWorld world = return $ drawView (uiState world) world
+drawWorld world = do
+	let views = drawView (uiState world) world
+	return $ Translate (fromIntegral $ - 1024 `div` 2) (fromIntegral $ - 768 `div` 2) views
 
 newWorldFromEvent :: Event -> World -> World
 newWorldFromEvent event world = handleViewEvent event mainView world
@@ -41,6 +43,11 @@ gameView :: View World
 gameView = (makeView (100, 1024, 0, 768))
 	{ viewID = "game"
 	, background = Just green
-	, eventHandler = Just (\_ world -> world { uiState = changeView "game" (\v -> v { background = Just blue }) (uiState world) })
+	, eventHandler = Just (\_ world ->
+		world { uiState = changeView "game" (\v -> if background v == Just green
+			then v { background = Just blue }
+			else v { background = Just green }
+		) (uiState world) }
+	  )
 	}
 

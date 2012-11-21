@@ -1,3 +1,6 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
+
 
 module Serenity.Game.Server.GameState where
 
@@ -21,12 +24,12 @@ class Assets assetManager where
 	assetsInitialize :: IO assetManager
         assetsGetPicture :: String -> assetManager -> Picture
 
-class World world where
+class (Show world) => World world where
 	worldInitialize :: GameMap -> world
 	worldStep :: TimeDuration -> world -> world
 	worldHandleMessage :: WorldMessage -> world -> world
 
-class InputFilter inputFilter where
+class (Show inputFilter) => InputFilter inputFilter where
  	inputFilterInitialize :: inputFilter 
  	inputFilterHandleInput :: Event -> inputFilter -> (Maybe ClientMessage, inputFilter)
         
@@ -34,13 +37,13 @@ class InputFilter inputFilter where
   
 type WindowSize = (Int, Int)
 class Graphics graphics where
-	graphicsInitialize :: (Assets assets) => assets -> WindowSize -> graphics
+	graphicsInitialize :: DefaultAssets -> WindowSize -> graphics
         graphicsHandleMessage :: GraphicsMessage -> graphics -> graphics
         graphicsRender :: (World world) => world -> graphics -> Picture
     
   
-class Game game where
-	gameInitialize :: (Assets assets) => assets -> 
+class (World world, Graphics graphics, InputFilter inputFilter) => Game game world graphics inputFilter | game -> world graphics inputFilter where
+	gameInitialize :: DefaultAssets -> 
                           WindowSize -> 
                           GameMap -> 
                           game
@@ -80,7 +83,7 @@ instance Assets DefaultAssets where
 			Just asset -> asset                  
                         Nothing -> color red $ text ("Couldn't load asset " ++ name)
               
-                
+
 data DefaultGame = 
 	DefaultGame   
         {	defaultGameWorld :: DefaultWorld
@@ -90,7 +93,7 @@ data DefaultGame =
 	deriving(Show, Eq)
 	        
 
-instance Game DefaultGame where        
+instance Game DefaultGame DefaultWorld DefaultGraphics DefaultInputFilter where        
 	gameInitialize assets windowSize gameMap =        
         	DefaultGame  
                 {	defaultGameWorld=(worldInitialize gameMap) :: DefaultWorld
@@ -149,7 +152,7 @@ instance Graphics DefaultGraphics where
                 
 	graphicsHandleMessage message graphics = graphics
         
-        graphicsRender world graphics = text "Hello World"
+        graphicsRender world graphics = color red $ text (show world)
 
 
 data DefaultInputFilter =

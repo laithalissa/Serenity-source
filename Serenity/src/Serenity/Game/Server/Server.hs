@@ -18,21 +18,22 @@ import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.ShipOrder(ShipOrder(..))
 import Serenity.Game.Model.Entity(Entity(..))
 import Serenity.Game.Server.KeyboardState(KeyboardState, initKeyboardState, handleKeyEvent, isKeyDown)
+import qualified Serenity.Game.Server.Assets as Assets
 
-import Serenity.Game.Server.Game(initialize)
+import Serenity.Game.Server.Game(Game, initialize, render, handleInput, step)
 
 runWindowSize = (600, 400)
 
 main :: IO ()
 main = do
   assets <- assetsIO
-  play (InWindow "Serenity" runWindowSize (100, 100)) black 5 (createGame assets) gameRender gameHandleInput gameStep
+  play (InWindow "Serenity" runWindowSize (100, 100)) black 5 (createGame assets) render handleInput step
   
   
-createGame :: DefaultAssets -> DefaultGame
-createGame assets = iInitialize assets runWindowSize gameMap
+createGame :: Assets.Assets -> Game
+createGame assets = initialize assets runWindowSize gameMap
   
-assetsIO = assetsInitialize :: IO DefaultAssets 
+assetsIO = Assets.initialize :: IO Assets.Assets
   
 gameMap = GameMap 
 	{	gameMapName = "My First Map"

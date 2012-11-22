@@ -1,6 +1,7 @@
 
 module Serenity.Game.Server.Game
-(	initialize
+(	Game
+,	initialize
 ,	render
 ,	handleInput
 ,	step
@@ -12,7 +13,7 @@ import Graphics.Gloss.Interface.Pure.Game(Event)
 import Serenity.Game.Server.Assets(Assets)
 import qualified Serenity.Game.Server.Graphics as Graphics
 import qualified Serenity.Game.Server.InputFilter  as InputFilter
-import Serenity.Game.Server.World as World
+import qualified Serenity.Game.Server.World as World
 
 import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.Common(TimeDuration)
@@ -33,30 +34,25 @@ data Game =
 	deriving(Show, Eq)
 	        
 
-gameWorld :: Game -> World.World
-gameGraphics :: Game -> Graphics.Graphics
-gameInputFilter :: Game -> InputFilter.InputFilter
-
-
 initialize assets windowSize gameMap =
 	Game
         {	world=firstWorld
-	,	graphics=Graphics.Initialize firstWorld assets windowSize
-	,	inputFilter=InputFilter.Initialize
+	,	graphics=Graphics.initialize firstWorld assets windowSize
+	,	inputFilter=InputFilter.initialize
 	}
 	where
 		firstWorld = World.initialize gameMap
 
 
-render game = Graphics.render game (graphics game)
+render game = Graphics.render (world game) (graphics game)
 
 handleInput event game =
-	case (InputFilter.handleInput event . gameFilter) game of
+	case (InputFilter.handleInput event . inputFilter) game of
 		(Just clientMessage, newInputFilter) -> case clientMessage of
 			ClientMessageGraphics graphicsMessage -> 
 				game{graphics=((Graphics.handleMessage graphicsMessage . graphics) game)}
 			ClientMessageWorld worldMessage ->  
 					game{world=((World.handleMessage worldMessage . world) game)}
-			(Nothing, newInputFilter) -> game{inputFilter=newInputFilter}
+		(Nothing, newInputFilter) -> game{inputFilter=newInputFilter}
 
 step timeDelta game = game{world=(World.step timeDelta (world game))}

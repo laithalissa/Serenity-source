@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+	{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
 
@@ -13,10 +13,10 @@ import Serenity.Game.Model.ClientMessage(ClientMessage(..), GraphicsMessage(..),
 import Serenity.Game.Model.WorldDelta(WorldDelta)
 import Serenity.Game.Model.GameMap(GameMap(..), Planet(..), SpaceLane(..))
 import Serenity.Game.Model.Common(TimeDuration, ViewPort)
-import Serenity.Game.Model.ShipClass(ShipClass(..))  
+import Serenity.Game.Model.ShipClass(ShipClass(..))
 import Serenity.Game.Model.Common(TimeDuration, toList4)
 import Serenity.Game.Model.Entity(Entity(..))
-
+import Serenity.Game.Server.InputFilter(InputFilter(..), DefaultInputFilter)
 import qualified Data.Map as Map
 
 	
@@ -34,31 +34,30 @@ class (Show world) => World world where
 
 	worldGameMap :: world -> GameMap
 
-class (Show inputFilter) => InputFilter inputFilter where
- 	inputFilterInitialize :: inputFilter 
- 	inputFilterHandleInput :: Event -> inputFilter -> (Maybe ClientMessage, inputFilter)
+
         
         
   
 type WindowSize = (Int, Int)
 class Graphics graphics where
+
 	graphicsInitialize :: DefaultWorld -> DefaultAssets -> WindowSize -> graphics
-        graphicsHandleMessage :: GraphicsMessage -> graphics -> graphics
-        graphicsRender :: DefaultGame -> graphics -> Picture
+	graphicsHandleMessage :: GraphicsMessage -> graphics -> graphics
+	graphicsRender :: DefaultGame -> graphics -> Picture
     
-        graphicsViewPortSize :: graphics -> ViewPort
+	graphicsViewPortSize :: graphics -> ViewPort
 
 	graphicsViewPortX :: graphics -> Float
-        graphicsViewPortX = (flip (!!)) 0 . toList4 . graphicsViewPortSize
+	graphicsViewPortX = (flip (!!)) 0 . toList4 . graphicsViewPortSize
 
 	graphicsViewPortY :: graphics -> Float
-        graphicsViewPortY = (flip (!!)) 1 . toList4 . graphicsViewPortSize
+	graphicsViewPortY = (flip (!!)) 1 . toList4 . graphicsViewPortSize
 
 	graphicsViewPortWidth :: graphics -> Float
-        graphicsViewPortWidth = (flip (!!)) 2 . toList4 . graphicsViewPortSize
+	graphicsViewPortWidth = (flip (!!)) 2 . toList4 . graphicsViewPortSize
 
 	graphicsViewPortHeight :: graphics -> Float
-        graphicsViewPortHeight = (flip (!!)) 3 . toList4 . graphicsViewPortSize
+	graphicsViewPortHeight = (flip (!!)) 3 . toList4 . graphicsViewPortSize
 	
 	graphicsWindowSize :: graphics -> WindowSize  
 
@@ -76,11 +75,10 @@ class (World world, Graphics graphics, InputFilter inputFilter) => Game game wor
 	gameRender :: game -> Picture
 	gameHandleInput :: Event -> game -> game 
 	gameStep :: TimeDuration -> game -> game
-                
-        gameWorld :: game -> world
-        gameGraphics :: game -> graphics
-        gameInputFilter :: game -> inputFilter
-        
+
+	gameWorld :: game -> world
+	gameGraphics :: game -> graphics
+	gameInputFilter :: game -> inputFilter
 
 
 ---------- Default Implementation ----------
@@ -120,12 +118,12 @@ data DefaultGame =
 	        
 
 instance Game DefaultGame DefaultWorld DefaultGraphics DefaultInputFilter where        
-	gameInitialize assets windowSize gameMap =        
-        	DefaultGame  
+	gameInitialize assets windowSize gameMap =
+        	DefaultGame
                 {	defaultGameWorld=(worldInitialize gameMap) :: DefaultWorld
 		,	defaultGameGraphics=(graphicsInitialize (worldInitialize gameMap) assets windowSize) :: DefaultGraphics
 		,	defaultGameInputFilter=inputFilterInitialize :: DefaultInputFilter
-		}                                    	
+		}
 
 	gameRender game = graphicsRender game (defaultGameGraphics game)
         
@@ -187,7 +185,7 @@ instance Graphics DefaultGraphics where
 						,	(snd . gameMapSize . worldGameMap) world
 						)
                 }
-                
+
 	graphicsHandleMessage (ClientScroll viewport) graphics = graphics{defaultGraphicsViewPort=viewport}
 	graphicsHandleMessage message graphics = graphics
         
@@ -246,24 +244,6 @@ instance Graphics DefaultGraphics where
 						(snd $ shipLocation entity)
 						(assetsGetPicture "ship1" (defaultGraphicsAssets graphics))
 
-
-
-data DefaultInputFilter =
-	DefaultInputFilter  
-	{	        
-	}          
-	deriving (Show, Eq)        
-                 
-instance InputFilter DefaultInputFilter where                 
-	inputFilterInitialize = DefaultInputFilter  
-        
-	inputFilterHandleInput event inputFilter =
-		(Just $ handleInput event, inputFilter) 
-		where
-			handleInput (EventKey key keyState modifiers mouse) = case key of
-				Char 'w' -> (ClientMessageGraphics $ ClientScroll (10,10,50,50))
-				Char _ -> (ClientMessageGraphics $ ClientScroll (0,0,100,100))
-			handleInput _ = (ClientMessageGraphics $ ClientScroll (0, 0, 100, 100)) 
 
 
 

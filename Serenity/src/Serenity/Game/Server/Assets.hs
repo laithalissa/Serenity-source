@@ -7,20 +7,25 @@ module Serenity.Game.Server.Assets
 ,	sizeTo
 ) where
 
+import Graphics.Gloss.Data.Color(red)
+
 import Graphics.Gloss.Data.Picture
-(	Picture(..)
-,	scale
-,	translate
-,	rotate
-,	pictures
-)
+	(	Picture(..)
+	,	color
+	,	loadBMP
+	,	pictures
+	,	rotate
+	,	scale
+	,	text
+	,	translate
+	)
 
 import qualified Data.Map as Map
 
 initialize :: IO Assets
 getPicture :: String -> Assets -> Picture
 getPictureSized :: String -> Float -> Float -> Assets -> Picture
-sizeTo :: String -> Float -> Float -> Picture
+sizeTo :: Float -> Float -> Picture -> Picture
 
 data Assets = 
 	Assets
@@ -48,28 +53,26 @@ getPicture name assets =
 		Nothing -> color red $ text ("Couldn't load asset " ++ name)
 
 getPictureSized name nWidth nHeight assets = 
-	sizeTo (nWidth, nHeight) (getPicture name assets)
+	sizeTo nWidth nHeight (getPicture name assets)
 
 
-sizeTo :: (Float, Float) -> Picture -> Picture
+sizeTo nWidth nHeight image@(Blank) = image
 
-sizeTo (nWidth, nHeight) image@(Blank) = image
+sizeTo nWidth nHeight image@(Translate width height subImage) = 
+	translate width height $ sizeTo nWidth nHeight subImage
 
-sizeTo (nWidth, nHeight) image@(Translate width height subImage) = 
-	translate width height $ sizeTo (nWidth, nHeight) subImage
-
-sizeTo (nWidth, nHeight) image@(Scale scaleX scaleY subImage) =
+sizeTo nWidth nHeight image@(Scale scaleX scaleY subImage) =
 	scale scaleX scaleY $ sizeTo 
-		(nWidth/scaleX, nHeight/scaleY) 
+		(nWidth/scaleX) (nHeight/scaleY) 
 		subImage
 
-sizeTo (nWidth, nHeight) image@(Rotate rotation subImage) =
-	rotate rotation $ sizeTo (nWidth, nHeight) subImage
+sizeTo nWidth nHeight image@(Rotate rotation subImage) =
+	rotate rotation $ sizeTo nWidth nHeight subImage
 
-sizeTo (nWidth, nHeight) image@(Pictures subImages) =
-	pictures $ map (sizeTo (nWidth, nHeight)) subImages
+sizeTo nWidth nHeight image@(Pictures subImages) =
+	pictures $ map (sizeTo nWidth nHeight) subImages
 
-sizeTo (nWidth, nHeight) image@(Bitmap width height _ _) = 
+sizeTo nWidth nHeight image@(Bitmap width height _ _) = 
 	scale 
 	(nWidth/(fromIntegral width)) 
 	(nHeight/(fromIntegral height)) 

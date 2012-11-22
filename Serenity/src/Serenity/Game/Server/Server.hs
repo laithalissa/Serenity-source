@@ -18,8 +18,8 @@ import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.ShipOrder(ShipOrder(..))
 import Serenity.Game.Model.Entity(Entity(..))
 import Serenity.Game.Server.KeyboardState(KeyboardState, initKeyboardState, handleKeyEvent, isKeyDown)
-import Serenity.Game.Server.GameState(Assets(..), DefaultAssets(..))
-import Serenity.Game.Server.GameState(Game(..), DefaultGame, Assets(..), DefaultAssets)
+
+import Serenity.Game.Server.Game(initialize)
 
 runWindowSize = (600, 400)
 
@@ -30,7 +30,7 @@ main = do
   
   
 createGame :: DefaultAssets -> DefaultGame
-createGame assets = gameInitialize assets runWindowSize gameMap
+createGame assets = iInitialize assets runWindowSize gameMap
   
 assetsIO = assetsInitialize :: IO DefaultAssets 
   

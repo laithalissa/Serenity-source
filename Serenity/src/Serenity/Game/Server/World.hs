@@ -1,20 +1,20 @@
 
 module Serenity.Game.Server.World
-(	World
+(	World(..)
 ,	initialize
 ,	step
 ,	handleMessage
 ,	gameMap
 ) where
 
-import Serenity.Game.Server.GameMap(GameMap)
-import Serenity.Game.Server.ClientMessage(WorldMessage)
+import Serenity.Game.Model.ClientMessage(WorldMessage)
+import Serenity.Game.Model.Common(TimeDuration)
 import Serenity.Game.Model.Entity(Entity)
-
+import Serenity.Game.Model.GameMap(GameMap)
 
 initialize :: GameMap -> World
 step :: TimeDuration -> World -> World
-handleMessage :: WorldMessage -> World
+handleMessage :: WorldMessage -> World -> World
 
 data World =
 	World

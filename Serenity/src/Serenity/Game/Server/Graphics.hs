@@ -9,18 +9,39 @@ module Serenity.Game.Server.Graphics
 ,	windowSize	
 ) where
 
-import Graphics.Gloss.Data.Picture(Picture)
+import Graphics.Gloss.Data.Picture
+	(	Picture
+	,	line
+	,	pictures
+	,	translate
+	,	scale
+	)
 
 import Serenity.Game.Model.ClientMessage(GraphicsMessage(..))
-import Serenity.Game.Model.Common(ViewPort)
-import Serenity.Game.Server.Assets(Assets, getPictureScaled)
+import Serenity.Game.Model.Common(ViewPort, toList4)
+import Serenity.Game.Model.Entity(Entity(Ship, shipLocation))
+import Serenity.Game.Model.GameMap
+	(	GameMap
+		(	gameMapSize
+		,	gameMapPlanets
+		,	gameMapSpaceLanes
+		)
+	,	Planet
+		(	planetName
+		,	planetType
+		,	planetLocation
+		)
+	,	SpaceLane(SpaceLane)
+	)
+import Serenity.Game.Server.Assets(Assets, getPicture, getPictureSized)
+import Serenity.Game.Server.World(World(gameMap, entities))
 
 
 type WindowSize = (Int, Int)
 
-initialize :: World -> Assets -> WindowSize -> graphics
-handleMessage :: GraphicsMessage -> graphics -> graphics
-render :: Game -> graphics -> Picture
+initialize :: World -> Assets -> WindowSize -> Graphics
+handleMessage :: GraphicsMessage -> Graphics -> Graphics
+render :: World -> Graphics -> Picture
 
 data Graphics =
 	Graphics  
@@ -36,44 +57,43 @@ initialize world assets windowSize =
 	,	windowSize=windowSize
 	,	viewPort=(0, 0, width, height)
 	}
-	where
-		width = (fst . gameMapSize . worldGameMap) world
-		height = (snd . gameMapSize . worldGameMap) world
+		where
+		width = (fst . gameMapSize . gameMap) world
+		height = (snd . gameMapSize . gameMap) world
 
 handleMessage (ClientScroll viewport) graphics = 
-	graphics{graphicsViewPort=viewport}
+	graphics{viewPort=viewport}
 handleMessage message graphics = graphics
         
-render game graphics = pictures 
+render world graphics = pictures 
 	[	background
 	,	(drawWorldToWindow . renderInWorld) world
 	]
-	where
-		world = defaultGameWorld game
+		where
 		background = getPictureSized "background" ww wh (assets graphics)
 		drawWorldToWindow = translateWorld . scaleWorld
 		scaleWorld = scale (ww/vpw) (wh/vph)
 		translateWorld = translate (-((ww/vpw)*vpx + (ww/2))) (-((wh/vph)*vpy + (wh/2)))
 				
-		ww = graphicsWindowWidth graphics
-		wh = graphicsWindowHeight graphics
-		vpx = graphicsViewPortX graphics
-		vpy = graphicsViewPortY graphics 
-		vpw = graphicsViewPortWidth graphics
-		vph = graphicsViewPortHeight graphics
+		ww = windowWidth graphics
+		wh = windowHeight graphics
+		vpx = viewPortX graphics
+		vpy = viewPortY graphics 
+		vpw = viewPortWidth graphics
+		vph = viewPortHeight graphics
                           
 		renderInWorld world = pictures
 			[	pictures $ map spaceLaneF (worldSpaceLanes world)
 			,	pictures $ map planetF (worldPlanets world)
 			,	pictures $ map entityF (worldEntities world) 
 			]
-		where
-			worldSpaceLanes = gameMapSpaceLanes . worldGameMap
-			worldPlanets = gameMapPlanets . worldGameMap
-			worldEntities = defaultWorldEntities
+			where
+			worldSpaceLanes = gameMapSpaceLanes . gameMap
+			worldPlanets = gameMapPlanets . gameMap
+			worldEntities = entities
 
-		planetF planet = translate planetX planetY $ assetsGetPictureSize (planetType planet) 5 5 (defaultGraphicsAssets graphics) 
-		where
+		planetF planet = translate planetX planetY $ getPictureSized (planetType planet) 5 5 (assets graphics) 
+			where
 			planetX =  (fst . planetLocation) planet
 	 		planetY = (snd . planetLocation) planet
  
@@ -81,37 +101,27 @@ render game graphics = pictures
 				[ (pX p1N, pY p1N)
 				, (pX p2N, pY p2N) 
 				]
-				where
+					where
 					pX = fst . planetLocation . getPlanet
 					pY = snd . planetLocation . getPlanet
 					getPlanet name = foldl
 						(\f s -> if (planetName f) == name
 								then f
 								else s)
-						(head $ gameMapPlanets $ defaultWorldGameMap world)
-						(gameMapPlanets $ defaultWorldGameMap world)
+						(head $ gameMapPlanets $ gameMap world)
+						(gameMapPlanets $ gameMap world)
 		entityF entity = case entity of
 			Ship{} -> translate 
 				(fst $ shipLocation entity) 
 				(snd $ shipLocation entity)
-				(assetsGetPicture "ship1" (defaultGraphicsAssets graphics))
+				(getPicture "ship1" (assets graphics))
 
 
 
-viewPortX :: graphics -> Float
-viewPortX = (flip (!!)) 0 . toList4 . graphicsViewPortSize
 
-viewPortY :: graphics -> Float
-viewPortY = (flip (!!)) 1 . toList4 . graphicsViewPortSize
-
-viewPortWidth :: graphics -> Float
-viewPortWidth = (flip (!!)) 2 . toList4 . graphicsViewPortSize
-
-viewPortHeight :: graphics -> Float
-viewPortHeight = (flip (!!)) 3 . toList4 . graphicsViewPortSize
-
-windowWidth :: graphics -> Float
-windowWidth = fromIntegral . fst . graphicsWindowSize
-	
-windowHeight :: graphics -> Float
-windowHeight = fromIntegral . snd . graphicsWindowSize
+viewPortX = (flip (!!)) 0 . toList4 . viewPort
+viewPortY = (flip (!!)) 1 . toList4 . viewPort
+viewPortWidth = (flip (!!)) 2 . toList4 . viewPort
+viewPortHeight = (flip (!!)) 3 . toList4 . viewPort
+windowWidth = fromIntegral . fst . windowSize
+windowHeight = fromIntegral . snd . windowSize

@@ -13,7 +13,7 @@ clean:
 	cabal clean
 
 build:
-	cabal configure 
+	cabal configure --enable-tests
 	cabal build
 
 prepareEnvironment:

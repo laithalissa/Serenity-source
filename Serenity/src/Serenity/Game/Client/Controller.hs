@@ -1,8 +1,8 @@
 module Serenity.Game.Client.Controller
 	( UIEvent(..)
-	, initWorld
-	, drawWorld
-	, newWorldFromEvent
+	, initClientState
+	, drawClientState
+	, newClientStateFromEvent
 	)
 where
 
@@ -10,44 +10,44 @@ import Graphics.Gloss.Data.Color
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Interface.Pure.Game (Event(..))
 
-import Serenity.Game.Client.World
+import Serenity.Game.Client.ClientState
 
 import Serenity.Sheen.UIEvent
 import Serenity.Sheen.View
 
-initWorld :: World
-initWorld = World [] mainView
+initClientState :: ClientState
+initClientState = ClientState [] mainView
 
-drawWorld :: World -> IO Picture
-drawWorld world = do
-	let views = drawView (uiState world) world
+drawClientState :: ClientState -> IO Picture
+drawClientState clientState = do
+	let views = drawView (uiState clientState) clientState
 	return $ Translate (fromIntegral $ - 1024 `div` 2) (fromIntegral $ - 768 `div` 2) views
 
-newWorldFromEvent :: Event -> World -> World
-newWorldFromEvent event world = handleViewEvent event mainView world
+newClientStateFromEvent :: Event -> ClientState -> ClientState
+newClientStateFromEvent event clientState = handleViewEvent event mainView clientState
 
-mainView :: View World
+mainView :: View ClientState
 mainView = (makeView (0, 1024, 0, 768))
 	{ viewID = "main"
 	, subviews = [menuView, gameView]
 	, background = Just black
 	}
 
-menuView :: View World
+menuView :: View ClientState
 menuView = (makeView (0, 100, 0, 768))
 	{ viewID = "menu"
 	, background = Just red
 	}
 
-gameView :: View World
+gameView :: View ClientState
 gameView = (makeView (100, 1024, 0, 768))
 	{ viewID = "game"
 	, background = Just green
-	, eventHandler = Just (\_ world ->
-		world { uiState = changeView "game" (\v -> if background v == Just green
+	, eventHandler = Just (\_ clientState ->
+		clientState { uiState = changeView "game" (\v -> if background v == Just green
 			then v { background = Just blue }
 			else v { background = Just green }
-		) (uiState world) }
+		) (uiState clientState) }
 	  )
 	}
 

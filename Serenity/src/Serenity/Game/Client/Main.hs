@@ -5,7 +5,7 @@ where
 
 import Graphics.Gloss.Interface.IO.Game
 
-import Serenity.Game.Client.World
+import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.Controller
 
 main :: IO ()
@@ -13,27 +13,25 @@ main = playIO
 	(InWindow "Virtual Balloon Commander" (1024, 768) (0, 0))
 	white
 	20
-	initWorld
-	drawWorld
+	initClientState
+	drawClientState
 	handleEvent
 	handleStep
 
-handleEvent :: Event -> World -> IO World
-handleEvent event world = do
-	newWorld <- return $ newWorldFromEvent event world
+handleEvent :: Event -> ClientState -> IO ClientState
+handleEvent event clientState = do
+	newClientState <- return $ newClientStateFromEvent event clientState 
 
 	-- ...
 	-- send messages to server
 	-- ...
 
-	return newWorld
+	return newClientState 
 
-handleStep :: Float -> World -> IO World
-handleStep delta world = do
+handleStep :: Float -> ClientState -> IO ClientState
+handleStep delta clientState = do
 	-- ...
 	-- handle new messages from server
 	-- ...
 
-	newWorld <- return $ world
-
-	return newWorld
+	return clientState

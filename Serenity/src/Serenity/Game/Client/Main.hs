@@ -10,7 +10,7 @@ import Serenity.Game.Client.Controller
 
 main :: IO ()
 main = playIO
-	(InWindow "Serenity Client" (1024, 768) (0, 0))
+	(InWindow "Virtual Balloon Commander" (1024, 768) (0, 0))
 	white
 	20
 	initWorld

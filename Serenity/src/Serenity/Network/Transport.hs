@@ -17,6 +17,7 @@ module Serenity.Network.Transport
 ,	getConnection
 ,	liftIO
 ,	Transport
+,	MonadTransport
 ) where
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect)
@@ -74,7 +75,7 @@ bindOutboundSocket host port = withSocketsDo $ do
 	bindSocket sock (SockAddrInet (port+1) iNADDR_ANY)
 	return (sock, addr, family)
 
-class Monad m => MonadTransport m where
+class MonadIO m => MonadTransport m where
 	connect :: String -> PortNumber -> m ()
 	listen  :: PortNumber -> m ()
 	send :: Message -> m ()

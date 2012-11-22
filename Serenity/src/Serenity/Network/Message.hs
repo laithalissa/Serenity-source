@@ -53,5 +53,3 @@ putKillShip KillShip {entityId = eID} = do
 getKillShip = do
 	eID <- getWord32be
 	return KillShip {entityId = eID}
-
---putStrict = B.concat $ BL.toChunks $ runPut

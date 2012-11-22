@@ -1,7 +1,7 @@
 module Serenity.Game.Server.KeyboardState where
 
 import Data.Set as Set
-import Graphics.Gloss.Interface.Pure.Game (Key(..), SpecialKey(..), KeyState(..))
+import Graphics.Gloss.Interface.Pure.Game (Key(..), KeyState(..))
 
 type KeyboardState = Set Key
 

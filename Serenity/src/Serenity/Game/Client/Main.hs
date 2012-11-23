@@ -1,6 +1,6 @@
 module Serenity.Game.Client.Main (
 	main
-) 
+)
 where
 
 import Graphics.Gloss.Interface.IO.Game
@@ -32,13 +32,13 @@ assetsIO = Assets.initialize :: IO Assets.Assets
 
 --handleInputAndIO :: Event -> ClientState -> IO ClientState
 --handleInputAndIO event clientState = do
---	newClientState <- return $ newClientStateFromEvent event clientState 
+--	newClientState <- return $ newClientStateFromEvent event clientState
 
 --	-- ...
 --	-- send commands to server
 --	-- ...
 
---	return newClientState 
+--	return newClientState
 
 --handleStep :: Float -> ClientState -> IO ClientState
 --handleStep delta clientState = do

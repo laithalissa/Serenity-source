@@ -18,7 +18,7 @@ import Data.Maybe (catMaybes)
 import Serenity.Sheen.UIEvent
 import Serenity.Sheen.Util
 
-data View world = View 
+data View world = View
 	{	viewID :: String                   -- ^ Unique identifier for the view
 	,	subviews :: [View world]           -- ^ List of views below this one
 	,	frame :: Extent                    -- ^ Rectangular area the view represents
@@ -34,7 +34,7 @@ makeView ::
 	-> (Int, Int, Int, Int) -- ^ Coordinates of the view: (xmin, xmax, ymin, ymax)
 	-> View world
 
-makeView ident (xmin, xmax, ymin, ymax) = View 
+makeView ident (xmin, xmax, ymin, ymax) = View
 	{	viewID = ident
 	,	frame = makeExtent ymax ymin xmax xmin
 	,	subviews = []
@@ -80,7 +80,7 @@ handleViewEvent event view =
 		Nothing -> id
 
 getEventHandler :: UIEvent -> View world -> Maybe (UIEvent -> world -> world)
-getEventHandler event@(ViewClick point _) view = 
+getEventHandler event@(ViewClick point _) view =
 	if eventInView then
 		case subviewHandlers of
 			[] -> eventHandler view

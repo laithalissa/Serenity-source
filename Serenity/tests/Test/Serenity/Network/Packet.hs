@@ -21,7 +21,7 @@ import qualified Data.Set as Set
 
 $(derive makeArbitrary ''Flag)
 
-tests = testGroup "Network Packet Tests" 
+tests = testGroup "Network Packet Tests"
 	[	testProperty "Test converting flags to binary and back works correctly" propertyFlagsAreSetCorrectly
 	]
 

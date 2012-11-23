@@ -18,7 +18,7 @@ import Data.Binary (Binary(..), encode, decode)
 
 $(derive makeArbitrary ''Message)
 
-tests = testGroup "Network Utility Tests" 
+tests = testGroup "Network Utility Tests"
 	[	testProperty "Test converting to binary and back returns the same message" propertyGetPutIsID
 	]
 

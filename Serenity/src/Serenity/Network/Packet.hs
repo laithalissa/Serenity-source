@@ -45,17 +45,17 @@ data Packet = Packet
 	} deriving (Show, Eq)
 
 readPacket :: ByteString -> Maybe Packet
-readPacket bytes = case (fst $ readPacket' bytes) of 
+readPacket bytes = case (fst $ readPacket' bytes) of
 	Left _ -> Nothing
 	Right packet -> Just packet
 readPacket' = runGet $ do
-	pProt  <- getWord32be 
+	pProt  <- getWord32be
 	pSeq   <- getWord32be
 	pAck   <- getWord32be
 	pFlags <- getWord8
 	r       <- remaining
 	pData  <- getByteString r
-	return Packet 
+	return Packet
 		{	packetProt = pProt
 		,	packetSeq = pSeq
 		,	packetAck = pAck
@@ -78,7 +78,7 @@ writePacket packet = B.concat $ BL.toChunks $ runPut $ do
 	putByteString $ packetData packet
 
 initialPacket :: Message -> Packet
-initialPacket message = Packet 
+initialPacket message = Packet
 	{	packetProt  = fromIntegral $ 1
 	,	packetSeq   = fromIntegral $ 1
 	,	packetAck   = fromIntegral $ 1
@@ -92,13 +92,13 @@ getPacketData Packet {packetData = dat} = binaryToMessage dat
 data Flag = Syn | Fin deriving (Eq, Ord, Show)
 
 flagValues :: [(Flag, Word8)]
-flagValues = 
+flagValues =
 	[	(Syn, 0)
 	,	(Fin, 1)
 	]
 
 getFlags :: Packet -> [Flag]
-getFlags packet@Packet{packetFlags=flagsField} = 
+getFlags packet@Packet{packetFlags=flagsField} =
 	concat $ zipWith flagInField (map snd flagValues) (map fst flagValues)
 	where
 		flagInField i flag = if (bit $ fromIntegral i) .&. flagsField == (bit $ fromIntegral i) then [flag] else []
@@ -115,7 +115,7 @@ emptyFinPacket = setFlags [Fin] (initialPacket Message.Empty)
 receivePacket sock = do
 	(mesg, client) <- recvFrom sock 512
 	maybePacket <- return $ readPacket mesg
-	case maybePacket of 
+	case maybePacket of
 		Just packet -> return (packet, client)
 		Nothing -> receivePacket sock
 

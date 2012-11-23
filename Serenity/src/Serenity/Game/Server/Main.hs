@@ -42,7 +42,7 @@ readInput sock tvar = do
 --	timeRef <- newIORef (getTime)
 
 --	forever $ modifyIORef (loop2 (loop (inbox, outbox)) timeRef) worldRef
---		where 
+--		where
 --			loop = network (iterate messageUpdate timeUpdate)
 --			loop2 loop timeRef oldWorld  = do
 --				newTime <- getTime

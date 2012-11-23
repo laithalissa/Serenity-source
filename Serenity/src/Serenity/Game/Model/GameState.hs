@@ -19,8 +19,8 @@ data GameState =
 	deriving (Show, Eq)
 
 initialize :: GameMap -> GameState
-initialize gameMap = 
-	GameState  
+initialize gameMap =
+	GameState
 	{	gameMap=gameMap
 	,	entities=[]
 	}

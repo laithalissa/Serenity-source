@@ -1,6 +1,6 @@
-module Main 
+module Main
 (	main
-) 
+)
 where
 
 import qualified Serenity.Game.Server.Main as Server
@@ -11,7 +11,7 @@ import System.Environment (getArgs)
 
 main = do
 	arg <- liftM (\args -> if length args > 0 then args!!0 else "") getArgs
-        do 
+        do
           case arg of
             "server" -> Server.main
             "client" -> Client.main

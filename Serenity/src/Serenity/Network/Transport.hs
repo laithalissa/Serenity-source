@@ -39,18 +39,18 @@ import Data.Binary (Binary)
 import Serenity.Network.Message (Message)
 import qualified Serenity.Network.Message as Message
 
-data Connection = 
-	Connected 
+data Connection =
+	Connected
 	{	connectionSocket :: Socket
 	,	connectionAddr :: SockAddr
 	,	connectionId :: Int
 	,	connectionSent :: Set (Packet, POSIXTime)
 	,	connectionLocalSequence ::  Int
 	,	connectionRemoteSequence ::  Int
-	} 
+	}
 	| Unconnected deriving (Show, Eq)
 
-initialConnection sock addr cid = Connected 
+initialConnection sock addr cid = Connected
 	{	connectionSocket = sock
 	,	connectionAddr = addr
 	,	connectionId = cid
@@ -64,9 +64,9 @@ isConnected Connected {} = True
 isConnected _ = False
 
 bindOutboundSocket host port = withSocketsDo $ do
-	addrInfo <- 
-		liftM head $ 
-		liftM (filter (\x -> addrFamily x == AF_INET)) $ 
+	addrInfo <-
+		liftM head $
+		liftM (filter (\x -> addrFamily x == AF_INET)) $
 		getAddrInfo Nothing (Just "localhost") (Just (show port))
 	let addr = addrAddress addrInfo
 	let family = addrFamily addrInfo
@@ -86,7 +86,7 @@ newtype Transport a = Transport (StateT Connection IO a)
 	deriving (Functor, Monad, MonadIO, MonadState Connection)
 
 instance MonadTransport Transport where
-	connect host port = do 
+	connect host port = do
 		connection <- get
 		case connection of
 			Connected {} -> return ()
@@ -96,12 +96,12 @@ instance MonadTransport Transport where
 				liftIO $ sendPacket sock emptySynPacket addr
 				return ()
 
-	listen port = do 
+	listen port = do
 		connection <- liftIO (withSocketsDo $ do
 			sock <- socket AF_INET Datagram 0
 			bindSocket sock (SockAddrInet port iNADDR_ANY)
 
-			(packet, client) <- receivePacket sock 
+			(packet, client) <- receivePacket sock
 			if Syn `elem` (getFlags packet)
 				then return $ initialConnection sock client 12
 				else return Unconnected)
@@ -109,9 +109,9 @@ instance MonadTransport Transport where
 
 	send string = do
 		connection <- get
-		liftIO $ sendPacket 
-			(connectionSocket connection) 
-			(initialPacket string) 
+		liftIO $ sendPacket
+			(connectionSocket connection)
+			(initialPacket string)
 			(connectionAddr connection)
 
 	receive = do
@@ -135,7 +135,7 @@ runTransport :: Transport a -> Connection -> IO (a, Connection)
 runTransport (Transport c) =  runStateT c
 
 runOne :: Transport a -> IO Connection
-runOne f = do 
+runOne f = do
 	(_, connection) <- runTransport f Unconnected
 	return connection
 

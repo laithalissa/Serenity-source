@@ -1,4 +1,4 @@
-module Serenity.Network.Message 
+module Serenity.Network.Message
 (	Message (..)
 )
 where
@@ -9,7 +9,7 @@ import Data.Binary.Put
 import Data.Binary.Get
 import Data.Monoid (mempty)
 
-data Message = 
+data Message =
 	Empty
 	| UpdateLocation
 	{	entityId :: Word32

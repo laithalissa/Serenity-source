@@ -22,11 +22,11 @@ data InputFilter =
 	InputFilter
 	deriving (Show, Eq)
 
-initialize :: InputFilter 
+initialize :: InputFilter
 initialize = InputFilter
 
 handleInput :: Event -> inputFilter -> (Maybe ClientMessage, inputFilter)
-handleInput event inputFilter = (Just $ handleInput event, inputFilter) 
+handleInput event inputFilter = (Just $ handleInput event, inputFilter)
 	where
 		handleInput (EventKey key keyState modifiers mouse) = case key of
 			Char 'w' -> (ClientMessageGraphics $ ClientScroll (10,10,50,50))

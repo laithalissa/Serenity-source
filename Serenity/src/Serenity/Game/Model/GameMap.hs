@@ -7,7 +7,7 @@ module Serenity.Game.Model.GameMap
 
 import Serenity.Game.Model.Common(Location, Direction, Resources(..), Size)
 
-data GameMap = GameMap 
+data GameMap = GameMap
 	{	gameMapName :: String
 	,	gameMapSize :: Size
 	,	gameMapSpawnPoints :: [(Location)]
@@ -16,7 +16,7 @@ data GameMap = GameMap
 	}
 	deriving(Show, Eq)
 
-data Planet = Planet 
+data Planet = Planet
 	{	planetName :: String
 	,	planetType :: String -- specifies which size / texture to use
 	,	planetLocation :: Location
@@ -25,17 +25,17 @@ data Planet = Planet
 	}
 	deriving(Show, Eq)
 
-data SpaceLane = SpaceLane 
+data SpaceLane = SpaceLane
 	{	spaceLanePlanet1 :: String
 	,	spaceLanePlanet2 :: String
 	}
 	deriving(Show, Eq)
 
-exampleGameMap = GameMap 
+exampleGameMap = GameMap
 	{	gameMapName = "My First Map"
 	,	gameMapSize = (100, 100)
 	,	gameMapSpawnPoints=[(50, 50)]
-	,	gameMapPlanets = 
+	,	gameMapPlanets =
 			[	createPlanet "Earth" (50, 50)
 			,	createPlanet "Mars" (10, 10)
 			,	createPlanet "Pluto" (90, 10)
@@ -43,7 +43,7 @@ exampleGameMap = GameMap
 	,	gameMapSpaceLanes=[SpaceLane "Earth" "Mars"]
 	}
 	where
-		createPlanet name location = Planet 
+		createPlanet name location = Planet
 			{	planetName=name
 			,	planetType="planet1"
 			,	planetLocation=location
@@ -57,10 +57,10 @@ exampleGameMap = GameMap
 --	,	spawnPoints :: [(Location)]
 --	,	planets :: [Planet]
 --	,	spaceLanes :: [SpaceLane]
---	} 
+--	}
 --deriving(Show, Eq)
 
---data Planet = Planet 
+--data Planet = Planet
 --	{	planetName :: String
 --	,	planetType :: String -- specifies which size / texture to use
 --	,	location :: Location
@@ -69,7 +69,7 @@ exampleGameMap = GameMap
 --	}
 --	deriving(Show, Eq)
 
---data SpaceLane = SpaceLane 
+--data SpaceLane = SpaceLane
 --	{	planetName1 :: String
 --	,	planetName2 :: String
 --	}

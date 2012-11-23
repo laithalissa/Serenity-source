@@ -11,10 +11,10 @@ type Orientation = (Float, Float, Float, Float)
 type Size = (Float, Float)
 
 --data Resource = Metal { amount :: Float } | Fuel { amount :: Float } | AntiMatter { amount :: Float }
-data Resources = Resources 
+data Resources = Resources
 	{	fuel :: Float
 	,	antiMatter :: Float
-	,	metal :: Float 
+	,	metal :: Float
 	}
 	deriving(Show, Eq)
 

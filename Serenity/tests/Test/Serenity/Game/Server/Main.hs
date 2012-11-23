@@ -14,7 +14,7 @@ import Test.QuickCheck
 import Serenity.Game.Server.Main
 import Serenity.Network.Message (Message(Empty))
 
-tests = testGroup "Server Main Tests" 
+tests = testGroup "Server Main Tests"
 	[	testProperty "Test updateWorld with id" propertyUpdateWorldOnID
 	,	testProperty "Test updateWorld passes time" propertyUpdateWorldOnTime
 	,	testProperty "Test updateWorld is id with no message" propertyUpdateWorldOnMessage
@@ -22,20 +22,20 @@ tests = testGroup "Server Main Tests"
 	]
 
 propertyUpdateWorldOnID :: Int -> Bool
-propertyUpdateWorldOnID world = 
+propertyUpdateWorldOnID world =
 	(fst $ updateWorld (\_ -> \w -> w) (\_ -> \w -> (w, [])) world [] 0) == world
 
 propertyUpdateWorldOnTime :: Double -> Bool
-propertyUpdateWorldOnTime world = 
+propertyUpdateWorldOnTime world =
 	(fst $ updateWorld (\_ -> \w -> w) (\time -> \w -> (w+time, [])) world [] 1) > world
 
 increaseIfMessage [] = id
 increaseIfMessage [Empty] = (+1)
 
 propertyUpdateWorldOnMessage :: Int -> Bool
-propertyUpdateWorldOnMessage   world = 
+propertyUpdateWorldOnMessage   world =
 	(fst $ updateWorld increaseIfMessage (\_ -> \w -> (w, [])) world [Empty] 0) > world
 
 propertyUpdateWorldOnNoMessage :: Int -> Bool
-propertyUpdateWorldOnNoMessage world = 
+propertyUpdateWorldOnNoMessage world =
 	(fst $ updateWorld increaseIfMessage (\_ -> \w -> (w, [])) world [] 0) == world

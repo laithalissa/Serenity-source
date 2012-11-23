@@ -3,24 +3,24 @@ module Serenity.Game.Model.Entity where
 import Serenity.Game.Model.ShipOrder
 import Serenity.Game.Model.Common
 
-data Entity = 
-	Ship 
+data Entity =
+	Ship
 	{	shipId :: Int
 	,	shipLocation :: Location
 	,	shipDirection :: Direction
 	,	shipSpeed :: Direction
-	,	shipOrder :: ShipOrder 
+	,	shipOrder :: ShipOrder
 	}
-	| Gun 
+	| Gun
 	{	shipId :: Int
 	,	weaponSlotIndex :: Int
 	}
-	| System 
+	| System
 	{	shipId :: Int
 	}
-	| Bullet 
+	| Bullet
 	{	location :: Location
 	,	direction :: Direction
 	,	speed :: Float
-	} 
+	}
 	deriving (Show, Ord, Eq)

@@ -12,7 +12,7 @@ import Test.Serenity.Network (serverClientFixture)
 import Serenity.Network.Transport
 import qualified Serenity.Network.Message as Message
 
-tests = testGroup "Network Tests" 
+tests = testGroup "Network Tests"
 	[	testCase "Test a listening process accepts a connection" testAcceptance
 	,	testCase "Test two processes can exchange info over a connection" testSendReceive
 	,	testCase "Test two processes can exchange info over a connection both ways" testSendReceiveDuplex

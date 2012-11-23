@@ -15,7 +15,7 @@ import Serenity.Network.Utility
 import Serenity.Network.Message (Message)
 import qualified Serenity.Network.Message as Message
 
-tests = testGroup "Network Utility Tests" 
+tests = testGroup "Network Utility Tests"
 	[	testCase "Test testGetTransportChannels returns two empty channels" testGetTransportChannels
 	,	testCase "Test input placed in the input channel is sent" testSendChannel
 	,	testCase "Test input sent arrives in the receive channel" testReceiveChannel

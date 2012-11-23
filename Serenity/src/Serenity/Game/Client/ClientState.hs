@@ -1,4 +1,4 @@
-module Serenity.Game.Client.ClientState 
+module Serenity.Game.Client.ClientState
 (	Game(..)
 ,	initialize
 ,	render
@@ -57,9 +57,9 @@ handleInput :: Event -> Game -> Game
 handleInput event game =
 	case (InputFilter.handleInput event . inputFilter) game of
 		(Just clientMessage, newInputFilter) -> case clientMessage of
-			ClientMessageGraphics graphicsMessage -> 
+			ClientMessageGraphics graphicsMessage ->
 				game{graphics=((Graphics.handleMessage graphicsMessage . graphics) game)}
-			ClientMessageWorld worldMessage ->  
+			ClientMessageWorld worldMessage ->
 					game{gameState=((GameState.handleMessage worldMessage . gameState) game)}
 		(Nothing, newInputFilter) -> game{inputFilter=newInputFilter}
 

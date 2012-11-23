@@ -41,12 +41,12 @@ gameView :: View ClientState
 gameView = (makeView "game" (100, 1024, 0, 768))
 	{	background = Just green
 	,	eventHandler = Just event
-	} 
+	}
 	where
 		event _ clientState =
 			clientState { uiState = changeView "game" swap (uiState clientState) }
 		swap v = if background v == Just green
 			then v { background = Just blue }
 			else v { background = Just green }
-		
+
 

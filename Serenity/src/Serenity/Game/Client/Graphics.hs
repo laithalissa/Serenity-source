@@ -5,7 +5,7 @@ module Serenity.Game.Client.Graphics
 ,	handleMessage
 ,	render
 ,	viewPort
-,	windowSize	
+,	windowSize
 ) where
 
 import Graphics.Gloss.Data.Picture
@@ -38,11 +38,11 @@ import Serenity.Game.Model.GameState(GameState(gameMap, entities))
 type WindowSize = (Int, Int)
 
 data Graphics =
-	Graphics  
+	Graphics
 	{	assets :: Assets
 	,	windowSize :: WindowSize
 	,	viewPort :: ViewPort
-	} 
+	}
 	deriving (Show, Eq)
 
 initialize :: GameState -> Assets -> WindowSize -> Graphics
@@ -61,7 +61,7 @@ handleMessage (ClientScroll viewport) graphics = graphics{viewPort=viewport}
 handleMessage message graphics = graphics
 
 render :: GameState -> Graphics -> Picture
-render world graphics = pictures 
+render world graphics = pictures
 	[	background
 	,	(drawWorldToWindow . renderInWorld) world
 	]
@@ -70,32 +70,32 @@ render world graphics = pictures
 		drawWorldToWindow = translateWorld . scaleWorld
 		scaleWorld = scale (ww/vpw) (wh/vph)
 		translateWorld = translate (-((ww/vpw)*vpx + (ww/2))) (-((wh/vph)*vpy + (wh/2)))
-				
+
 		ww = windowWidth graphics
 		wh = windowHeight graphics
 		vpx = viewPortX graphics
-		vpy = viewPortY graphics 
+		vpy = viewPortY graphics
 		vpw = viewPortWidth graphics
 		vph = viewPortHeight graphics
 
 		renderInWorld world = pictures
 			[	pictures $ map spaceLaneF (worldSpaceLanes world)
 			,	pictures $ map planetF (worldPlanets world)
-			,	pictures $ map entityF (worldEntities world) 
+			,	pictures $ map entityF (worldEntities world)
 			]
 			where
 			worldSpaceLanes = gameMapSpaceLanes . gameMap
 			worldPlanets = gameMapPlanets . gameMap
 			worldEntities = entities
 
-		planetF planet = translate planetX planetY $ getPictureSized (planetType planet) 5 5 (assets graphics) 
+		planetF planet = translate planetX planetY $ getPictureSized (planetType planet) 5 5 (assets graphics)
 			where
 			planetX =  (fst . planetLocation) planet
 	 		planetY = (snd . planetLocation) planet
- 
+
 		spaceLaneF spaceLane@(SpaceLane p1N p2N) = line
 				[ (pX p1N, pY p1N)
-				, (pX p2N, pY p2N) 
+				, (pX p2N, pY p2N)
 				]
 					where
 					pX = fst . planetLocation . getPlanet
@@ -107,8 +107,8 @@ render world graphics = pictures
 						(head $ gameMapPlanets $ gameMap world)
 						(gameMapPlanets $ gameMap world)
 		entityF entity = case entity of
-			Ship{} -> translate 
-				(fst $ shipLocation entity) 
+			Ship{} -> translate
+				(fst $ shipLocation entity)
 				(snd $ shipLocation entity)
 				(getPicture "ship1" (assets graphics))
 

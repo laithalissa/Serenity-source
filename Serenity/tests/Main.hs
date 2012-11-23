@@ -16,7 +16,7 @@ import qualified Test.Serenity.Game.Server.Main as ServerMain
 
 main = defaultMainWithArgs allTests htf_args
 
-htf_args = 
+htf_args =
 	[	"--maximum-generated-tests=5000"
 	,	"--maximum-unsuitable-generated-tests=3000"
 	]

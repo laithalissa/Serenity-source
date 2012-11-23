@@ -8,7 +8,7 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent
 
 readUntilJust :: TVar (Maybe a) -> IO a
-readUntilJust tvar = atomically $ do 
+readUntilJust tvar = atomically $ do
 	maybeOutput <- readTVar tvar
 	case maybeOutput of
 		Nothing -> retry

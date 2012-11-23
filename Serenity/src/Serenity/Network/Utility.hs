@@ -11,7 +11,7 @@ import Serenity.Network.Transport
 import Serenity.Network.Message (Message)
 import qualified Serenity.Network.Message as Message
 
-getTransportChannels :: Transport (TChan Message, TChan Message, TVar Connection)
+getTransportChannels :: (MonadTransport t) => t (TChan Message, TChan Message, TVar Connection)
 getTransportChannels = do
 	inbox  <- liftIO newTChanIO
 	outbox <- liftIO newTChanIO

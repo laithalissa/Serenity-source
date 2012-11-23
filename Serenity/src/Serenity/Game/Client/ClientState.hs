@@ -7,4 +7,3 @@ data ClientState = ClientState
 	, uiState :: UIState ClientState
 	-- gameState :: GameState
 	}
-	deriving Show

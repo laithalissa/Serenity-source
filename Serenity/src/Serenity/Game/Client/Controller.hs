@@ -27,22 +27,19 @@ newClientStateFromEvent :: Event -> ClientState -> ClientState
 newClientStateFromEvent event clientState = handleViewEvent event mainView clientState
 
 mainView :: View ClientState
-mainView = (makeView (0, 1024, 0, 768))
-	{ viewID = "main"
-	, subviews = [menuView, gameView]
+mainView = (makeView "main" (0, 1024, 0, 768))
+	{ subviews = [menuView, gameView]
 	, background = Just black
 	}
 
 menuView :: View ClientState
-menuView = (makeView (0, 100, 0, 768))
-	{ viewID = "menu"
-	, background = Just red
+menuView = (makeView "menu" (0, 100, 0, 768))
+	{ background = Just red
 	}
 
 gameView :: View ClientState
-gameView = (makeView (100, 1024, 0, 768))
-	{ viewID = "game"
-	, background = Just green
+gameView = (makeView "game" (100, 1024, 0, 768))
+	{ background = Just green
 	, eventHandler = Just (\_ clientState ->
 		clientState { uiState = changeView "game" (\v -> if background v == Just green
 			then v { background = Just blue }

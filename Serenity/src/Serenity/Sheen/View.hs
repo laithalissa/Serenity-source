@@ -19,21 +19,22 @@ import Serenity.Sheen.UIEvent
 import Serenity.Sheen.Util
 
 data View world = View 
-	{ viewID :: String
-	, subviews :: [View world]
-	, frame :: Extent
-	, zIndex :: Int
-	, background :: Maybe Color
-	, depict :: Maybe (world -> Picture)
-	, eventHandler :: Maybe (UIEvent -> world -> world)
+	{ viewID :: String -- ^ Unique identifier for the view
+	, subviews :: [View world] -- ^ List of views below this one
+	, frame :: Extent -- ^ Rectangular area the view represents
+	, zIndex :: Int -- ^ Stack position of the view
+	, background :: Maybe Color -- ^ Background colour
+	, depict :: Maybe (world -> Picture) -- ^ Callback to draw world state within the view
+	, eventHandler :: Maybe (UIEvent -> world -> world) -- ^ Callback to handle UIEvents
 	}
 
-instance Show (View a) where
-	show (View { viewID = id, subviews = sub, background = bg }) = id ++ ": " ++ show bg ++ show (map show sub)
-
-makeView :: (Int, Int, Int, Int) -> View world
-makeView (xmin, xmax, ymin, ymax) = View 
-	{ viewID = ""
+-- | Create new view
+makeView ::
+	String                  -- ^ Unique identifier for the view
+	-> (Int, Int, Int, Int) -- ^ Coordinates of the view: (xmin, xmax, ymin, ymax)
+	-> View world
+makeView ident (xmin, xmax, ymin, ymax) = View 
+	{ viewID = ident
 	, frame = makeExtent ymax ymin xmax xmin
 	, subviews = []
 	, zIndex = 0
@@ -42,7 +43,11 @@ makeView (xmin, xmax, ymin, ymax) = View
 	, eventHandler = Nothing
 	}
 
-drawView :: View world -> world -> Picture
+-- | Draw a view hierarchy
+drawView ::
+	View world -- ^ Root of the hierarchy to draw
+	-> world   -- ^ The world state to be used during drawing
+	-> Picture
 drawView view world = Translate (fromIntegral xmin) (fromIntegral ymin) $ Pictures $ bg ++ pict ++ children
 	where
 	(ymax, ymin, xmax, xmin) = takeExtent $ frame view
@@ -57,7 +62,15 @@ drawView view world = Translate (fromIntegral xmin) (fromIntegral ymin) $ Pictur
 
 	children = map (\v -> drawView v world) (orderViews $ subviews view)
 
-handleViewEvent :: Event -> View world -> world -> world
+-- | Handle a Gloss event
+-- This function gets the event handler from the deepest view in the
+-- hierarchy that is within the scope of the event and applies it to
+-- the given world state
+handleViewEvent ::
+	Event         -- ^ The event to react to
+	-> View world -- ^ View hierarchy
+	-> world      -- ^ Current world state
+	-> world
 handleViewEvent event view =
 	case eventToUIEvent $ translateEvent (fromIntegral $ 1024 `div` 2) (fromIntegral $ 768 `div` 2) event of
 		Just uiEvent -> case getEventHandler uiEvent view of
@@ -81,6 +94,16 @@ getEventHandler event@(ViewClick point _) view =
 
 getEventHandler _ _ = Nothing
 
+-- | Change something about a specific view in a view hierarchy
+changeView ::
+	String                -- ^ The ID of the view to change
+	-> (View a -> View a) -- ^ Function that performs the change
+	-> View a             -- ^ View hierarchy containing the target view
+	-> View a
+changeView id f view
+	| viewID view == id = f view
+	| otherwise = view { subviews = map (changeView id f) (subviews view) }
+
 orderViews :: [View world] -> [View world]
 orderViews = sortBy (comparing zIndex)
 
@@ -92,7 +115,3 @@ translateUIEvent :: Int -> Int -> UIEvent -> UIEvent
 translateUIEvent x y (ViewClick (clickX, clickY) button) = ViewClick newPoint button
 	where newPoint = (clickX + (fromIntegral x), clickY + (fromIntegral y))
 
-changeView :: String -> (View a -> View a) -> View a -> View a
-changeView id f view
-	| viewID view == id = f view
-	| otherwise = view { subviews = map (changeView id f) (subviews view) }

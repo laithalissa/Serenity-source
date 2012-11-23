@@ -1,10 +1,10 @@
 module Serenity.Sheen.View
-	( View (..)
-	, makeView
-	, drawView
-	, handleViewEvent
-	, changeView
-	)
+(	View (..)
+,	makeView
+,	drawView
+,	handleViewEvent
+,	changeView
+)
 where
 
 import Graphics.Gloss
@@ -19,13 +19,13 @@ import Serenity.Sheen.UIEvent
 import Serenity.Sheen.Util
 
 data View world = View 
-	{ viewID :: String -- ^ Unique identifier for the view
-	, subviews :: [View world] -- ^ List of views below this one
-	, frame :: Extent -- ^ Rectangular area the view represents
-	, zIndex :: Int -- ^ Stack position of the view
-	, background :: Maybe Color -- ^ Background colour
-	, depict :: Maybe (world -> Picture) -- ^ Callback to draw world state within the view
-	, eventHandler :: Maybe (UIEvent -> world -> world) -- ^ Callback to handle UIEvents
+	{	viewID :: String                   -- ^ Unique identifier for the view
+	,	subviews :: [View world]           -- ^ List of views below this one
+	,	frame :: Extent                    -- ^ Rectangular area the view represents
+	,	zIndex :: Int                      -- ^ Stack position of the view
+	,	background :: Maybe Color          -- ^ Background colour
+	,	depict :: Maybe (world -> Picture) -- ^ Callback to draw world state within the view
+	,	eventHandler :: Maybe (UIEvent -> world -> world) -- ^ Callback to handle UIEvents
 	}
 
 -- | Create new view
@@ -33,14 +33,15 @@ makeView ::
 	String                  -- ^ Unique identifier for the view
 	-> (Int, Int, Int, Int) -- ^ Coordinates of the view: (xmin, xmax, ymin, ymax)
 	-> View world
+
 makeView ident (xmin, xmax, ymin, ymax) = View 
-	{ viewID = ident
-	, frame = makeExtent ymax ymin xmax xmin
-	, subviews = []
-	, zIndex = 0
-	, background = Nothing
-	, depict = Nothing
-	, eventHandler = Nothing
+	{	viewID = ident
+	,	frame = makeExtent ymax ymin xmax xmin
+	,	subviews = []
+	,	zIndex = 0
+	,	background = Nothing
+	,	depict = Nothing
+	,	eventHandler = Nothing
 	}
 
 -- | Draw a view hierarchy

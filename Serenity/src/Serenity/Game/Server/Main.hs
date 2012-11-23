@@ -25,13 +25,13 @@ readInput sock tvar = do
 	atomically $ writeTVar tvar (packetData packet)
 	putStrLn $ "[" ++ (show client) ++ "] " ++ (show packet)
 
----- | Run the server with given update functions.
+-- | Run the server with given update functions.
 --play :: forall world
---	 .  Int                                     -- ^ Number of simulation steps to take for each second of real time.
---	 -> PortNumber                              -- ^ Port to listen on
---	 -> world                                   -- ^ The initial world.
---	 -> ([Message] -> world -> world)           -- ^ A function to handle messages from clients.
---	 -> (Double -> world -> (world, [Message])) -- ^ A function to step the world one iteration, given the past time
+--	 .  Int                            -- ^ Number of simulation steps to take for each second of real time.
+--	 -> PortNumber                     -- ^ Port to listen on
+--	 -> world                          -- ^ The initial world.
+--	 -> ([Message] -> world -> world)  -- ^ A function to handle messages from clients.
+--	 -> (Double -> world -> [Message]) -- ^ A function to step the world one iteration, given the past time
 --	 -> IO ()
 
 --play rate initialWord messageUpdate timeUpdate = do
@@ -59,7 +59,7 @@ updateWorld :: ([Message] -> world -> world)           -- ^ A function to handle
 updateWorld messageUpdate timeUpdate world messages time = timeUpdate time (messageUpdate messages world)
 
 -- | Run the update with the requisite communication over the network
---network :: (world -> [Message] -> Double -> (world, [Message]) -> (inbox, outbox) -> world -> Double  -> IO world
+--network :: (world -> [Message] -> Double -> (world, [Message])) -> (inbox, outbox) -> world -> Double  -> IO world
 --network calculate (inbox, outbox) world time = do
 --	inMessages <- read inbox
 --	(newWorld, outMessages) <- return $ calculate world inMessages time

@@ -25,12 +25,17 @@ main = do
 		(\event w -> return $ handleInput event w)
 		(\f w -> return $ step f w)
 
---handleEvent :: Event -> ClientState -> IO ClientState
---handleEvent event clientState = do
+createGame :: Assets.Assets -> (Int, Int) -> Game
+createGame assets windowSize = ClientState.initialize assets windowSize exampleGameMap
+
+assetsIO = Assets.initialize :: IO Assets.Assets
+
+--handleInputAndIO :: Event -> ClientState -> IO ClientState
+--handleInputAndIO event clientState = do
 --	newClientState <- return $ newClientStateFromEvent event clientState 
 
 --	-- ...
---	-- send messages to server
+--	-- send commands to server
 --	-- ...
 
 --	return newClientState 
@@ -42,9 +47,4 @@ main = do
 --	-- ...
 
 --	return clientState
-
-createGame :: Assets.Assets -> (Int, Int) -> Game
-createGame assets windowSize = ClientState.initialize assets windowSize exampleGameMap
-
-assetsIO = Assets.initialize :: IO Assets.Assets
 

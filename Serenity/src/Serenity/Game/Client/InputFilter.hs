@@ -1,4 +1,4 @@
-module Serenity.Game.Server.InputFilter
+module Serenity.Game.Client.InputFilter
 (	InputFilter
 ,	initialize
 ,	handleInput

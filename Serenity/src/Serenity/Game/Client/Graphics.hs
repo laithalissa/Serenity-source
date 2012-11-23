@@ -1,4 +1,4 @@
-module Serenity.Game.Server.Graphics
+module Serenity.Game.Client.Graphics
 (	Graphics
 ,	WindowSize
 ,	initialize
@@ -32,15 +32,10 @@ import Serenity.Game.Model.GameMap
 		)
 	,	SpaceLane(SpaceLane)
 	)
-import Serenity.Game.Server.Assets(Assets, getPicture, getPictureSized)
-import Serenity.Game.Server.World(World(gameMap, entities))
-
+import Serenity.Game.Client.Assets(Assets, getPicture, getPictureSized)
+import Serenity.Game.Model.GameState(GameState(gameMap, entities))
 
 type WindowSize = (Int, Int)
-
-initialize :: World -> Assets -> WindowSize -> Graphics
-handleMessage :: GraphicsMessage -> Graphics -> Graphics
-render :: World -> Graphics -> Picture
 
 data Graphics =
 	Graphics  
@@ -50,8 +45,9 @@ data Graphics =
 	} 
 	deriving (Show, Eq)
 
+initialize :: GameState -> Assets -> WindowSize -> Graphics
 initialize world assets windowSize =
-	Graphics          
+	Graphics
 	{	assets=assets
 	,	windowSize=windowSize
 	,	viewPort=(0, 0, width, height)
@@ -60,9 +56,11 @@ initialize world assets windowSize =
 		width = (fst . gameMapSize . gameMap) world
 		height = (snd . gameMapSize . gameMap) world
 
+handleMessage :: GraphicsMessage -> Graphics -> Graphics
 handleMessage (ClientScroll viewport) graphics = graphics{viewPort=viewport}
 handleMessage message graphics = graphics
-        
+
+render :: GameState -> Graphics -> Picture
 render world graphics = pictures 
 	[	background
 	,	(drawWorldToWindow . renderInWorld) world
@@ -79,7 +77,7 @@ render world graphics = pictures
 		vpy = viewPortY graphics 
 		vpw = viewPortWidth graphics
 		vph = viewPortHeight graphics
-                          
+
 		renderInWorld world = pictures
 			[	pictures $ map spaceLaneF (worldSpaceLanes world)
 			,	pictures $ map planetF (worldPlanets world)

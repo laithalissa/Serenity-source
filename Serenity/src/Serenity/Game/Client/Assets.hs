@@ -1,4 +1,4 @@
-module Serenity.Game.Server.Assets
+module Serenity.Game.Client.Assets
 (	Assets
 ,	initialize
 ,	getPicture

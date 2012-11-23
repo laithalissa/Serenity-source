@@ -16,10 +16,10 @@ import Serenity.Game.Model.ShipClass(ShipClass(..), WeaponSlotType(..))
 import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.ShipOrder(ShipOrder(..))
 import Serenity.Game.Model.Entity(Entity(..))
-import Serenity.Game.Server.KeyboardState(KeyboardState, initKeyboardState, handleKeyEvent, isKeyDown)
-import qualified Serenity.Game.Server.Assets as Assets
+import Serenity.Game.Client.KeyboardState(KeyboardState, initKeyboardState, handleKeyEvent, isKeyDown)
+import qualified Serenity.Game.Client.Assets as Assets
 
-import Serenity.Game.Server.Game(Game, initialize, render, handleInput, step)
+import Serenity.Game.Client.ClientState(Game, initialize, render, handleInput, step)
 
 runWindowSize = (600, 400)
 

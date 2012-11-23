@@ -16,16 +16,24 @@ build:
 	cabal configure --enable-tests
 	cabal build
 
-prepareEnvironment:
+dist: build
 	mkdir -p ${environmentDir}
 	cp -r ${resDir}/* ${environmentDir}
 	cp ${cabalBuildFile} "${environmentDir}/${runFile}"
 	chmod a+x "${environmentDir}/${runFile}"
 
-run: build prepareEnvironment
-	make cached
+client: dist
+	make clientCached
 
-cached:
+server: dist
+	make serverCached
+
+
+clientCached:
+	cd ${environmentDir}; \
+	./${runFile} client
+
+serverCached:
 	cd ${environmentDir}; \
 	./${runFile} server
 

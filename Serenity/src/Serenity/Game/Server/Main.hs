@@ -16,9 +16,11 @@ import Serenity.Network.Message
 
 port = 9900
 
-main = do
-	connection <- runListen port
-	return ()
+main = print "sup"
+
+-- main = do
+-- 	connection <- runListen port
+-- 	return ()
 
 readInput sock tvar = do
 	(packet, client) <- receivePacket sock

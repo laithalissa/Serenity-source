@@ -3,7 +3,7 @@ module Main
 ) 
 where
 
-import qualified Serenity.Game.Server.Server as Server
+import qualified Serenity.Game.Server.Main as Server
 import qualified Serenity.Game.Client.Main as Client
 
 import Control.Monad (liftM)

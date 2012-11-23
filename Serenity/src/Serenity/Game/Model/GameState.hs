@@ -1,5 +1,5 @@
-module Serenity.Game.Server.World
-(	World(..)
+module Serenity.Game.Model.GameState
+(	GameState(..)
 ,	initialize
 ,	step
 ,	handleMessage
@@ -11,22 +11,22 @@ import Serenity.Game.Model.Common(TimeDuration)
 import Serenity.Game.Model.Entity(Entity)
 import Serenity.Game.Model.GameMap(GameMap)
 
-initialize :: GameMap -> World
-step :: TimeDuration -> World -> World
-handleMessage :: WorldMessage -> World -> World
-
-data World =
-	World
+data GameState =
+	GameState
 	{	gameMap :: GameMap
 	,	entities :: [Entity]
 	}
 	deriving (Show, Eq)
 
+initialize :: GameMap -> GameState
 initialize gameMap = 
-	World  
+	GameState  
 	{	gameMap=gameMap
 	,	entities=[]
 	}
 
+step :: TimeDuration -> GameState -> GameState
 step timeDelta world = world
+
+handleMessage :: WorldMessage -> GameState -> GameState
 handleMessage message world = world

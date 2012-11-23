@@ -1,4 +1,4 @@
-module Serenity.Game.Server.Assets
+module Serenity.Game.Client.Assets
 (	Assets
 ,	initialize
 ,	getPicture
@@ -21,16 +21,13 @@ import Graphics.Gloss.Data.Picture
 
 import qualified Data.Map as Map
 
-initialize :: IO Assets
-getPicture :: String -> Assets -> Picture
-getPictureSized :: String -> Float -> Float -> Assets -> Picture
-sizeTo :: Float -> Float -> Picture -> Picture
 
 data Assets = Assets
 	{	textures :: Map.Map String Picture
 	} 
 	deriving(Eq, Show)
 
+initialize :: IO Assets
 initialize = do
 	planet1 <- loadBMP "planet1.bmp"        	              
 	background <- loadBMP "background.bmp"
@@ -45,15 +42,18 @@ initialize = do
 	return Assets{textures=assets}
 
 
+getPicture :: String -> Assets -> Picture
 getPicture name assets =                
 	case (Map.lookup name $ textures assets) of
 		Just asset -> asset                  
 		Nothing -> color red $ text ("Couldn't load asset " ++ name)
 
+getPictureSized :: String -> Float -> Float -> Assets -> Picture
 getPictureSized name nWidth nHeight assets = 
 	sizeTo nWidth nHeight (getPicture name assets)
 
 
+sizeTo :: Float -> Float -> Picture -> Picture
 sizeTo nWidth nHeight image@(Blank) = image
 
 sizeTo nWidth nHeight image@(Translate width height subImage) = 

@@ -1,4 +1,4 @@
-module Serenity.Game.Server.KeyboardState where
+module Serenity.Game.Client.KeyboardState where
 
 import Data.Set as Set
 import Graphics.Gloss.Interface.Pure.Game (Key(..), KeyState(..))

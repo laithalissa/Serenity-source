@@ -1,11 +1,16 @@
-module Serenity.Game.Model.Entity where
+module Serenity.Game.Model.Entity
+(	Entity(..)
+,	module Serenity.Game.Model.ShipOrder
+) where
 
 import Serenity.Game.Model.ShipOrder
+import Serenity.Game.Model.ShipClass
 import Serenity.Game.Model.Common
 
 data Entity =
 	Ship
 	{	shipId :: Int
+	,	shipClass :: Int
 	,	shipLocation :: Location
 	,	shipDirection :: Direction
 	,	shipSpeed :: Direction
@@ -19,8 +24,9 @@ data Entity =
 	{	shipId :: Int
 	}
 	| Bullet
-	{	location :: Location
-	,	direction :: Direction
-	,	speed :: Float
+	{	bulletLocation :: Location
+	,	bulletDirection :: Direction
+	,	bulletSpeed :: Float
 	}
-	deriving (Show, Ord, Eq)
+	deriving (Show, Eq)
+

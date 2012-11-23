@@ -2,22 +2,47 @@
 
 module Serenity.Network.Message 
 (	Message (..)
+,	Update(..)
+,	Command(..)
+,	Entity(..)
+,	ShipOrder(..)
 )
 where
+
+import Serenity.Game.Model.Entity 
 
 import Data.Word (Word32, Word16)
 import Data.Binary
 import Data.DeriveTH
 
 data Message = 
-	Empty
-	| UpdateLocation
-	{	entityId :: Word32
-	,	location :: (Word16, Word16)
+	  UpdateMessage Update
+	| CommandMessage Command
+	| Empty
+	deriving (Show, Eq)
+
+data Update = 
+	UpdateEntity
+	{	entity :: Entity
 	}
-	| KillShip
-	{	entityId :: Word32
+	| AddEntity
+	{	entity :: Entity
+	}
+	| DeleteEntity
+	{	entity :: Entity
 	}
 	deriving (Show, Eq)
 
+data Command = 
+	GiveOrder
+	{	entityId :: Int
+	,	order :: ShipOrder
+	}
+	deriving (Show, Eq)
+
+-- More Magic
+$(derive makeBinary ''ShipOrder)
+$(derive makeBinary ''Entity)
+$(derive makeBinary ''Update)
+$(derive makeBinary ''Command)
 $(derive makeBinary ''Message)

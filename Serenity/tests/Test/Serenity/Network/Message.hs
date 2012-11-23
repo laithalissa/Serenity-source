@@ -16,7 +16,11 @@ import Data.Derive.Arbitrary
 import Serenity.Network.Message
 import Data.Binary (Binary(..), encode, decode)
 
+$(derive makeArbitrary ''ShipOrder)
+$(derive makeArbitrary ''Entity)
 $(derive makeArbitrary ''Message)
+$(derive makeArbitrary ''Update)
+$(derive makeArbitrary ''Command)
 
 tests = testGroup "Network Utility Tests"
 	[	testProperty "Test converting to binary and back returns the same message" propertyGetPutIsID

@@ -12,7 +12,7 @@ import Test.HUnit
 import Test.QuickCheck
 
 import Serenity.Game.Server.Main
-import Serenity.Network.Message (Message(Empty))
+import Serenity.Network.Message
 
 tests = testGroup "Server Main Tests"
 	[	testProperty "Test updateWorld with id" propertyUpdateWorldOnID

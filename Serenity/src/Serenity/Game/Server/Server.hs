@@ -1,4 +1,3 @@
-
 module Serenity.Game.Server.Server where
 
 import Control.Wire
@@ -26,32 +25,30 @@ runWindowSize = (600, 400)
 
 main :: IO ()
 main = do
-  assets <- assetsIO
-  play (InWindow "Serenity" runWindowSize (100, 100)) black 5 (createGame assets) render handleInput step
-  
-  
+	assets <- assetsIO
+	play (InWindow "Serenity" runWindowSize (100, 100)) black 5 (createGame assets) render handleInput step
+
 createGame :: Assets.Assets -> Game
 createGame assets = initialize assets runWindowSize gameMap
-  
+
 assetsIO = Assets.initialize :: IO Assets.Assets
-  
+
 gameMap = GameMap 
 	{	gameMapName = "My First Map"
 	,	gameMapSize = (100, 100)
-	,	gameMapSpawnPoints=[(50, 50)]				   
+	,	gameMapSpawnPoints=[(50, 50)]
 	,	gameMapPlanets = 
-			[	createPlanet "Earth" (50, 50)                                             
-			,	createPlanet "Mars" (10, 10)   
-                	,	createPlanet "Pluto" (90, 10)                                             
+			[	createPlanet "Earth" (50, 50)
+			,	createPlanet "Mars" (10, 10)
+			,	createPlanet "Pluto" (90, 10)
 			]
 	,	gameMapSpaceLanes=[SpaceLane "Earth" "Mars"]
-        }
-      where
-        createPlanet name location = 
-		Planet 
-		{	planetName=name
-		,	planetType="planet1"                  
-		,	planetLocation=location
-		,	planetDirection=(0,1)
-		,	planetResources=Resources{fuel=10, antiMatter=10, metal=10}                       
-		}
+	}
+	where
+		createPlanet name location = Planet 
+			{	planetName=name
+			,	planetType="planet1"
+			,	planetLocation=location
+			,	planetDirection=(0,1)
+			,	planetResources=Resources{fuel=10, antiMatter=10, metal=10}
+			}

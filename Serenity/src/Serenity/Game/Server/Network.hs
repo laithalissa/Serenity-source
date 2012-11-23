@@ -1,4 +1,3 @@
-
 module Serenity.Game.Server.Network where
 -- ( newClientSocket
 -- , newServerSocket

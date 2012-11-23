@@ -1,4 +1,3 @@
-
 module Serenity.Game.Server.World
 (	World(..)
 ,	initialize
@@ -22,12 +21,12 @@ data World =
 	,	entities :: [Entity]
 	}
 	deriving (Show, Eq)
-        
+
 initialize gameMap = 
 	World  
 	{	gameMap=gameMap
 	,	entities=[]
 	}
-        
+
 step timeDelta world = world
 handleMessage message world = world

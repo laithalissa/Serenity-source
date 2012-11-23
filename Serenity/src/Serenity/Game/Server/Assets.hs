@@ -1,4 +1,3 @@
-
 module Serenity.Game.Server.Assets
 (	Assets
 ,	initialize
@@ -27,8 +26,7 @@ getPicture :: String -> Assets -> Picture
 getPictureSized :: String -> Float -> Float -> Assets -> Picture
 sizeTo :: Float -> Float -> Picture -> Picture
 
-data Assets = 
-	Assets
+data Assets = Assets
 	{	textures :: Map.Map String Picture
 	} 
 	deriving(Eq, Show)

@@ -1,4 +1,3 @@
-
 module Serenity.Game.Model.ClientMessage where
 
 import Serenity.Game.Model.Entity

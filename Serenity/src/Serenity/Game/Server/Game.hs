@@ -1,4 +1,3 @@
-
 module Serenity.Game.Server.Game
 (	Game
 ,	initialize
@@ -19,33 +18,26 @@ import Serenity.Game.Model.ClientMessage(ClientMessage(..))
 import Serenity.Game.Model.Common(TimeDuration)
 import Serenity.Game.Model.GameMap(GameMap)
 
-
-initialize :: Assets -> Graphics.WindowSize -> GameMap -> Game
-render :: Game -> Picture
-handleInput :: Event -> Game -> Game
-step :: TimeDuration -> Game -> Game
-
-data Game = 
-	Game   
-        {	world :: World.World
+data Game = Game
+	{	world :: World.World
 	,	graphics :: Graphics.Graphics
 	,	inputFilter :: InputFilter.InputFilter
-	}                 	
+	}
 	deriving(Show, Eq)
-	        
 
-initialize assets windowSize gameMap =
-	Game
-        {	world=firstWorld
+initialize :: Assets -> Graphics.WindowSize -> GameMap -> Game
+initialize assets windowSize gameMap = Game
+	{	world=firstWorld
 	,	graphics=Graphics.initialize firstWorld assets windowSize
 	,	inputFilter=InputFilter.initialize
 	}
 	where
 		firstWorld = World.initialize gameMap
 
-
+render :: Game -> Picture
 render game = Graphics.render (world game) (graphics game)
 
+handleInput :: Event -> Game -> Game
 handleInput event game =
 	case (InputFilter.handleInput event . inputFilter) game of
 		(Just clientMessage, newInputFilter) -> case clientMessage of
@@ -55,4 +47,5 @@ handleInput event game =
 					game{world=((World.handleMessage worldMessage . world) game)}
 		(Nothing, newInputFilter) -> game{inputFilter=newInputFilter}
 
+step :: TimeDuration -> Game -> Game
 step timeDelta game = game{world=(World.step timeDelta (world game))}

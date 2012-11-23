@@ -1,4 +1,3 @@
-
 module Serenity.Game.Server.Graphics
 (	Graphics
 ,	WindowSize
@@ -57,19 +56,18 @@ initialize world assets windowSize =
 	,	windowSize=windowSize
 	,	viewPort=(0, 0, width, height)
 	}
-		where
+	where
 		width = (fst . gameMapSize . gameMap) world
 		height = (snd . gameMapSize . gameMap) world
 
-handleMessage (ClientScroll viewport) graphics = 
-	graphics{viewPort=viewport}
+handleMessage (ClientScroll viewport) graphics = graphics{viewPort=viewport}
 handleMessage message graphics = graphics
         
 render world graphics = pictures 
 	[	background
 	,	(drawWorldToWindow . renderInWorld) world
 	]
-		where
+	where
 		background = getPictureSized "background" ww wh (assets graphics)
 		drawWorldToWindow = translateWorld . scaleWorld
 		scaleWorld = scale (ww/vpw) (wh/vph)
@@ -115,8 +113,6 @@ render world graphics = pictures
 				(fst $ shipLocation entity) 
 				(snd $ shipLocation entity)
 				(getPicture "ship1" (assets graphics))
-
-
 
 
 viewPortX = (flip (!!)) 0 . toList4 . viewPort

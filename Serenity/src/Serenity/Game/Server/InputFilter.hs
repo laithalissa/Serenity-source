@@ -1,4 +1,3 @@
-
 module Serenity.Game.Server.InputFilter
 (	InputFilter
 ,	initialize
@@ -19,16 +18,14 @@ import Serenity.Game.Model.ClientMessage
 	,	WorldMessage(..)
 	)
 
+data InputFilter =
+	InputFilter
+	deriving (Show, Eq)
 
 initialize :: InputFilter 
-handleInput :: Event -> inputFilter -> (Maybe ClientMessage, inputFilter)
-
-data InputFilter =
-	InputFilter  	        	          
-	deriving (Show, Eq)        
-
 initialize = InputFilter
 
+handleInput :: Event -> inputFilter -> (Maybe ClientMessage, inputFilter)
 handleInput event inputFilter = (Just $ handleInput event, inputFilter) 
 	where
 		handleInput (EventKey key keyState modifiers mouse) = case key of

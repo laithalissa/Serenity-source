@@ -1,8 +1,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-
-module Serenity.Game.Server.GameState where
+module Serenity.Game.Server.GameState
+() where
 
 import Graphics.Gloss.Interface.Pure.Game(play)
 import Graphics.Gloss.Data.Picture(Picture(..), loadBMP, text, color, pictures, scale, translate, line, rotate)
@@ -19,14 +19,4 @@ import Serenity.Game.Model.Entity(Entity(..))
 import Serenity.Game.Server.InputFilter(InputFilter, initialize, handleInput)
 import qualified Data.Map as Map
 
-	
-
-
-        
-        
-  
 type WindowSize = (Int, Int)
-
-
-
-

@@ -22,7 +22,8 @@ executable serenity
         array,
         astar,
         gloss == 1.7.6.6,
-        netwire == 4.0.5
+        netwire == 4.0.5,
+        derive
     hs-source-dirs: src
     ghc-options:    -W -threaded -rtsopts
 

@@ -1,69 +1,81 @@
 module Serenity.Game.Client.ClientState
-(	Game(..)
+(	ClientState(..)
 ,	initialize
 ,	render
 ,	handleInput
-,	step
-,	ClientState(..)
-,	UIState(..)
 ) where
 
-import Graphics.Gloss.Data.Picture(Picture)
-import Graphics.Gloss.Interface.Pure.Game(Event)
+import Graphics.Gloss.Data.Picture (Picture)
+import Graphics.Gloss.Interface.Pure.Game (Event)
 
-import Serenity.Game.Client.Assets(Assets)
-import qualified Serenity.Game.Client.Graphics as Graphics
-import qualified Serenity.Game.Client.InputFilter  as InputFilter
+import Serenity.Network.Message (Command)
 
-import Serenity.Game.Shared.Model.GameState (GameState)
+import Serenity.Game.Client.Common
+
+import Serenity.Game.Client.Assets (Assets)
+
+import qualified Serenity.Game.Client.GUI as GUI
+
+import Serenity.Game.Client.InputFilter (InputFilter)
+import qualified Serenity.Game.Client.InputFilter as InputFilter
+
+import Serenity.Game.Client.UIState (UIState(..))
+
+import Serenity.Game.Shared.Model.GameState (GameState, gameMap)
 import qualified Serenity.Game.Shared.Model.GameState as GameState
 
-import Serenity.Game.Shared.Model.ClientMessage(ClientMessage(..))
-import Serenity.Game.Shared.Model.Common(TimeDuration)
-import Serenity.Game.Shared.Model.GameMap(GameMap)
+import Serenity.Game.Shared.Model.ClientMessage (ClientMessage(..))
+import Serenity.Game.Shared.Model.Common
+import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
+
+import Serenity.Sheen.View
 
 
-
-import Serenity.Game.Client.UIState
-
+-- | Represents the state of the client including the current game state
+-- and GUI's state
 data ClientState = ClientState
-	{ messages :: [String] -- XXX should be Messages
-	, uiState :: UIState ClientState
-	-- gameState :: GameState
+	{	gameState :: GameState         -- ^ State of the game world, e.g. ship positions
+	,	uiState :: UIState ClientState -- ^ State of the GUI, e.g. view hierarchy
+	,	commands :: [Command]          -- ^ List of commands to send to the server
+	,	inputFilter :: InputFilter
+	,	assets :: Assets
 	}
 
-
-
-data Game = Game
-	{	gameState :: GameState
-	,	graphics :: Graphics.Graphics
-	,	inputFilter :: InputFilter.InputFilter
-	}
-	deriving(Show, Eq)
-
-initialize :: Assets -> Graphics.WindowSize -> GameMap -> Game
-initialize assets windowSize gameMap = Game
-	{	gameState=firstWorld
-	,	graphics=Graphics.initialize firstWorld assets windowSize
-	,	inputFilter=InputFilter.initialize
+-- | Create the initial client state
+initialize ::
+	Assets                 -- ^ Assets
+	-> GameMap             -- ^ Map
+	-> ClientState
+initialize assets gameMap = ClientState
+	{	gameState = game
+	,	uiState = initUIState game
+	,	commands = []
+	,	inputFilter = InputFilter.initialize
+	,	assets = assets
 	}
 	where
-		firstWorld = GameState.initialize gameMap
+		game = GameState.initialize gameMap
 
-render :: Game -> Picture
-render game = Graphics.render (gameState game) (graphics game)
+render :: ClientState -> Picture
+render clientState = GUI.render (gameState clientState) (uiState clientState) (assets clientState)
 
-handleInput :: Event -> Game -> Game
+handleInput :: Event -> ClientState -> ClientState
 handleInput event game =
 	case (InputFilter.handleInput event . inputFilter) game of
 		(Just clientMessage, newInputFilter) -> case clientMessage of
-			ClientMessageGraphics graphicsMessage ->
-				game{graphics=((Graphics.handleMessage graphicsMessage . graphics) game)}
+			ClientMessageGraphics guiMessage ->
+				game { uiState = GUI.handleMessage guiMessage . uiState $ game }
 			ClientMessageWorld worldMessage ->
-					game{gameState=((GameState.handleMessage worldMessage . gameState) game)}
-		(Nothing, newInputFilter) -> game{inputFilter=newInputFilter}
+					game { gameState = GameState.handleMessage worldMessage . gameState $ game }
+		(Nothing, newInputFilter) -> game { inputFilter = newInputFilter }
 
-step :: TimeDuration -> Game -> Game
-step timeDelta game = game{gameState=(GameState.step timeDelta (gameState game))}
+initUIState :: GameState -> UIState ClientState
+initUIState gameState = UIState
+	{	views = mainView
+	,	viewPort = (0, 0, width, height)
+	}
+	where
+		(width, height) = gameMapSize $ gameMap gameState
 
-
+mainView :: View ClientState
+mainView = makeView "main" (0, fst windowSize, 0, snd windowSize)

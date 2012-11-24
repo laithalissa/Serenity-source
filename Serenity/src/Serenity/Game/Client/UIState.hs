@@ -1,5 +1,10 @@
 module Serenity.Game.Client.UIState where
 
+import Serenity.Game.Shared.Model.Common
+
 import Serenity.Sheen.View
 
-type UIState a = View a
+data UIState a = UIState
+	{	views :: View a
+	,	viewPort :: ViewPort
+	}

@@ -5,46 +5,46 @@ where
 
 import Graphics.Gloss.Interface.IO.Game
 
-import Serenity.Game.Client.ClientState (Game, render, step, handleInput)
+import Serenity.Game.Client.ClientState (ClientState, render, handleInput)
 import qualified Serenity.Game.Client.ClientState as ClientState
-import Serenity.Game.Client.Controller
-import Serenity.Game.Client.Assets (Assets(..), initialize)
+
+import Serenity.Game.Client.Common
+
+import Serenity.Game.Client.Assets (Assets(..))
 import qualified Serenity.Game.Client.Assets as Assets
+
 import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
 main :: IO ()
 main = do
-	assets <- assetsIO
-	let windowSize = (1024, 768)
+	assets <- Assets.initialize
 	playIO
 		(InWindow "Virtual Balloon Commander" windowSize (0, 0))
 		white
 		20
-		(createGame assets windowSize)
+		(initClientState assets)
 		(return . render)
-		(\event w -> return $ handleInput event w)
-		(\f w -> return $ step f w)
+		handleEvent
+		handleStep
 
-createGame :: Assets.Assets -> (Int, Int) -> Game
-createGame assets windowSize = ClientState.initialize assets windowSize exampleGameMap
+-- | Create the initial client state
+initClientState :: Assets -> ClientState
+initClientState assets = ClientState.initialize assets exampleGameMap
 
-assetsIO = Assets.initialize :: IO Assets.Assets
+handleEvent :: Event -> ClientState -> IO ClientState
+handleEvent event clientState = do
+	newClientState <- return $ handleInput event clientState
 
---handleInputAndIO :: Event -> ClientState -> IO ClientState
---handleInputAndIO event clientState = do
---	newClientState <- return $ newClientStateFromEvent event clientState
+	-- ...
+	-- send commands to server
+	-- ...
 
---	-- ...
---	-- send commands to server
---	-- ...
+	return newClientState
 
---	return newClientState
+handleStep :: Float -> ClientState -> IO ClientState
+handleStep delta clientState = do
+	-- ...
+	-- handle new messages from server
+	-- ...
 
---handleStep :: Float -> ClientState -> IO ClientState
---handleStep delta clientState = do
---	-- ...
---	-- handle new messages from server
---	-- ...
-
---	return clientState
-
+	return clientState

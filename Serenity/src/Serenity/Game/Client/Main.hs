@@ -10,7 +10,7 @@ import qualified Serenity.Game.Client.ClientState as ClientState
 import Serenity.Game.Client.Controller
 import Serenity.Game.Client.Assets (Assets(..), initialize)
 import qualified Serenity.Game.Client.Assets as Assets
-import Serenity.Game.Model.GameMap (exampleGameMap)
+import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
 main :: IO ()
 main = do

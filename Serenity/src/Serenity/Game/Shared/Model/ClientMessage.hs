@@ -1,7 +1,7 @@
-module Serenity.Game.Model.ClientMessage where
+module Serenity.Game.Shared.Model.ClientMessage where
 
-import Serenity.Game.Model.Entity
-import Serenity.Game.Model.Common
+import Serenity.Game.Shared.Model.Entity
+import Serenity.Game.Shared.Model.Common
 
 data ClientMessage =
 	ClientMessageGraphics GraphicsMessage |

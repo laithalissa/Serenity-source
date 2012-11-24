@@ -1,11 +1,11 @@
-module Serenity.Game.Model.Entity
+module Serenity.Game.Shared.Model.Entity
 (	Entity(..)
-,	module Serenity.Game.Model.ShipOrder
+,	module Serenity.Game.Shared.Model.ShipOrder
 ) where
 
-import Serenity.Game.Model.ShipOrder
-import Serenity.Game.Model.ShipClass
-import Serenity.Game.Model.Common
+import Serenity.Game.Shared.Model.ShipOrder
+import Serenity.Game.Shared.Model.ShipClass
+import Serenity.Game.Shared.Model.Common
 
 data Entity =
 	Ship

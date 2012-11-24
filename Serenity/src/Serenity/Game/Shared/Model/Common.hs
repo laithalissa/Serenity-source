@@ -1,4 +1,5 @@
-module Serenity.Game.Model.Common where
+
+module Serenity.Game.Shared.Model.Common where
 
 type ViewPort = (Float, Float, Float, Float)
 type EntityId = Int
@@ -11,12 +12,8 @@ type Orientation = (Float, Float, Float, Float)
 type Size = (Float, Float)
 
 --data Resource = Metal { amount :: Float } | Fuel { amount :: Float } | AntiMatter { amount :: Float }
-data Resources = Resources
-	{	fuel :: Float
-	,	antiMatter :: Float
-	,	metal :: Float
-	}
-	deriving(Show, Eq)
+data Resources = Resources { fuel :: Float, antiMatter :: Float, metal :: Float } deriving(Show, Eq)
+
 
 -- helper functions --
 toList2 (a1, a2) = [a1, a2]

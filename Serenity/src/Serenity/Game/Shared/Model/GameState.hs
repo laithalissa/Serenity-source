@@ -1,4 +1,4 @@
-module Serenity.Game.Model.GameState
+module Serenity.Game.Shared.Model.GameState
 (	GameState(..)
 ,	initialize
 ,	step
@@ -6,10 +6,10 @@ module Serenity.Game.Model.GameState
 ,	gameMap
 ) where
 
-import Serenity.Game.Model.ClientMessage(WorldMessage)
-import Serenity.Game.Model.Common(TimeDuration)
-import Serenity.Game.Model.Entity(Entity)
-import Serenity.Game.Model.GameMap(GameMap)
+import Serenity.Game.Shared.Model.ClientMessage(WorldMessage)
+import Serenity.Game.Shared.Model.Common(TimeDuration)
+import Serenity.Game.Shared.Model.Entity(Entity)
+import Serenity.Game.Shared.Model.GameMap(GameMap)
 
 data GameState =
 	GameState

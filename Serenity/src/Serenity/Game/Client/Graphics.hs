@@ -16,10 +16,10 @@ import Graphics.Gloss.Data.Picture
 	,	scale
 	)
 
-import Serenity.Game.Model.ClientMessage(GraphicsMessage(..))
-import Serenity.Game.Model.Common(ViewPort, toList4)
-import Serenity.Game.Model.Entity(Entity(Ship, shipLocation))
-import Serenity.Game.Model.GameMap
+import Serenity.Game.Shared.Model.ClientMessage(GraphicsMessage(..))
+import Serenity.Game.Shared.Model.Common(ViewPort, toList4)
+import Serenity.Game.Shared.Model.Entity(Entity(Ship, shipLocation))
+import Serenity.Game.Shared.Model.GameMap
 	(	GameMap
 		(	gameMapSize
 		,	gameMapPlanets
@@ -33,7 +33,7 @@ import Serenity.Game.Model.GameMap
 	,	SpaceLane(SpaceLane)
 	)
 import Serenity.Game.Client.Assets(Assets, getPicture, getPictureSized)
-import Serenity.Game.Model.GameState(GameState(gameMap, entities))
+import Serenity.Game.Shared.Model.GameState(GameState(gameMap, entities))
 
 type WindowSize = (Int, Int)
 

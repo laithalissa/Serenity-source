@@ -12,7 +12,7 @@ import Graphics.Gloss.Interface.Pure.Game
 	,	MouseButton(..)
 	)
 
-import Serenity.Game.Model.ClientMessage
+import Serenity.Game.Shared.Model.ClientMessage
 	(	ClientMessage(..)
 	,	GraphicsMessage(..)
 	,	WorldMessage(..)

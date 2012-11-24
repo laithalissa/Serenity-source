@@ -1,11 +1,11 @@
-module Serenity.Game.Model.GameMap
+module Serenity.Game.Shared.Model.GameMap
 (	GameMap(..)
 ,	Planet(..)
 ,	SpaceLane(..)
 ,	exampleGameMap
 ) where
 
-import Serenity.Game.Model.Common(Location, Direction, Resources(..), Size)
+import Serenity.Game.Shared.Model.Common(Location, Direction, Resources(..), Size)
 
 data GameMap = GameMap
 	{	gameMapName :: String

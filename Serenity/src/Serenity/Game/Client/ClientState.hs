@@ -15,12 +15,12 @@ import Serenity.Game.Client.Assets(Assets)
 import qualified Serenity.Game.Client.Graphics as Graphics
 import qualified Serenity.Game.Client.InputFilter  as InputFilter
 
-import Serenity.Game.Model.GameState (GameState)
-import qualified Serenity.Game.Model.GameState as GameState
+import Serenity.Game.Shared.Model.GameState (GameState)
+import qualified Serenity.Game.Shared.Model.GameState as GameState
 
-import Serenity.Game.Model.ClientMessage(ClientMessage(..))
-import Serenity.Game.Model.Common(TimeDuration)
-import Serenity.Game.Model.GameMap(GameMap)
+import Serenity.Game.Shared.Model.ClientMessage(ClientMessage(..))
+import Serenity.Game.Shared.Model.Common(TimeDuration)
+import Serenity.Game.Shared.Model.GameMap(GameMap)
 
 
 

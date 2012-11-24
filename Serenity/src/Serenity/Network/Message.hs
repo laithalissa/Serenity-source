@@ -10,14 +10,14 @@ module Serenity.Network.Message
 where
 
 import Serenity.Game.Model.Entity 
-
-import Data.Word (Word32, Word16)
 import Data.Binary
 import Data.DeriveTH
 
+type ClientId = Int
+
 data Message = 
 	  UpdateMessage Update
-	| CommandMessage Command
+	| CommandMessage Command ClientId
 	| Empty
 	deriving (Show, Eq)
 

@@ -1,15 +1,22 @@
 SHELL := /bin/bash
 
-environmentDir="environment"
 resDir="resources"
+
+buildDir="build"
+
+runDir="${buildDir}/environment"
 cabalBuildFile="dist/build/serenity/serenity"
-cabalTestFile="dist/build/test-serenity/test-serenity"
 runFile="serenity"
+
+testDir="${buildDir}/test"
+cabalTestFile="dist/build/test-serenity/test-serenity"
+testFile="serenity-test"
+
 rtsArgs="-K1G"
 
 clean:
 	rm -rf dist
-	rm -rf ${environmentDir}
+	rm -rf ${buildDir}
 	cabal clean
 
 build:
@@ -17,10 +24,22 @@ build:
 	cabal build
 
 dist: build
-	mkdir -p ${environmentDir}
-	cp -r ${resDir}/* ${environmentDir}
-	cp ${cabalBuildFile} "${environmentDir}/${runFile}"
-	chmod a+x "${environmentDir}/${runFile}"
+	mkdir ${buildDir}
+	mkdir -p ${runDir}
+	cp -r ${resDir}/* ${runDir}
+	cp ${cabalBuildFile} "${runDir}/${runFile}"
+	chmod a+x "${runDir}/${runFile}"
+
+dist-test: build
+	mkdir ${buildDir}
+	mkdir -p "${testDir}"
+	cp -r ${resDir}/* "${testDir}"
+	cp "${cabalTestFile}" "${testDir}/${testFile}"
+	chmod a+x "${testDir}/${testFile}"
+
+test: dist-test
+	cd ${testDir}: \
+	./${testFile}
 
 client: dist
 	make clientCached
@@ -30,10 +49,10 @@ server: dist
 
 
 clientCached:
-	cd ${environmentDir}; \
+	cd ${runDir}; \
 	./${runFile} client
 
 serverCached:
-	cd ${environmentDir}; \
+	cd ${runDir}; \
 	./${runFile} server
 

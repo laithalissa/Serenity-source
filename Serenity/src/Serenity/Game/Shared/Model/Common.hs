@@ -1,7 +1,6 @@
 
 module Serenity.Game.Shared.Model.Common where
 
-type ViewPort = (Float, Float, Float, Float)
 type EntityId = Int
 type TimeDuration = Float -- milliseconds
 type Location = (Float, Float)

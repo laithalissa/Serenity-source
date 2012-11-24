@@ -1,6 +1,6 @@
 module Serenity.Game.Client.UIState where
 
-import Serenity.Game.Shared.Model.Common
+import Serenity.Game.Client.Common (ViewPort)
 
 import Serenity.Sheen.View
 

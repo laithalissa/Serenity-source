@@ -13,7 +13,9 @@ import Serenity.Game.Client.UIState
 
 import Serenity.Game.Shared.Model.Entity
 import Serenity.Game.Shared.Model.GameMap
-import Serenity.Game.Shared.Model.GameState (GameState, gameMap, entities)
+import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, gameStateEntities)
+
+import qualified Data.Set as Set
 
 handleMessage :: GUICommand -> UIState a -> UIState a
 handleMessage (ClientScroll viewPortMove) uiState = uiState { viewPort = scrollViewPort viewPortMove (viewPort uiState) }
@@ -41,12 +43,12 @@ render gameState uiState assets = Pictures
 		renderInWorld gameState = pictures
 			[	pictures $ map spaceLaneF (worldSpaceLanes gameState)
 			,	pictures $ map planetF (worldPlanets gameState)
-			,	pictures $ map entityF (worldEntities gameState)
+			,	pictures $ map entityF $ map entity (Set.toList $ worldEntities gameState)
 			]
 			where
-			worldSpaceLanes = gameMapSpaceLanes . gameMap
-			worldPlanets = gameMapPlanets . gameMap
-			worldEntities = entities
+			worldSpaceLanes = gameMapSpaceLanes . gameStateGameMap
+			worldPlanets = gameMapPlanets . gameStateGameMap
+			worldEntities = gameStateEntities
 
 		planetF planet = translate planetX planetY $ getPictureSized (planetType planet) 5 5 assets
 			where
@@ -64,8 +66,8 @@ render gameState uiState assets = Pictures
 						(\f s -> if (planetName f) == name
 								then f
 								else s)
-						(head $ gameMapPlanets $ gameMap gameState)
-						(gameMapPlanets $ gameMap gameState)
+						(head $ gameMapPlanets $ gameStateGameMap gameState)
+						(gameMapPlanets $ gameStateGameMap gameState)
 		entityF entity = case entity of
 			Ship{} -> translate
 				(fst $ shipLocation entity)

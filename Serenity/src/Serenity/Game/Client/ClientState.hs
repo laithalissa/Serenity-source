@@ -19,7 +19,7 @@ import qualified Serenity.Game.Client.InputFilter as InputFilter
 import Serenity.Game.Client.UIState (UIState(..))
 
 import Serenity.Game.Shared.Model.Common
-import Serenity.Game.Shared.Model.GameState (GameState, gameMap)
+import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap)
 import qualified Serenity.Game.Shared.Model.GameState as GameState
 import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
 
@@ -69,7 +69,7 @@ initUIState gameState = UIState
 	,	viewPort = (0, 0, width, height)
 	}
 	where
-		(width, height) = gameMapSize $ gameMap gameState
+		(width, height) = gameMapSize $ gameStateGameMap gameState
 
 mainView :: View ClientState
 mainView = makeView "main" (0, fst windowSize, 0, snd windowSize)

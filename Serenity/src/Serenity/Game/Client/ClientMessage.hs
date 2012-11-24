@@ -9,4 +9,5 @@ data ClientMessage = ClientMessageGUI GUICommand
 	deriving (Show, Eq)
 
 data GUICommand = ClientScroll ViewPortMove
+	| ClientZoom ViewPortZoom
 	deriving (Show, Eq)

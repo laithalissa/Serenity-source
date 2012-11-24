@@ -16,8 +16,12 @@ import Serenity.Game.Shared.Model.GameMap
 import Serenity.Game.Shared.Model.GameState (GameState, gameMap, entities)
 
 handleMessage :: GUICommand -> UIState a -> UIState a
-handleMessage (ClientScroll viewPortMove) uiState = uiState { viewPort = (vpx + (fst viewPortMove), vpy + (snd viewPortMove), vpw, vph) }
-	where (vpx, vpy, vpw, vph) = viewPort uiState
+handleMessage (ClientScroll viewPortMove) uiState = uiState { viewPort = scrollViewPort viewPortMove (viewPort uiState) }
+	where scrollViewPort (x, y) (vpx, vpy, vpw, vph) = (vpx + x, vpy + y, vpw, vph)
+
+handleMessage (ClientZoom viewPortZoom) uiState = uiState { viewPort = zoomViewPort viewPortZoom (viewPort uiState) }
+	where zoomViewPort (x, y, w, h) (vpx, vpy, vpw, vph) = (vpx + x, vpy + y, vpw + w, vph + h)
+
 handleMessage message uiState = uiState
 
 render :: GameState -> UIState a -> Assets -> Picture

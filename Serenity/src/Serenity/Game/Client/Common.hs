@@ -10,3 +10,6 @@ type ViewPort = (Float, Float, Float, Float)
 
 -- | A change in the view port's x and y coordinates
 type ViewPortMove = (Float, Float)
+
+-- | A change to the view port's zoom level
+type ViewPortZoom = (Float, Float, Float, Float)

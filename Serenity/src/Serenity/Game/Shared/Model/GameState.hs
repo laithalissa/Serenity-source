@@ -4,6 +4,8 @@ module Serenity.Game.Shared.Model.GameState
 ,	addEntity
 ,	removeEntity
 ,	getEntityById
+,	hasEntity
+,	hasEntityId
 ) where
 
 import Serenity.Game.Shared.Model.Common(TimeDuration)
@@ -43,8 +45,19 @@ getEntityById eId gameState =
 				(gameStateEntities gameState)
 	
 
+hasEntity :: GameEntity -> GameState -> Bool
+hasEntity entity gameState = hasEntityId (entityId entity) gameState
+
+hasEntityId :: EntityId -> GameState -> Bool
+hasEntityId entityId gameState = case (getEntityById entityId gameState) of
+	Nothing -> False
+	Just _ -> True
+
 addEntity :: GameEntity -> GameState -> GameState
 addEntity entity gameState = gameState{gameStateEntities=(Set.insert entity (gameStateEntities gameState))}
 
 removeEntity :: GameEntity -> GameState -> GameState
 removeEntity entity gameState = gameState{gameStateEntities=(Set.delete entity (gameStateEntities gameState))}
+
+isValid :: GameState -> Bool
+isValid _ = True

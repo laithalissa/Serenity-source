@@ -9,9 +9,7 @@ module Serenity.Network.Message
 )
 where
 
-import Serenity.Game.Shared.Model.Entity 
-
-import Data.Word (Word32, Word16)
+import Serenity.Game.Shared.Model.Entity
 
 import Data.Binary
 import Data.DeriveTH

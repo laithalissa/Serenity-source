@@ -5,13 +5,11 @@ where
 
 import Graphics.Gloss.Interface.IO.Game
 
-import Serenity.Game.Client.ClientState (ClientState, render, handleInput)
-import qualified Serenity.Game.Client.ClientState as ClientState
-
-import Serenity.Game.Client.Common
-
 import Serenity.Game.Client.Assets (Assets(..))
 import qualified Serenity.Game.Client.Assets as Assets
+import Serenity.Game.Client.ClientState (ClientState, render, handleInput)
+import qualified Serenity.Game.Client.ClientState as ClientState
+import Serenity.Game.Client.Common
 
 import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 

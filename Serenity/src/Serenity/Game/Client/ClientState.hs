@@ -11,25 +11,19 @@ import Graphics.Gloss.Interface.Pure.Game (Event)
 import Serenity.Network.Message (Command)
 
 import Serenity.Game.Client.Common
-
 import Serenity.Game.Client.Assets (Assets)
-
+import Serenity.Game.Client.ClientMessage (ClientMessage(..))
 import qualified Serenity.Game.Client.GUI as GUI
-
 import Serenity.Game.Client.InputFilter (InputFilter)
 import qualified Serenity.Game.Client.InputFilter as InputFilter
-
 import Serenity.Game.Client.UIState (UIState(..))
 
+import Serenity.Game.Shared.Model.Common
 import Serenity.Game.Shared.Model.GameState (GameState, gameMap)
 import qualified Serenity.Game.Shared.Model.GameState as GameState
-
-import Serenity.Game.Shared.Model.ClientMessage (ClientMessage(..))
-import Serenity.Game.Shared.Model.Common
 import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
 
 import Serenity.Sheen.View
-
 
 -- | Represents the state of the client including the current game state
 -- and GUI's state
@@ -66,7 +60,8 @@ handleInput event game =
 			ClientMessageGraphics guiMessage ->
 				game { uiState = GUI.handleMessage guiMessage . uiState $ game }
 			ClientMessageWorld worldMessage ->
-					game { gameState = GameState.handleMessage worldMessage . gameState $ game }
+					-- game { gameState = GameState.handleMessage worldMessage . gameState $ game }
+					game
 		(Nothing, newInputFilter) -> game { inputFilter = newInputFilter }
 
 initUIState :: GameState -> UIState ClientState

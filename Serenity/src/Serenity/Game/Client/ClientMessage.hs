@@ -1,4 +1,4 @@
-module Serenity.Game.Shared.Model.ClientMessage where
+module Serenity.Game.Client.ClientMessage where
 
 import Serenity.Game.Shared.Model.Entity
 import Serenity.Game.Shared.Model.Common

@@ -7,10 +7,10 @@ where
 import Graphics.Gloss.Data.Picture
 
 import Serenity.Game.Client.Assets
+import Serenity.Game.Client.ClientMessage (GraphicsMessage(..))
 import Serenity.Game.Client.Common
 import Serenity.Game.Client.UIState
 
-import Serenity.Game.Shared.Model.ClientMessage (GraphicsMessage(..))
 import Serenity.Game.Shared.Model.Entity
 import Serenity.Game.Shared.Model.GameMap
 import Serenity.Game.Shared.Model.GameState (GameState, gameMap, entities)

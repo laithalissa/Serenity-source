@@ -40,3 +40,8 @@ getEntityById eId gameState =
 				(gameStateEntities gameState)
 	
 
+addEntity :: Entity -> GameState -> GameState
+addEntity entity gameState = gameState{gameStateEntities=(Set.insert entity (gameStateEntities gameState))}
+
+removeEntity :: Entity -> GameState -> GameState
+removeEntity entity gameState = gameState{gameStateEntities=(Set.delete entity (gameStateEntities gameState))}

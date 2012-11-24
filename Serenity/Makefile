@@ -24,22 +24,23 @@ build:
 	cabal build
 
 dist: build
-	mkdir ${buildDir}
+	mkdir -p ${buildDir}
 	mkdir -p ${runDir}
 	cp -r ${resDir}/* ${runDir}
-	cp ${cabalBuildFile} "${runDir}/${runFile}"
-	chmod a+x "${runDir}/${runFile}"
+	cp ${cabalBuildFile} ${runDir}/${runFile}
+	chmod a+x ${runDir}/${runFile}
 
 dist-test: build
-	mkdir ${buildDir}
-	mkdir -p "${testDir}"
-	cp -r ${resDir}/* "${testDir}"
-	cp "${cabalTestFile}" "${testDir}/${testFile}"
-	chmod a+x "${testDir}/${testFile}"
+	mkdir -p ${buildDir}
+	mkdir -p ${testDir}
+	cp -r ${resDir}/* ${testDir}
+	cp ${cabalTestFile} ${testDir}/${testFile}
+	chmod a+x ${testDir}/${testFile}
 
 test: dist-test
-	cd ${testDir}: \
+	cd ${testDir}; \
 	./${testFile}
+	cat dist/test/Serenity-0.1-test-serenity.log
 
 client: dist
 	make clientCached

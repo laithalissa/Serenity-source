@@ -73,7 +73,7 @@ handleViewEvent ::
 	-> world      -- ^ Current world state
 	-> world
 handleViewEvent event view =
-	case eventToUIEvent $ translateEvent (fromIntegral $ 1024 `div` 2) (fromIntegral $ 768 `div` 2) event of
+	case eventToUIEvent event of
 		Just uiEvent -> case getEventHandler uiEvent view of
 					Just handler -> handler uiEvent
 					Nothing -> id
@@ -107,10 +107,6 @@ changeView id f view
 
 orderViews :: [View world] -> [View world]
 orderViews = sortBy (comparing zIndex)
-
-translateEvent :: Float -> Float -> Event -> Event
-translateEvent x y (EventKey key state modifiers (eventX, eventY)) = (EventKey key state modifiers (eventX + x, eventY + y))
-translateEvent x y (EventMotion (eventX, eventY)) = (EventMotion (eventX + x, eventY + y))
 
 translateUIEvent :: Int -> Int -> UIEvent -> UIEvent
 translateUIEvent x y (ViewClick (clickX, clickY) button) = ViewClick newPoint button

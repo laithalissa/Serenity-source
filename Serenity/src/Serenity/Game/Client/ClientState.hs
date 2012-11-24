@@ -1,30 +1,21 @@
 module Serenity.Game.Client.ClientState
 (	ClientState(..)
+,	UIState(..)
 ,	initialize
-,	render
-,	handleInput
 ) where
-
-import Graphics.Gloss.Data.Picture (Picture)
-import Graphics.Gloss.Interface.Pure.Game (Event)
-
-import Serenity.Network.Message (Command)
 
 import Serenity.Game.Client.Common
 import Serenity.Game.Client.Assets (Assets)
-import Serenity.Game.Client.ClientMessage (ClientMessage(..))
-import qualified Serenity.Game.Client.GUI as GUI
-import Serenity.Game.Client.InputFilter (InputFilter)
-import qualified Serenity.Game.Client.InputFilter as InputFilter
-import Serenity.Game.Client.UIState (UIState(..))
+-- import Serenity.Game.Client.UIState (UIState(..))
 
 import Serenity.Game.Shared.Model.Common
 import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap)
 import qualified Serenity.Game.Shared.Model.GameState as GameState
 import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
 
-import Serenity.Sheen.View
+import Serenity.Network.Message (Command)
 
+import Serenity.Sheen.View
 
 -- XXX ONLY FOR THE EXAMPLE GAMESTATE
 import Serenity.Game.Shared.Model.Entity
@@ -37,9 +28,13 @@ data ClientState = ClientState
 	{	gameState :: GameState         -- ^ State of the game world, e.g. ship positions
 	,	uiState :: UIState ClientState -- ^ State of the GUI, e.g. view hierarchy
 	,	commands :: [Command]          -- ^ List of commands to send to the server
-	,	inputFilter :: InputFilter
 	,	assets :: Assets
 	,	clientName :: OwnerId
+	}
+
+data UIState a = UIState
+	{	views :: View a
+	,	viewPort :: ViewPort
 	}
 
 -- | Create the initial client state
@@ -51,7 +46,6 @@ initialize assets gameMap = ClientState
 	{	gameState = game
 	,	uiState = initUIState game
 	,	commands = []
-	,	inputFilter = InputFilter.initialize
 	,	assets = assets
 	,	clientName = "test"
 	}
@@ -66,23 +60,6 @@ initialize assets gameMap = ClientState
 					,	entity = Ship 0 (50, 50) (0, 0) (0, 0) StayStillOrder
 					}
 			}
-
-render :: ClientState -> Picture
-render clientState = GUI.render (gameState clientState) (uiState clientState) (assets clientState)
-
-handleInput :: Event -> ClientState -> ClientState
-handleInput event clientState =
-	case InputFilter.handleInput event (gameState clientState) (clientName clientState) (inputFilter clientState) of
-		([], newInputFilter) -> clientState { inputFilter = newInputFilter }
-		(clientMessages, newInputFilter) -> handleMessages clientMessages clientState
-
-handleMessages :: [ClientMessage] -> ClientState -> ClientState
-handleMessages [] clientState = clientState
-handleMessages (m:ms) clientState = case m of
-			ClientMessageGUI guiMessage -> handleMessages ms $
-				clientState { uiState = GUI.handleMessage guiMessage (uiState clientState) }
-			ClientMessageCommand command -> handleMessages ms $
-				clientState { commands = (commands clientState) ++ [command] }
 
 initUIState :: GameState -> UIState ClientState
 initUIState gameState = UIState

@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Serenity.Game.Shared.Model.GameMap
 (	GameMap(..)
 ,	Planet(..)
@@ -6,15 +8,6 @@ module Serenity.Game.Shared.Model.GameMap
 ) where
 
 import Serenity.Game.Shared.Model.Common(Location, Direction, Resources(..), Size)
-
-data GameMap = GameMap
-	{	gameMapName :: String
-	,	gameMapSize :: Size
-	,	gameMapSpawnPoints :: [(Location)]
-	,	gameMapPlanets :: [Planet]
-	,	gameMapSpaceLanes :: [SpaceLane]
-	}
-	deriving(Show, Eq)
 
 data Planet = Planet
 	{	planetName :: String
@@ -25,11 +18,24 @@ data Planet = Planet
 	}
 	deriving(Show, Eq)
 
+
+
+data GameMap = GameMap
+	{	gameMapName :: String
+	,	gameMapSize :: Size
+	,	gameMapSpawnPoints :: [(Location)]
+	,	gameMapPlanets :: [Planet]
+	,	gameMapSpaceLanes :: [SpaceLane]
+	}
+	deriving(Show, Eq)
+
+
 data SpaceLane = SpaceLane
 	{	spaceLanePlanet1 :: String
 	,	spaceLanePlanet2 :: String
 	}
 	deriving(Show, Eq)
+
 
 exampleGameMap = GameMap
 	{	gameMapName = "My First Map"

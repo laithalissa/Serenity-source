@@ -5,6 +5,7 @@ module Serenity.Network.Message
 ,	Update(..)
 ,	Command(..)
 ,	Entity(..)
+,	GameEntity(..)
 ,	ShipOrder(..)
 )
 where
@@ -28,26 +29,27 @@ data Message =
 --   Any updates should be identically sent to all clients
 data Update = 
 	UpdateEntity
-	{	entity :: Entity
+	{	updateEntity :: GameEntity
 	}
 	| AddEntity
-	{	entity :: Entity
+	{	updateEntity :: GameEntity
 	}
 	| DeleteEntity
-	{	entity :: Entity
+	{	updateEntity :: GameEntity
 	}
 	deriving (Show, Eq)
 
 -- | Commands are sent from the clients to the server and contain order information and other notifications of intention.
 data Command = 
 	GiveOrder
-	{	entityId :: Int
+	{	commandEntityId :: Int
 	,	order :: ShipOrder
 	}
 	deriving (Show, Eq)
 
 -- Derive binary instances using deep magic.
 $(derive makeBinary ''ShipOrder)
+$(derive makeBinary ''GameEntity)
 $(derive makeBinary ''Entity)
 $(derive makeBinary ''Update)
 $(derive makeBinary ''Command)

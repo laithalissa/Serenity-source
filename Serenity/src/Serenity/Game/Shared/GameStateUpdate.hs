@@ -1,13 +1,25 @@
 
 module Serenity.Game.Shared.GameStateUpdate
-(	module Serenity.Game.Model.GameState(GameState)
-,	module Serenity.Network.Message(Update)
+(	module Serenity.Game.Shared.Model.GameState
+,	module Serenity.Network.Message
 ,	gameStateUpdate
 ) where
 
 
-import Serenity.Game.Model.GameState(GameState)
-import Serenity.Network.Message(Update)
+
+import Serenity.Game.Shared.Model.GameState(GameState)
+
+import Serenity.Network.Message
+	(	Update(..)
+	)
 
 gameStateUpdate :: GameState -> Update -> GameState
-gameStateUpdate gameState update = gameState
+gameStateUpdate gameState (AddEntity entity) = gameState 
+gameStateUpdate gameState (DeleteEntity entity) = gameState
+gameStateUpdate gameState (UpdateEntity entity) = gameState
+
+
+
+
+
+

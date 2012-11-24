@@ -2,6 +2,7 @@
 module Serenity.Game.Shared.Model.Common where
 
 type EntityId = Int
+type OwnerId = String
 type TimeDuration = Float -- milliseconds
 type Location = (Float, Float)
 type Path = [Location]

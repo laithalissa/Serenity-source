@@ -71,10 +71,10 @@ render :: ClientState -> Picture
 render clientState = GUI.render (gameState clientState) (uiState clientState) (assets clientState)
 
 handleInput :: Event -> ClientState -> ClientState
-handleInput event game =
-	case InputFilter.handleInput event (gameState game) (clientName game) (inputFilter game) of
-		([], newInputFilter) -> game { inputFilter = newInputFilter }
-		(clientMessages, newInputFilter) -> handleMessages clientMessages game
+handleInput event clientState =
+	case InputFilter.handleInput event (gameState clientState) (clientName clientState) (inputFilter clientState) of
+		([], newInputFilter) -> clientState { inputFilter = newInputFilter }
+		(clientMessages, newInputFilter) -> handleMessages clientMessages clientState
 
 handleMessages :: [ClientMessage] -> ClientState -> ClientState
 handleMessages [] clientState = clientState

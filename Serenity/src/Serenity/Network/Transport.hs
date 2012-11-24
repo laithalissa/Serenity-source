@@ -18,6 +18,7 @@ module Serenity.Network.Transport
 ,	liftIO
 ,	Transport
 ,	MonadTransport
+,	PortNumber
 ) where
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect, isConnected)

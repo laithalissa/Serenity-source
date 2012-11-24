@@ -23,7 +23,7 @@ tests = testGroup "Network Utility Tests"
 
 testGetTransportChannels = do
 	connection <- runConnect "localhost" 9908
-	(inbox, outbox, conVar) <- evalTransport getTransportChannels connection
+	TransportInterface inbox outbox conVar <- evalTransport getTransportChannels connection
 	inboxEmpty <- atomically $ isEmptyTChan inbox
 	outboxEmpty <- atomically $ isEmptyTChan outbox
 	and [inboxEmpty, outboxEmpty] @?= True
@@ -33,8 +33,7 @@ testSendChannel = do
 	string @?= Message.Empty
 	where
 		client = do
-			connection <- runConnect "localhost" port
-			(inbox, outbox, conVar) <- evalTransport getTransportChannels connection
+			TransportInterface inbox outbox conVar <- connectChannelsIO "localhost" port
 			atomically $ writeTChan outbox Message.Empty
 			return ()
 
@@ -55,8 +54,7 @@ testReceiveChannel = do
 			return ()
 
 		server = do
-			connection <- runListen port
-			(inbox, outbox, conVar) <- evalTransport getTransportChannels connection
+			TransportInterface inbox outbox conVar <- listenChannelsIO port
 			string <- atomically $ readTChan inbox
 			return string
 

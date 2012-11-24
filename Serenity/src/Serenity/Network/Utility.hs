@@ -1,4 +1,11 @@
-module Serenity.Network.Utility where
+module Serenity.Network.Utility
+(	TransportInterface(..)
+,	getTransportChannels
+,	connectChannels
+,	connectChannelsIO
+,	listenChannels
+,	listenChannelsIO
+) where
 
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
@@ -11,7 +18,19 @@ import Serenity.Network.Transport
 import Serenity.Network.Message (Message)
 import qualified Serenity.Network.Message as Message
 
-getTransportChannels :: (MonadTransport t) => t (TChan Message, TChan Message, TVar Connection)
+data TransportInterface = TransportInterface
+	{	channelInbox      :: TChan Message
+	,	channelOutbox     :: TChan Message
+	,	channelConnection :: TVar Connection
+	}
+
+newTransportInterface inbox outbox con = TransportInterface
+	{	channelInbox      = inbox
+	,	channelOutbox     = outbox
+	,	channelConnection = con
+	}
+
+getTransportChannels :: (MonadTransport t) => t TransportInterface
 getTransportChannels = do
 	inbox  <- liftIO newTChanIO
 	outbox <- liftIO newTChanIO
@@ -19,7 +38,7 @@ getTransportChannels = do
 	connectionTvar <- liftIO $ newTVarIO connection
 	liftIO $ forkIO $ forever $ inboxLoop inbox connectionTvar
 	liftIO $ forkIO $ forever $ outboxLoop outbox connectionTvar
-	return (inbox, outbox, connectionTvar)
+	return $ newTransportInterface inbox outbox connectionTvar
 	where
 		outboxLoop outbox connectionTvar = do
 			(message, connection) <- atomically $ do
@@ -32,3 +51,19 @@ getTransportChannels = do
 			connection <- atomically $ readTVar connectionTvar
 			message <- evalTransport (receive) connection
 			atomically $ writeTChan inbox message
+
+connectChannels :: (MonadTransport t) => String -> PortNumber -> t TransportInterface
+connectChannels host port = do
+	connect host port
+	getTransportChannels
+
+connectChannelsIO :: String -> PortNumber -> IO TransportInterface
+connectChannelsIO host port = evalTransport (connectChannels host port) Unconnected
+
+listenChannels :: (MonadTransport t) => PortNumber -> t TransportInterface
+listenChannels port = do
+	listen port
+	getTransportChannels
+
+listenChannelsIO :: PortNumber -> IO TransportInterface
+listenChannelsIO port = evalTransport (listenChannels port) Unconnected

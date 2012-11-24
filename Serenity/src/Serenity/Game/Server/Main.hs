@@ -11,6 +11,8 @@ import Control.Concurrent (forkIO)
 import Control.Monad (forever)
 
 import Serenity.Network.Transport
+import Serenity.Network.Utility
+import Serenity.Game.Server.ClientData
 import Serenity.Network.Packet
 import Serenity.Network.Message
 
@@ -27,14 +29,24 @@ readInput sock tvar = do
 	atomically $ writeTVar tvar (packetData packet)
 	putStrLn $ "[" ++ (show client) ++ "] " ++ (show packet)
 
+-- | Wait for n clients to connect
+connectionPhase :: 
+	   Int             -- ^ Number of clients to connect.
+	-> PortNumber      -- ^ Port to listen on.
+	-> IO [ClientData] -- ^ Client connection information.
+
+connectionPhase = undefined
+
 -- | Run the server with given update functions.
---play :: forall world
---	 .  Int                            -- ^ Number of simulation steps to take for each second of real time.
---	 -> PortNumber                     -- ^ Port to listen on
---	 -> world                          -- ^ The initial world.
---	 -> ([Message] -> world -> world)  -- ^ A function to handle messages from clients.
---	 -> (Double -> world -> [Message]) -- ^ A function to step the world one iteration, given the past time
---	 -> IO ()
+play :: forall world
+	 .  Int                            -- ^ Number of simulation steps to take for each second of real time.
+	 -> [ClientData]                   -- ^ Clients
+	 -> world                          -- ^ The initial world.
+	 -> ([Message] -> world -> world)  -- ^ A function to handle messages from clients.
+	 -> (Double -> world -> [Message]) -- ^ A function to step the world one iteration, given the past time
+	 -> IO ()
+
+play = undefined
 
 --play rate initialWord messageUpdate timeUpdate = do
 --	connection <- runConnection listen

@@ -54,3 +54,4 @@ Test-Suite test-serenity
         gloss == 1.7.*,
         netwire == 4.0.5
     hs-source-dirs: tests, src
+    ghc-options:    -W -threaded -rtsopts

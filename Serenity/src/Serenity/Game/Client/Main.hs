@@ -3,6 +3,7 @@ module Serenity.Game.Client.Main (
 )
 where
 
+import Control.Monad (when)
 import Graphics.Gloss.Interface.IO.Game
 
 import Serenity.Game.Client.Assets (Assets(..))
@@ -36,6 +37,9 @@ handleEvent event clientState = do
 	-- ...
 	-- send commands to server
 	-- ...
+
+	when (not $ null (ClientState.commands newClientState)) $
+		print $ ClientState.commands newClientState
 
 	return newClientState
 

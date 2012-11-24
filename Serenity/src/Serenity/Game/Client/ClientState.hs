@@ -25,6 +25,12 @@ import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
 
 import Serenity.Sheen.View
 
+
+-- XXX ONLY FOR THE EXAMPLE GAMESTATE
+import Serenity.Game.Shared.Model.Entity
+import qualified Data.Set as Set
+-- XXX
+
 -- | Represents the state of the client including the current game state
 -- and GUI's state
 data ClientState = ClientState
@@ -33,6 +39,7 @@ data ClientState = ClientState
 	,	commands :: [Command]          -- ^ List of commands to send to the server
 	,	inputFilter :: InputFilter
 	,	assets :: Assets
+	,	clientName :: OwnerId
 	}
 
 -- | Create the initial client state
@@ -46,22 +53,36 @@ initialize assets gameMap = ClientState
 	,	commands = []
 	,	inputFilter = InputFilter.initialize
 	,	assets = assets
+	,	clientName = "test"
 	}
 	where
-		game = GameState.initialize gameMap
+		-- XXX EXAMPLE GAMESTATE
+		-- game = GameState.initialize gameMap
+		game = GameState.GameState
+			{	GameState.gameStateGameMap = gameMap
+			,	GameState.gameStateEntities = Set.singleton $ GameEntity
+					{	entityId = 1
+					,	ownerId = "test"
+					,	entity = Ship 0 (50, 50) (0, 0) (0, 0) StayStillOrder
+					}
+			}
 
 render :: ClientState -> Picture
 render clientState = GUI.render (gameState clientState) (uiState clientState) (assets clientState)
 
 handleInput :: Event -> ClientState -> ClientState
 handleInput event game =
-	case (InputFilter.handleInput event . inputFilter) game of
-		(Just clientMessage, newInputFilter) -> case clientMessage of
-			ClientMessageGUI guiMessage ->
-				game { uiState = GUI.handleMessage guiMessage . uiState $ game }
-			ClientMessageCommand command ->
-				game { commands = [command] }
-		(Nothing, newInputFilter) -> game { inputFilter = newInputFilter }
+	case InputFilter.handleInput event (gameState game) (clientName game) (inputFilter game) of
+		([], newInputFilter) -> game { inputFilter = newInputFilter }
+		(clientMessages, newInputFilter) -> handleMessages clientMessages game
+
+handleMessages :: [ClientMessage] -> ClientState -> ClientState
+handleMessages [] clientState = clientState
+handleMessages (m:ms) clientState = case m of
+			ClientMessageGUI guiMessage -> handleMessages ms $
+				clientState { uiState = GUI.handleMessage guiMessage (uiState clientState) }
+			ClientMessageCommand command -> handleMessages ms $
+				clientState { commands = (commands clientState) ++ [command] }
 
 initUIState :: GameState -> UIState ClientState
 initUIState gameState = UIState

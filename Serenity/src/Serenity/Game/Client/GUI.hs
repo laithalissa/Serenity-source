@@ -72,4 +72,4 @@ render gameState uiState assets = Pictures
 			Ship{} -> translate
 				(fst $ shipLocation entity)
 				(snd $ shipLocation entity)
-				(getPicture "ship1" assets)
+				(getPictureSized "ship1" 10 10 assets)

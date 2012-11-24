@@ -4,19 +4,9 @@ module Serenity.Game.Client.InputFilter
 ,	handleInput
 ) where
 
-import Graphics.Gloss.Interface.Pure.Game
-	(	SpecialKey(..)
-	,	Key(..)
-	,	Event(..)
-	,	KeyState(..)
-	,	MouseButton(..)
-	)
+import Graphics.Gloss.Interface.Pure.Game (Event(..), Key(..), KeyState(..))
 
-import Serenity.Game.Client.ClientMessage
-	(	ClientMessage(..)
-	,	GraphicsMessage(..)
-	,	WorldMessage(..)
-	)
+import Serenity.Game.Client.ClientMessage (ClientMessage(..), GUICommand(..))
 
 data InputFilter =
 	InputFilter
@@ -26,10 +16,15 @@ initialize :: InputFilter
 initialize = InputFilter
 
 handleInput :: Event -> inputFilter -> (Maybe ClientMessage, inputFilter)
-handleInput event inputFilter = (Just $ handleInput event, inputFilter)
+handleInput event inputFilter = (clientMessage, inputFilter)
 	where
-		handleInput (EventKey key keyState modifiers mouse) = case key of
-			Char 'w' -> (ClientMessageGraphics $ ClientScroll (10,10,50,50))
-			Char _ -> (ClientMessageGraphics $ ClientScroll (0,0,100,100))
-		handleInput _ = (ClientMessageGraphics $ ClientScroll (0, 0, 100, 100))
+		clientMessage = case event of
+			(EventKey key Down _ _) -> case key of
+				Char 'w' -> Just $ ClientMessageGUI $ ClientScroll (0, 10)
+				Char 'a' -> Just $ ClientMessageGUI $ ClientScroll (-10, 0)
+				Char 's' -> Just $ ClientMessageGUI $ ClientScroll (0, -10)
+				Char 'd' -> Just $ ClientMessageGUI $ ClientScroll (10, 0)
+				_ -> Nothing
+
+			_ -> Nothing
 

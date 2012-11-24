@@ -7,7 +7,7 @@ where
 import Graphics.Gloss.Data.Picture
 
 import Serenity.Game.Client.Assets
-import Serenity.Game.Client.ClientMessage (GraphicsMessage(..))
+import Serenity.Game.Client.ClientMessage (GUICommand(..))
 import Serenity.Game.Client.Common
 import Serenity.Game.Client.UIState
 
@@ -15,8 +15,9 @@ import Serenity.Game.Shared.Model.Entity
 import Serenity.Game.Shared.Model.GameMap
 import Serenity.Game.Shared.Model.GameState (GameState, gameMap, entities)
 
-handleMessage :: GraphicsMessage -> UIState a -> UIState a
-handleMessage (ClientScroll viewport) uiState = uiState { viewPort = viewport }
+handleMessage :: GUICommand -> UIState a -> UIState a
+handleMessage (ClientScroll viewPortMove) uiState = uiState { viewPort = (vpx + (fst viewPortMove), vpy + (snd viewPortMove), vpw, vph) }
+	where (vpx, vpy, vpw, vph) = viewPort uiState
 handleMessage message uiState = uiState
 
 render :: GameState -> UIState a -> Assets -> Picture

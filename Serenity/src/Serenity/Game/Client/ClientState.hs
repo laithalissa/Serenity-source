@@ -57,11 +57,10 @@ handleInput :: Event -> ClientState -> ClientState
 handleInput event game =
 	case (InputFilter.handleInput event . inputFilter) game of
 		(Just clientMessage, newInputFilter) -> case clientMessage of
-			ClientMessageGraphics guiMessage ->
+			ClientMessageGUI guiMessage ->
 				game { uiState = GUI.handleMessage guiMessage . uiState $ game }
-			ClientMessageWorld worldMessage ->
-					-- game { gameState = GameState.handleMessage worldMessage . gameState $ game }
-					game
+			ClientMessageCommand command ->
+				game { commands = [command] }
 		(Nothing, newInputFilter) -> game { inputFilter = newInputFilter }
 
 initUIState :: GameState -> UIState ClientState

@@ -14,7 +14,7 @@ data InputFilter = InputFilter
 initialize :: InputFilter
 initialize = InputFilter
 
-handleInput :: Event -> inputFilter -> (Maybe ClientMessage, inputFilter)
+handleInput :: Event -> InputFilter -> (Maybe ClientMessage, InputFilter)
 handleInput event inputFilter = (clientMessage, inputFilter)
 	where
 		clientMessage = case event of

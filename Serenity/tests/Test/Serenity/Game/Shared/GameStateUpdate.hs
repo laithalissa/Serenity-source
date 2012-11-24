@@ -48,7 +48,7 @@ tests = testGroup "GameStateUpdate Tests"
 
 
 testSomething :: Int -> Bool
-testSomething seed = (gameStateUpdate gameState (UpdateEntity gameEntity)) == gameState
+testSomething seed = (gameStateUpdate gameState (UpdateEntity gameEntity)) /= gameState
 	where
 		gameState = GameState.initialize exampleGameMap
 		gameEntity = GameEntity 0 "joseph" entity

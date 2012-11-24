@@ -7,13 +7,13 @@ buildDir="build"
 runDir="${buildDir}/environment"
 cabalBuildFile="dist/build/serenity/serenity"
 runFile="serenity"
-runRTSArgs="+RTS -K1G -RTS"
+runRTSArgs= +RTS -N -K1G -RTS
 
 testDir="${buildDir}/test"
 cabalTestFile="dist/build/test-serenity/test-serenity"
 testFile="serenity-test"
 testLogFile="dist/test/Serenity-0.1-test-serenity.log"
-testRTSArgs="+RTS -K1G -RTS"
+testRTSArgs= +RTS -K1G -RTS
 
 
 clean:

@@ -54,7 +54,8 @@ testReceiveChannel = do
 			return ()
 
 		server = do
-			TransportInterface inbox outbox conVar <- listenChannelsIO port
+			connection <- startListeningIO port
+			TransportInterface inbox outbox conVar <- listenChannelsIO connection
 			string <- atomically $ readTChan inbox
 			return string
 

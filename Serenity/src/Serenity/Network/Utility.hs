@@ -1,10 +1,12 @@
 module Serenity.Network.Utility
 (	TransportInterface(..)
+,	Connection(..)
 ,	getTransportChannels
 ,	connectChannels
 ,	connectChannelsIO
 ,	listenChannels
 ,	listenChannelsIO
+,	startListeningIO
 ) where
 
 import Control.Concurrent.STM
@@ -52,6 +54,9 @@ getTransportChannels = do
 			message <- evalTransport (receive) connection
 			atomically $ writeTChan inbox message
 
+startListeningIO :: PortNumber -> IO Connection
+startListeningIO port = evalTransport (do startListening port; getConnection) Unconnected
+
 connectChannels :: (MonadTransport t) => String -> PortNumber -> t TransportInterface
 connectChannels host port = do
 	connect host port
@@ -60,10 +65,10 @@ connectChannels host port = do
 connectChannelsIO :: String -> PortNumber -> IO TransportInterface
 connectChannelsIO host port = evalTransport (connectChannels host port) Unconnected
 
-listenChannels :: (MonadTransport t) => PortNumber -> t TransportInterface
-listenChannels port = do
-	listen port
+listenChannels :: (MonadTransport t) => t TransportInterface
+listenChannels = do
+	accept
 	getTransportChannels
 
-listenChannelsIO :: PortNumber -> IO TransportInterface
-listenChannelsIO port = evalTransport (listenChannels port) Unconnected
+listenChannelsIO :: Connection -> IO TransportInterface
+listenChannelsIO connection = evalTransport listenChannels connection

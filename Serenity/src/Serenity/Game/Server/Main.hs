@@ -4,6 +4,7 @@ module Serenity.Game.Server.Main
 (	main
 ,	port
 ,	updateWorld
+,	connectionPhase
 ) where
 
 import Control.Concurrent.STM
@@ -15,6 +16,8 @@ import Serenity.Network.Utility
 import Serenity.Game.Server.ClientData
 import Serenity.Network.Packet
 import Serenity.Network.Message
+
+import Control.Concurrent(threadDelay)
 
 port = 9900
 
@@ -35,7 +38,17 @@ connectionPhase ::
 	-> PortNumber      -- ^ Port to listen on.
 	-> IO [ClientData] -- ^ Client connection information.
 
-connectionPhase = undefined
+connectionPhase clientLimit port = do 
+	connection <- startListeningIO port
+	connectionPhase' clientLimit port connection [] 
+	where 
+		connectionPhase' clientLimit port connection clientDataList = do
+			channels <- listenChannelsIO connection
+			clientDataList' <- return $ (ClientData{clientTransportInterface=channels}):clientDataList
+			threadDelay 100
+			if length clientDataList' >= clientLimit 
+				then return clientDataList' 
+				else connectionPhase' clientLimit port connection clientDataList'
 
 -- | Run the server with given update functions.
 play :: forall world

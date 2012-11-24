@@ -6,7 +6,7 @@ module Serenity.Game.Shared.Model.Entity
 
 import Serenity.Game.Shared.Model.ShipOrder
 import Serenity.Game.Shared.Model.ShipClass
-import Serenity.Game.Shared.Model.Common
+import Serenity.Game.Shared.Model.Common(EntityId, Location, Direction, Speed, OwnerId)
 import Data.Ord(Ordering(LT, EQ, GT))
 
 data GameEntity = 
@@ -27,7 +27,7 @@ data Entity =
 	{	shipClass :: Int
 	,	shipLocation :: Location
 	,	shipDirection :: Direction
-	,	shipSpeed :: Direction
+	,	shipSpeed :: Speed
 	,	shipOrder :: ShipOrder
 	}
 	| Gun

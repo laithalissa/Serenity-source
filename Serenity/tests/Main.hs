@@ -13,6 +13,7 @@ import qualified Test.Serenity.Network.Message as Message
 import qualified Test.Serenity.Network.Packet as Packet
 import qualified Test.Serenity.Game.Server.Main as ServerMain
 import qualified Test.Serenity.Game.Shared.GameStateUpdate as GameStateUpdate
+import qualified Test.Serenity.Game.Server.GameStateTransform as GST
 -- import qualified Test.Serenity.Game.Server.Network as ServerNetwork
 
 main = defaultMainWithArgs allTests htf_args
@@ -32,5 +33,6 @@ allTests =
 	,	Message.tests
 	,	ServerMain.tests
 	,	GameStateUpdate.tests
+	,	GST.tests
 	-- ,	ServerNetwork.networkTests
 	]

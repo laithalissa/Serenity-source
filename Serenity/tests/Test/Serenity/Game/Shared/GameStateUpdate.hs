@@ -77,3 +77,5 @@ testEntityAddedIsIgnoredIfEntityAlreadyInGameState gameMap entities entity =
 createGameState :: GameMap -> [GameEntity] -> GameState
 createGameState gameMap entities = foldl (\gm e -> addEntity e gm) (initialize gameMap) entities
 
+
+

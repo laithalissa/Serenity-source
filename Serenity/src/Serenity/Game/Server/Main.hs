@@ -7,7 +7,7 @@ module Serenity.Game.Server.Main
 ) where
 
 import Control.Concurrent.STM
-import Control.Concurrent (forkIO)
+import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (forever)
 
 import Serenity.Network.Transport
@@ -86,6 +86,7 @@ play stepsPerSecond clientDataList initialWorld transform step updateWorld = do
 			updatesT    <- return $ step 0.5 gameState'
 			gameState'' <- return $ updateWorld updatesT gameState'
 			sendToClient (updatesC ++ updatesT) clientDataList
+			threadDelay 100000
 			playLoop gameState'' lastTime
 
 -- | Receive commands from the network from all the clients

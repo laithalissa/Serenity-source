@@ -53,7 +53,7 @@ server: dist
 
 clientCached:
 	cd ${runDir}; \
-	./${runFile} ${runRTSArgs} client
+	./${runFile} ${runRTSArgs} client localhost 9050
 
 serverCached:
 	cd ${runDir}; \

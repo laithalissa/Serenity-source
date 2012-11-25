@@ -67,7 +67,7 @@ handleEvent outbox event clientState = do
 handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
 	-- Receive updates from the server
-	messages <- readTChanUntilEmpty inbox []
+	messages <- readTChanUntilEmpty inbox
 	let updates = map extractUpdate (filter isUpdate messages)
 
 	-- Apply the updates to the game state

@@ -39,14 +39,23 @@ data SpaceLane = SpaceLane
 
 exampleGameMap = GameMap
 	{	gameMapName = "My First Map"
-	,	gameMapSize = (100, 100)
+	,	gameMapSize = (500, 500)
 	,	gameMapSpawnPoints=[(50, 50)]
-	,	gameMapPlanets =
-			[	createPlanet "Earth" (50, 50)
-			,	createPlanet "Mars" (10, 10)
-			,	createPlanet "Pluto" (90, 10)
+	,	gameMapPlanets = 
+			[	createPlanet "Jupitor" (50, 50)
+			,	createPlanet "Mars" (450, 50)
+			,	createPlanet "Pluto" (50, 450)
+			,	createPlanet "Venus" (450, 450)
+			,	createPlanet "Earth" (250, 250)
+			,	createPlanet "Moon" (250, 200)
 			]
-	,	gameMapSpaceLanes=[SpaceLane "Earth" "Mars"]
+	,	gameMapSpaceLanes=
+			[	SpaceLane "Earth" "Jupitor"
+			,	SpaceLane "Earth" "Mars"
+			,	SpaceLane "Earth" "Pluto"
+			,	SpaceLane "Earth" "Venus"
+			,	SpaceLane "Earth" "Moon"
+			]
 	}
 	where
 		createPlanet name location = Planet

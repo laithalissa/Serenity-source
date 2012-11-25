@@ -23,38 +23,26 @@ import Serenity.Game.Server.GameStateTransform(transforms,step)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import Control.Concurrent(threadDelay)
 
-
-type Port = Int
-type ClientCount = Int
-
-
-server :: Port -> ClientCount -> IO ()
+-- | Run the server.
+server :: 
+	   Int   -- ^ Port to listen on.
+	-> Int   -- ^ Number of clients to connect.
+	-> IO ()
 server port clientCount = do
 	print "server started"	
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
-	clients <- connectionPhase clientCount (fromIntegral port)
+	clients <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
 	play 5 clients exampleGameState transforms step manyUpdateGameState
 	print "server finished"
 
-	
-
--- main = do
--- 	connection <- runListen port
--- 	return ()
-
-readInput sock tvar = do
-	(packet, client) <- receivePacket sock
-	atomically $ writeTVar tvar (packetData packet)
-	putStrLn $ "[" ++ (show client) ++ "] " ++ (show packet)
-
 -- | Wait for n clients to connect
 connectionPhase :: 
-	   Int             -- ^ Number of clients to connect.
-	-> PortNumber      -- ^ Port to listen on.
+	   PortNumber      -- ^ Port to listen on.
+	-> Int             -- ^ Number of clients to connect.
 	-> IO [ClientData] -- ^ Client connection information.
 
-connectionPhase clientLimit port = do 
+connectionPhase port clientLimit = do 
 	connection <- startListeningIO port
 	connectionPhase' clientLimit port connection [] 
 	where 

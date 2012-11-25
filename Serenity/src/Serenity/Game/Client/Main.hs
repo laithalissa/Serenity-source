@@ -40,9 +40,9 @@ client serverHost serverPort name = do
 
 	assets <- Assets.initialize
 	playIO
-		(InWindow "Virtual Balloon Commander" windowSize (0, 0))
+		(InWindow "Project Serenity" windowSize (0, 0))
 		white
-		20
+		30
 		(initClientState assets name)
 		(return . render)
 		(handleEvent outbox)

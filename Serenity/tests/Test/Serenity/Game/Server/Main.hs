@@ -19,11 +19,11 @@ import Serenity.Network.Utility
 import Serenity.Network.Message
 
 tests = testGroup "Server Main Tests"
-	[	testCase "Test that a client can connect using connectionPhase"  (testConnectionPhaseConnectsNClients 1 9920)
-	,	testCase "Test that 3 clients can connect using connectionPhase" (testConnectionPhaseConnectsNClients 3 9921)
+	[	testCase "Test that a client can connect using connectionPhase"  (testConnectionPhaseConnectsNClients 9920 1)
+	,	testCase "Test that 3 clients can connect using connectionPhase" (testConnectionPhaseConnectsNClients 9921 3)
 	]
 
-testConnectionPhaseConnectsNClients n port = do
+testConnectionPhaseConnectsNClients port n = do
 	clientDataList <- serverClientFixture server client
 	length clientDataList @?= n
 	where
@@ -32,7 +32,7 @@ testConnectionPhaseConnectsNClients n port = do
 			return ()
 
 		server = do
-			clientDataList <- connectionPhase n port
+			clientDataList <- connectionPhase port n
 			return clientDataList
 
 testSendToClient = do
@@ -49,7 +49,7 @@ testSendToClient = do
 			return updates
 
 		server = do
-			clientDataList <- connectionPhase 1 port
+			clientDataList <- connectionPhase port 1
 			let updates = [UpdateEntity{}]
 			sendToClients updates clientDataList
 			return ()

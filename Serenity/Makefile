@@ -1,9 +1,9 @@
 SHELL := /bin/bash
 
-runClientArgs= +RTS -N -K500M -m20 -M3G -RTS client localhost 9900 Joseph
+runClientArgs= +RTS -N -K500M -m20 -M3G -RTS -m client -h localhost -p 9900 -n Joseph
 runClientLogFile=client.log
 
-runServerArgs= +RTS -N -K500M -M1G -RTS server
+runServerArgs= +RTS -N -K500M -M1G -RTS -m server -p 9900
 runServerLogFile=server.log
 testLogFilePath=dist/test/Serenity-0.1-test-serenity.log
 

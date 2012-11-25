@@ -3,6 +3,8 @@ version:       0.1
 license-file:  LICENSE
 build-type:    Simple
 cabal-version: >= 1.9.2
+data-dir:      resources
+data-files:    *.bmp
 
 executable serenity
     main-is:        Main.hs

@@ -21,6 +21,8 @@ import Graphics.Gloss.Data.Picture
 
 import qualified Data.Map as Map
 
+import Paths_Serenity
+
 
 data Assets = Assets
 	{	textures :: Map.Map String Picture
@@ -29,10 +31,10 @@ data Assets = Assets
 
 initialize :: IO Assets
 initialize = do
-	planet1 <- loadBMP "planet1.bmp"
-	background <- loadBMP "background.bmp"
-	ship1 <- loadBMP "ship1.bmp"
-	ship2 <- loadBMP "ship2.bmp"
+	planet1 <- loadAsset "planet1.bmp"
+	background <- loadAsset "background.bmp"
+	ship1 <- loadAsset "ship1.bmp"
+	ship2 <- loadAsset "ship2.bmp"
 	assets <- return $ Map.fromList
 		[ ("planet1", planet1)
 		, ("background", background)
@@ -41,6 +43,10 @@ initialize = do
 		]
 	return Assets{textures=assets}
 
+loadAsset :: FilePath -> IO Picture
+loadAsset f = do
+	file <- getDataFileName f
+	loadBMP file
 
 getPicture :: String -> Assets -> Picture
 getPicture name assets =

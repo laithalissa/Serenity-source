@@ -25,17 +25,19 @@ import Serenity.Network.Utility
 main :: [String] -> IO ()
 main args = do
 	let serverHost = head args
-
-	let serverPort = PortNum $ fromIntegral (read (args !! 1) :: Int)
+	let serverPort = fromIntegral $ read (args !! 1)
 	let name = args !! 2
 
-	assets <- Assets.initialize
-	print "client connecting..."
-	transport <- connectChannelsIO serverHost 9900
-	print "client connected!!"
+
+	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
+
+	transport <- connectChannelsIO serverHost serverPort
 	let inbox = channelInbox transport
 	let outbox = channelOutbox transport
 
+	print "Connected!"
+
+	assets <- Assets.initialize
 	playIO
 		(InWindow "Virtual Balloon Commander" windowSize (0, 0))
 		white

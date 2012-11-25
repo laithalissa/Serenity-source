@@ -67,13 +67,12 @@ handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
-	let updates = map extractUpdate (filter isUpdate messages)
+	let updates = concatMap getUpdate messages
 
 	-- Apply the updates to the game state
 	gameState' <- return $ manyUpdateGameState updates (gameState clientState)
 	return $ clientState { gameState = gameState' }
 
 	where
-		extractUpdate (UpdateMessage update _) = update
-		isUpdate (UpdateMessage _ _) = True
-		isUpdate _ = False
+		getUpdate (UpdateMessage update _) = [update]
+		getUpdate _ = []

@@ -3,7 +3,6 @@
 module Serenity.Game.Server.Main
 (	main
 ,	port
-,	updateWorld
 ,	connectionPhase
 ) where
 

@@ -8,18 +8,13 @@ import Serenity.Game.Client.Common
 import Serenity.Game.Client.Assets (Assets)
 
 import Serenity.Game.Shared.Model.Common
-import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap)
+import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, exampleGameState)
 import qualified Serenity.Game.Shared.Model.GameState as GameState
 import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
 
 import Serenity.Network.Message (Command)
 
 import Serenity.Sheen.View
-
--- XXX ONLY FOR THE EXAMPLE GAMESTATE
-import Serenity.Game.Shared.Model.Entity
-import qualified Data.Set as Set
--- XXX
 
 -- | Represents the state of the client including the current game state
 -- and GUI's state
@@ -49,16 +44,8 @@ initialize assets gameMap = ClientState
 	,	clientName = "test"
 	}
 	where
-		-- XXX EXAMPLE GAMESTATE
 		-- game = GameState.initialize gameMap
-		game = GameState.GameState
-			{	GameState.gameStateGameMap = gameMap
-			,	GameState.gameStateEntities = Set.singleton $ GameEntity
-					{	entityId = 1
-					,	ownerId = "test"
-					,	entity = Ship 0 (50, 50) (0, 0) (0, 0) StayStillOrder
-					}
-			}
+		game = exampleGameState
 
 initUIState :: GameState -> UIState ClientState
 initUIState gameState = UIState

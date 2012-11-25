@@ -4,3 +4,4 @@ doc
 run/
 environment/
 *#*
+*.log

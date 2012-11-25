@@ -23,7 +23,6 @@ import Serenity.Game.Shared.Model.Entity
 	(	GameEntity(..)
 	)
 
-
 updateGameState ::  Update -> GameState -> GameState
 updateGameState (AddEntity entity) gameState = 
 	if hasEntityId (entityId entity) gameState 
@@ -34,4 +33,5 @@ updateGameState (DeleteEntity entity) gameState = removeEntity entity gameState
 
 manyUpdateGameState :: [Update] -> GameState -> GameState
 manyUpdateGameState updates state = foldl (flip updateGameState) state updates
+
 

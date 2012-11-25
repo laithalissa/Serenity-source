@@ -92,10 +92,12 @@ testTransformReturnsUpdateWithEntityInCorrectState command@(GiveOrder eId order)
 --testStepDoesNothingWhenNoTimePassed command@(GiveOrder eId order) =
 	
 
-testStepMovesShipTowardsTarget :: Bool
-testStepMovesShipTowardsTarget = (distance (90,45) (10,10)) > (distance (movingShipLocation updates) (10, 10))		
+testStepMovesShipTowardsTarget :: Property
+testStepMovesShipTowardsTarget = conjoin
+	[	(distance (90,45) (10,10)) > (distance (movingShipLocation (step 1 gameState)) (10, 10))	
+	,	floatComp 0.0 (distance (movingShipLocation (step 1000 gameState)) (10, 10))
+	]
 	where
-		updates = step 1 gameState
 		movingShipLocation updates = (shipLocation . entity . updateEntity) (foldl (chooseShip 2) (head updates) updates)
 		distance (x1,y1) (x2,y2) = ((x1-x2)**2 + (y1-y2)**2)**0.5
 		chooseShip eId a b = if eId == (getId a) then a else b

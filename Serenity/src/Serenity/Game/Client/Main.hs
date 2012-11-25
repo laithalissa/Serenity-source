@@ -23,14 +23,12 @@ import Serenity.Network.Message (Message(..), Command)
 import Serenity.Network.Utility
 
 -- | Run the Virtual Balloon Commander client
-main ::
-	[String] -- ^ List of CLI arguments: host, port, player name
-	-> IO ()
-main args = do
-	let serverHost = head args
-	let serverPort = fromIntegral $ read (args !! 1)
-	let name = args !! 2
-
+client ::
+	String -- ^ Host
+	-> Int -- ^ Port 
+	-> String -- ^ Player Name
+	-> IO () 
+client serverHost serverPort name = do
 
 	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
 

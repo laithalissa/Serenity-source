@@ -7,11 +7,12 @@ module Serenity.Game.Shared.Model.GameState
 ,	getEntityById
 ,	hasEntity
 ,	hasEntityId
+,	exampleGameState
 ) where
 
 import Serenity.Game.Shared.Model.Common(TimeDuration)
 import Serenity.Game.Shared.Model.Entity(GameEntity(..), Entity(..))
-import Serenity.Game.Shared.Model.GameMap(GameMap(..))
+import Serenity.Game.Shared.Model.GameMap(GameMap(..), exampleGameMap)
 import Serenity.Game.Shared.Model.Common(EntityId)
 
 import Data.Set(Set)
@@ -62,3 +63,28 @@ removeEntity entity gameState = gameState{gameStateEntities=(Set.delete entity (
 
 isValid :: GameState -> Bool
 isValid _ = True
+
+exampleGameState = foldl f (initialize exampleGameMap) entities
+	where
+		f = flip addEntity
+		entities = 
+			[	createGameEntity 0 (5,5) StayStillOrder
+			,	createGameEntity 1 (10,5) StayStillOrder
+			,	createGameEntity 2 (90,45) MoveOrder{moveOrderLocation=(10,10)}
+			]
+
+		createGameEntity eid location order = 
+			GameEntity
+			{	entityId=eid
+			,	ownerId="ALC"
+			,	entity=createEntity location order
+			}
+			
+		createEntity location order = 	
+			Ship
+			{	shipClass=1
+			,	shipLocation=location
+			,	shipDirection=(0,1)
+			,	shipSpeed=(0,1)
+			,	shipOrder=order
+			}

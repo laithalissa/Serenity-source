@@ -19,6 +19,8 @@ tests = testGroup "Network Utility Tests"
 	[	testCase "Test testGetTransportChannels returns two empty channels" testGetTransportChannels
 	,	testCase "Test input placed in the input channel is sent" testSendChannel
 	,	testCase "Test input sent arrives in the receive channel" testReceiveChannel
+	,	testCase "Test readTChanUntilEmpty on empty TChan returns empty list" testReadUntilEmptyOnEmptyTChan
+	,	testCase "Test readTChanUntilEmpty" testReadTChanUntilEmpty
 	]
 
 testGetTransportChannels = do
@@ -60,3 +62,24 @@ testReceiveChannel = do
 			return string
 
 		port = 9912
+
+testReadUntilEmptyOnEmptyTChan = do
+	tchan <- newTChanIO
+	items <- readTChanUntilEmpty tchan []
+	empty <- atomically $ isEmptyTChan tchan
+
+	assertBool "TChan is not empty" empty
+	assertBool "Items is not emtpy" (length items == 0)
+
+testReadTChanUntilEmpty = do
+	tchan <- newTChanIO
+
+	atomically $ writeTChan tchan 0
+	atomically $ writeTChan tchan 1
+	atomically $ writeTChan tchan 2
+
+	items <- readTChanUntilEmpty tchan []
+	empty <- atomically $ isEmptyTChan tchan
+
+	assertBool "TChan is not empty" empty
+	[0, 1, 2] @=? items

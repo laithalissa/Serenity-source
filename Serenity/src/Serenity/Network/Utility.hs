@@ -7,6 +7,7 @@ module Serenity.Network.Utility
 ,	listenChannels
 ,	listenChannelsIO
 ,	startListeningIO
+,	readTChanUntilEmpty
 ) where
 
 import Control.Concurrent.STM
@@ -72,3 +73,16 @@ listenChannels = do
 
 listenChannelsIO :: Connection -> IO TransportInterface
 listenChannelsIO connection = evalTransport listenChannels connection
+
+-- | Read all of the items from a TChan
+readTChanUntilEmpty :: TChan a -> [a] -> IO [a]
+readTChanUntilEmpty tchan accum = do
+	value <- atomically $ do
+		empty <- isEmptyTChan tchan
+		if empty then return Nothing else do
+			readValue <- readTChan tchan
+			return $ Just readValue
+
+	case value of
+		Nothing -> return accum
+		Just v -> readTChanUntilEmpty tchan (accum ++ [v])

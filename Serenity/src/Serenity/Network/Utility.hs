@@ -7,6 +7,7 @@ module Serenity.Network.Utility
 ,	listenChannels
 ,	listenChannelsIO
 ,	startListeningIO
+,	readNTChan
 ,	readTChanUntilEmpty
 ,	sendMessages
 ) where
@@ -15,7 +16,7 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM.TChan
 import Control.Concurrent (forkIO)
-import Control.Monad (forever)
+import Control.Monad (forever, liftM)
 
 import Serenity.Network.Transport
 
@@ -74,6 +75,10 @@ listenChannels = do
 
 listenChannelsIO :: Connection -> IO TransportInterface
 listenChannelsIO connection = evalTransport listenChannels connection
+
+-- | Read the first n items from a TChan
+readNTChan :: Int -> TChan a -> IO [a]
+readNTChan n tchan = liftM (take n) (readTChanUntilEmpty tchan)
 
 -- | Read all of the items from a TChan
 readTChanUntilEmpty :: TChan a -> IO [a]

@@ -19,8 +19,7 @@ import Serenity.Game.Shared.GameStateUpdate(manyUpdateGameState)
 import Serenity.Game.Shared.Model.GameState(GameState, exampleGameState)
 import Serenity.Game.Server.GameStateTransform(transforms,step)
 
-import Data.Time.Clock.POSIX (getPOSIXTime)
-
+import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import Control.Concurrent(threadDelay)
 
 port = 9900
@@ -31,19 +30,8 @@ main = do
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase clientCount port
 	print "all clients connected, starting game"
-	play 5 clients exampleGameState transforms step manyUpdateGameState
+	play 20 clients exampleGameState transforms step manyUpdateGameState
 	print "server finished"
-
-	
-
--- main = do
--- 	connection <- runListen port
--- 	return ()
-
-readInput sock tvar = do
-	(packet, client) <- receivePacket sock
-	atomically $ writeTVar tvar (packetData packet)
-	putStrLn $ "[" ++ (show client) ++ "] " ++ (show packet)
 
 -- | Wait for n clients to connect
 connectionPhase :: 
@@ -74,20 +62,20 @@ play :: forall world
 	-> IO ()
 
 play stepsPerSecond clientDataList initialWorld transform step updateWorld = do
-	time <- getPOSIXTime
+	time <- getCurrentTime
 	playLoop initialWorld time
 	where 
 		playLoop gameState lastTime = do
 			commands    <- getCommands clientDataList
 			updatesC    <- return $ transform commands gameState
 			gameState'  <- return $ updateWorld updatesC gameState
-			newTime     <- getPOSIXTime
-			time        <- return $ (realToFrac lastTime) - (realToFrac newTime)
-			updatesT    <- return $ step 0.5 gameState'
+			newTime     <- getCurrentTime
+			time        <- return $ toRational $ diffUTCTime newTime lastTime
+			updatesT    <- return $ step (fromRational time) gameState'
 			gameState'' <- return $ updateWorld updatesT gameState'
 			sendToClient (updatesC ++ updatesT) clientDataList
-			threadDelay 100000
-			playLoop gameState'' lastTime
+			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
+			playLoop gameState'' newTime
 
 -- | Receive commands from the network from all the clients
 getCommands :: [ClientData] -> IO [Command]

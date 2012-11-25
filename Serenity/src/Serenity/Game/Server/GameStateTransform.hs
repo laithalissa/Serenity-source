@@ -8,6 +8,7 @@ module Serenity.Game.Server.GameStateTransform
 ,	GameEntity(..)
 ,	transform
 ,	step
+,	nextLocation
 ) where
 
 import Serenity.Network.Message

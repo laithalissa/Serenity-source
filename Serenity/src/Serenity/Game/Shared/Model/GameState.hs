@@ -1,5 +1,6 @@
 module Serenity.Game.Shared.Model.GameState
 (	GameState(..)
+,	GameMap(..)
 ,	initialize
 ,	addEntity
 ,	removeEntity
@@ -10,7 +11,7 @@ module Serenity.Game.Shared.Model.GameState
 
 import Serenity.Game.Shared.Model.Common(TimeDuration)
 import Serenity.Game.Shared.Model.Entity(GameEntity(..), Entity(..))
-import Serenity.Game.Shared.Model.GameMap(GameMap)
+import Serenity.Game.Shared.Model.GameMap(GameMap(..))
 import Serenity.Game.Shared.Model.Common(EntityId)
 
 import Data.Set(Set)

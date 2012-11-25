@@ -14,6 +14,7 @@ import Serenity.Game.Shared.Model.Common(TimeDuration)
 import Serenity.Game.Shared.Model.Entity(GameEntity(..), Entity(..))
 import Serenity.Game.Shared.Model.GameMap(GameMap(..), exampleGameMap)
 import Serenity.Game.Shared.Model.Common(EntityId)
+import Serenity.Game.Shared.Model.ShipOrder(ShipOrder(..))
 
 import Data.Set(Set)
 import qualified Data.Set as Set

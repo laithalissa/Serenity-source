@@ -16,6 +16,7 @@ import Serenity.Game.Client.Common
 import Serenity.Game.Client.Controller
 
 import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
+import Serenity.Game.Shared.Model.Common (OwnerId)
 import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
 import Serenity.Network.Message (Message(..), Command)
@@ -25,6 +26,7 @@ main :: [String] -> IO ()
 main args = do
 	let serverHost = head args
 	let serverPort = PortNum $ fromIntegral (read (args !! 1) :: Int)
+	let name = args !! 2
 
 	assets <- Assets.initialize
 	transport <- connectChannelsIO serverHost serverPort
@@ -35,14 +37,14 @@ main args = do
 		(InWindow "Virtual Balloon Commander" windowSize (0, 0))
 		white
 		20
-		(initClientState assets)
+		(initClientState assets name)
 		(return . render)
 		(handleEvent outbox)
 		(handleStep inbox)
 
 -- | Create the initial client state
-initClientState :: Assets -> ClientState
-initClientState assets = ClientState.initialize assets exampleGameMap
+initClientState :: Assets -> OwnerId -> ClientState
+initClientState assets name = ClientState.initialize assets exampleGameMap name
 
 handleEvent :: TChan Message -> Event -> ClientState -> IO ClientState
 handleEvent outbox event clientState = do

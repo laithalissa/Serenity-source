@@ -33,15 +33,16 @@ data UIState a = UIState
 
 -- | Create the initial client state
 initialize ::
-	Assets                 -- ^ Assets
-	-> GameMap             -- ^ Map
+	Assets         -- ^ Assets
+	-> GameMap     -- ^ Map
+	-> OwnerId     -- ^ Player's name
 	-> ClientState
-initialize assets gameMap = ClientState
+initialize assets gameMap name = ClientState
 	{	gameState = game
 	,	uiState = initUIState game
 	,	commands = []
 	,	assets = assets
-	,	clientName = "test"
+	,	clientName = name
 	}
 	where
 		-- game = GameState.initialize gameMap

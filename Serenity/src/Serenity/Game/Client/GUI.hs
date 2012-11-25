@@ -68,8 +68,5 @@ render gameState uiState assets = Pictures
 								else s)
 						(head $ gameMapPlanets $ gameStateGameMap gameState)
 						(gameMapPlanets $ gameStateGameMap gameState)
-		entityF entity = case entity of
-			Ship{} -> translate
-				(fst $ shipLocation entity)
-				(snd $ shipLocation entity)
-				(getPictureSized "ship1" 10 10 assets)
+		entityF Ship{shipLocation=(x,y), shipDirection=(dx,dy)} = 
+			translate x y $ (getPictureSized "ship1" 10 10 assets)

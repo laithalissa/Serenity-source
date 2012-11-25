@@ -72,6 +72,7 @@ handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
+	print messages
 	let updates = concatMap getUpdate messages
 
 	-- Apply the updates to the game state

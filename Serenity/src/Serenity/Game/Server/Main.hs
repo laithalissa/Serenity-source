@@ -83,9 +83,9 @@ play stepsPerSecond clientDataList initialWorld transform step updateWorld = do
 			gameState'  <- return $ updateWorld updatesC gameState
 			newTime     <- getPOSIXTime
 			time        <- return $ (realToFrac lastTime) - (realToFrac newTime)
-			updatesT    <- return $ step time gameState'
+			updatesT    <- return $ step 0.5 gameState'
 			gameState'' <- return $ updateWorld updatesT gameState'
-			return $ sendToClient (updatesC ++ updatesT)
+			sendToClient (updatesC ++ updatesT) clientDataList
 			playLoop gameState'' lastTime
 
 -- | Receive commands from the network from all the clients
@@ -101,6 +101,7 @@ getCommands clientDataList = do
 -- | Send updates to all clients
 sendToClient :: [Update] -> [ClientData] -> IO ()
 sendToClient updates clientDataList = do 
+		print updates
 		mapM (\o -> sendMessages o messages) outboxes
 		return ()
 		where

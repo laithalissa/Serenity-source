@@ -69,9 +69,9 @@ exampleGameState = foldl f (initialize exampleGameMap) entities
 	where
 		f = flip addEntity
 		entities = 
-			[	createGameEntity 0 (5,5) StayStillOrder
-			,	createGameEntity 1 (10,5) StayStillOrder
-			,	createGameEntity 2 (90,45) MoveOrder{moveOrderLocation=(10,10)}
+			[	createGameEntity 0 (20,25) StayStillOrder
+			,	createGameEntity 1 (85,10) StayStillOrder
+			,	createGameEntity 2 (50,45) MoveOrder{moveOrderLocation=(10,10)}
 			]
 
 		createGameEntity eid location order = 

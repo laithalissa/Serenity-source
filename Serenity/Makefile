@@ -10,14 +10,13 @@ clean:
 	cabal clean
 
 build:
-	cabal install --only-dependencies
 	cabal configure --enable-tests
 	cabal build
 
 test: build
 	cabal test
 
-install:
+install: build
 	cabal install
 
 client: install

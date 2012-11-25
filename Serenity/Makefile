@@ -52,12 +52,17 @@ client: dist
 server: dist
 	make serverCached
 
+run: dist
+	sleep1; make clientCached &
+	make serverCached
 
 clientCached:
 	cd ${runDir}; \
-	./${runFile} ${runRTSArgs} ${runClientArgs}
+	./${runFile} ${runRTSArgs} ${runClientArgs} > client.log
 
 serverCached:
 	cd ${runDir}; \
-	./${runFile} ${runRTSArgs} ${runServerArgs}
+	./${runFile} ${runRTSArgs} ${runServerArgs} > server.log
+
+
 

@@ -2,7 +2,7 @@
 module Serenity.Game.Shared.GameStateUpdate
 (	module Serenity.Game.Shared.Model.GameState
 ,	module Serenity.Network.Message
-,	gameStateUpdate
+,	updateGameState
 ) where
 
 
@@ -23,18 +23,14 @@ import Serenity.Game.Shared.Model.Entity
 	)
 
 
-gameStateUpdate :: GameState -> Update -> GameState
-gameStateUpdate gameState (AddEntity entity) = 
+updateGameState ::  Update -> GameState -> GameState
+updateGameState (AddEntity entity) gameState = 
 	if hasEntityId (entityId entity) gameState 
 		then gameState 
 		else addEntity entity gameState
+updateGameState (UpdateEntity entity) gameState = addEntity entity gameState
+updateGameState (DeleteEntity entity) gameState = removeEntity entity gameState
 
-gameStateUpdate gameState (UpdateEntity entity) = addEntity entity gameState
-gameStateUpdate gameState (DeleteEntity entity) = removeEntity entity gameState
-
-
-
-
-
-
+manyUpdateGameState :: [Update] -> GameState -> GameState
+manyUpdateGameState updates state = foldl (flip updateGameState) state updates
 

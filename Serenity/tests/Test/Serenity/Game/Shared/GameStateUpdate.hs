@@ -16,7 +16,7 @@ import Test.HUnit
 import Test.QuickCheck
 import Test.QuickCheck.Property(Property, (==>))
 
-import Serenity.Game.Shared.GameStateUpdate(gameStateUpdate)
+import Serenity.Game.Shared.GameStateUpdate(updateGameState)
 
 import Serenity.Game.Shared.Model.GameState(GameState(..), hasEntity, initialize, addEntity, getEntityById)
 
@@ -56,7 +56,7 @@ testEntityAddedCorrectlyIfNotAlreadyInGameState :: GameMap -> [GameEntity] -> Ga
 testEntityAddedCorrectlyIfNotAlreadyInGameState gameMap entities entity = (not $ hasEntity entity gsBefore) ==> (hasEntity entity gsAfter)  
 	where
 		gsBefore = createGameState gameMap entities
-		gsAfter = gameStateUpdate gsBefore (AddEntity entity) 
+		gsAfter = updateGameState (AddEntity entity) gsBefore
 
 
 testEntityAddedIsIgnoredIfEntityAlreadyInGameState :: GameMap -> [GameEntity] -> GameEntity -> Property
@@ -66,7 +66,7 @@ testEntityAddedIsIgnoredIfEntityAlreadyInGameState gameMap entities entity =
 		
 	where
 		gsBefore = createGameState gameMap entities
-		gsAfter = gameStateUpdate gsBefore (AddEntity entity)
+		gsAfter = updateGameState (AddEntity entity) gsBefore
 		oldEntity = fromJust $ getEntityById (entityId entity) gsBefore 
 		
 

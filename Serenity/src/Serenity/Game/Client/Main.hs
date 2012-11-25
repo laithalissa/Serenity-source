@@ -22,7 +22,10 @@ import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 import Serenity.Network.Message (Message(..), Command)
 import Serenity.Network.Utility
 
-main :: [String] -> IO ()
+-- | Run the Virtual Balloon Commander client
+main ::
+	[String] -- ^ List of CLI arguments: host, port, player name
+	-> IO ()
 main args = do
 	let serverHost = head args
 	let serverPort = fromIntegral $ read (args !! 1)
@@ -51,6 +54,9 @@ main args = do
 initClientState :: Assets -> OwnerId -> ClientState
 initClientState assets name = ClientState.initialize assets exampleGameMap name
 
+-- | Handle a Gloss input event, e.g. keyboard action
+-- The event is used to create a list of commands which are sent to the server.
+-- For example, clicking in the game area will order a ship to move to that location.
 handleEvent :: TChan Message -> Event -> ClientState -> IO ClientState
 handleEvent outbox event clientState = do
 	-- Get a list of commands
@@ -69,6 +75,8 @@ handleEvent outbox event clientState = do
 		wx = fromIntegral $ (fst windowSize) `div` 2
 		wy = fromIntegral $ (snd windowSize) `div` 2
 
+-- | Update the game state on a time step
+-- Updates are received from the server and then applied to the game state
 handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
 	-- Receive updates from the server

@@ -24,6 +24,17 @@ import Serenity.Game.Server.GameStateTransform(transforms,step)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import Control.Concurrent(threadDelay)
 
+import System.Console.ParseArgs
+	(	ArgsComplete(ArgsComplete)
+	,	Arg(..)
+	,	Argtype(ArgtypeInt)
+	,	parseArgs
+	,	argDataRequired
+	,	getArgInt
+	)
+
+
+
 port = 9900
 clientCount = 1
 
@@ -34,6 +45,8 @@ main = do
 	print "all clients connected, starting game"
 	play 30 clients exampleGameState transforms step manyUpdateGameState
 	print "server finished"
+
+
 
 -- | Wait for n clients to connect
 connectionPhase :: 

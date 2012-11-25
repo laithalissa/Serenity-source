@@ -75,8 +75,11 @@ listenChannelsIO :: Connection -> IO TransportInterface
 listenChannelsIO connection = evalTransport listenChannels connection
 
 -- | Read all of the items from a TChan
-readTChanUntilEmpty :: TChan a -> [a] -> IO [a]
-readTChanUntilEmpty tchan accum = do
+readTChanUntilEmpty :: TChan a -> IO [a]
+readTChanUntilEmpty chan = readTChanUntilEmpty' chan []
+
+readTChanUntilEmpty' :: TChan a -> [a] -> IO [a]
+readTChanUntilEmpty' tchan accum = do
 	value <- atomically $ do
 		empty <- isEmptyTChan tchan
 		if empty then return Nothing else do
@@ -85,4 +88,4 @@ readTChanUntilEmpty tchan accum = do
 
 	case value of
 		Nothing -> return accum
-		Just v -> readTChanUntilEmpty tchan (accum ++ [v])
+		Just v -> readTChanUntilEmpty' tchan (accum ++ [v])

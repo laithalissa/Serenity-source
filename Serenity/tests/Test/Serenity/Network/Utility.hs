@@ -65,7 +65,7 @@ testReceiveChannel = do
 
 testReadUntilEmptyOnEmptyTChan = do
 	tchan <- newTChanIO
-	items <- readTChanUntilEmpty tchan []
+	items <- readTChanUntilEmpty tchan 
 	empty <- atomically $ isEmptyTChan tchan
 
 	assertBool "TChan is not empty" empty
@@ -78,7 +78,7 @@ testReadTChanUntilEmpty = do
 	atomically $ writeTChan tchan 1
 	atomically $ writeTChan tchan 2
 
-	items <- readTChanUntilEmpty tchan []
+	items <- readTChanUntilEmpty tchan
 	empty <- atomically $ isEmptyTChan tchan
 
 	assertBool "TChan is not empty" empty

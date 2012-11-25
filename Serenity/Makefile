@@ -7,9 +7,9 @@ buildDir="build"
 runDir="${buildDir}/environment"
 cabalBuildFile="dist/build/serenity/serenity"
 runFile="serenity"
-runClientArgs= +RTS -N -K1G -RTS client localhost 9050 ALC
+runClientArgs= +RTS -N -K500M -m20 -M3G -RTS client localhost 9050 ALC
 runClientLogFile="${runDir}/client.log"
-runServerArgs= +RTS -N -K1G -RTS server
+runServerArgs= +RTS -N -K500M -M1G -RTS server
 runServerLogFile="${runDir}/server.log"
 testDir="${buildDir}/test"
 cabalTestFile="dist/build/test-serenity/test-serenity"
@@ -53,6 +53,9 @@ server: dist
 	make serverCached
 
 run: dist
+	make runCached
+
+runCached:
 	sleep1; make clientCached > ${runClientLogFile} &
 	make serverCached > ${runServerLogFile}
 

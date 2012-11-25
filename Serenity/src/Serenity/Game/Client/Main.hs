@@ -19,7 +19,7 @@ import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
 import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
 import Serenity.Network.Message (Message(..), Command)
-import Serenity.Network.Utility (TransportInterface(..), connectChannelsIO, readTChanUntilEmpty)
+import Serenity.Network.Utility
 
 main :: [String] -> IO ()
 main args = do
@@ -48,12 +48,9 @@ handleEvent :: TChan Message -> Event -> ClientState -> IO ClientState
 handleEvent outbox event clientState = do
 	-- Get a list of commands
 	newClientState <- return $ handleInput (translateEvent event) clientState
-	let commands = ClientState.commands newClientState
 
 	-- Send commands to the server
-	sendCommands outbox commands
-
-	when (not $ null commands) $ print commands
+	sendMessages outbox messages
 
 	return $ newClientState { ClientState.commands = [] }
 
@@ -63,6 +60,8 @@ handleEvent outbox event clientState = do
 
 		wx = fromIntegral $ (fst windowSize) `div` 2
 		wy = fromIntegral $ (snd windowSize) `div` 2
+
+		messages = map (\c -> CommandMessage c 0 0) (commands clientState)
 
 handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
@@ -78,10 +77,3 @@ handleStep inbox delta clientState = do
 		extractUpdate (UpdateMessage update _) = update
 		isUpdate (UpdateMessage _ _) = True
 		isUpdate _ = False
-
-sendCommands :: TChan Message -> [Command] -> IO ()
-sendCommands _ [] = return ()
-sendCommands outbox (c:cs) = do
-	atomically $ writeTChan outbox (CommandMessage c 0 0)
-	sendCommands outbox cs
-

@@ -4,13 +4,13 @@ module Serenity.Game.Client.Main (
 where
 
 import Control.Concurrent.STM
-import Control.Concurrent.STM.TChan
 import Control.Monad (when)
 import Graphics.Gloss.Interface.IO.Game
+import Network.Socket (PortNumber (..))
 
 import Serenity.Game.Client.Assets (Assets)
 import qualified Serenity.Game.Client.Assets as Assets
-import Serenity.Game.Client.ClientState (ClientState(..), UIState(..))
+import Serenity.Game.Client.ClientState (ClientState(..))
 import qualified Serenity.Game.Client.ClientState as ClientState
 import Serenity.Game.Client.Common
 import Serenity.Game.Client.Controller
@@ -18,13 +18,16 @@ import Serenity.Game.Client.Controller
 import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
 import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
-import Serenity.Network.Message (Message(..), Command, Update)
+import Serenity.Network.Message (Message(..), Command)
 import Serenity.Network.Utility (TransportInterface(..), connectChannelsIO, readTChanUntilEmpty)
 
-main :: IO ()
-main = do
+main :: [String] -> IO ()
+main args = do
+	let serverHost = head args
+	let serverPort = PortNum $ fromIntegral (read (args !! 1) :: Int)
+
 	assets <- Assets.initialize
-	transport <- connectChannelsIO "localhost" 8080
+	transport <- connectChannelsIO serverHost serverPort
 	let inbox = channelInbox transport
 	let outbox = channelOutbox transport
 
@@ -65,7 +68,7 @@ handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox []
-	let updates = map extractUpdate messages
+	let updates = map extractUpdate (filter isUpdate messages)
 
 	-- Apply the updates to the game state
 	gameState' <- return $ manyUpdateGameState updates (gameState clientState)
@@ -73,6 +76,8 @@ handleStep inbox delta clientState = do
 
 	where
 		extractUpdate (UpdateMessage update _) = update
+		isUpdate (UpdateMessage _ _) = True
+		isUpdate _ = False
 
 sendCommands :: TChan Message -> [Command] -> IO ()
 sendCommands _ [] = return ()

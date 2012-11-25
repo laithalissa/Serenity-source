@@ -7,6 +7,7 @@ module Serenity.Game.Server.GameStateTransform
 ,	Entity(..)
 ,	GameEntity(..)
 ,	transform
+,	transforms
 ,	step
 ,	nextLocation
 ) where
@@ -48,6 +49,12 @@ transform (GiveOrder orderEntityId order) gameState =
 	if hasEntityId orderEntityId gameState 
 		then [UpdateEntity $ giveOrder (fromJust $ getEntityById orderEntityId gameState) order]
 		else []	
+
+
+transforms :: [Command] -> GameState -> [Update]
+transforms commands gameState = concatMap ((flip transform) gameState) commands
+
+	
 
 
 giveOrder :: GameEntity -> ShipOrder -> GameEntity

@@ -14,16 +14,27 @@ import Serenity.Network.Transport
 import Serenity.Network.Utility
 import Serenity.Game.Server.ClientData
 import Serenity.Network.Packet
-import Serenity.Network.Message
-import Serenity.Game.Shared.GameStateUpdate
+import Serenity.Network.Message(Command(..), Update(..), Message(..))
+import Serenity.Game.Shared.GameStateUpdate(manyUpdateGameState)
+import Serenity.Game.Shared.Model.GameState(GameState, exampleGameState)
+import Serenity.Game.Server.GameStateTransform(transforms,step)
 
 import Data.Time.Clock.POSIX (getPOSIXTime)
 
 import Control.Concurrent(threadDelay)
 
 port = 9900
+clientCount = 1
 
-main = print "sup"
+main = do
+	print "server started"
+	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
+	clients <- connectionPhase clientCount port
+	print "all clients connected, starting game"
+	play 5 clients exampleGameState transforms step manyUpdateGameState
+	print "server finished"
+
+	
 
 -- main = do
 -- 	connection <- runListen port

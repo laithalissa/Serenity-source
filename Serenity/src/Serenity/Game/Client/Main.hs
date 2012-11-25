@@ -25,11 +25,14 @@ import Serenity.Network.Utility
 main :: [String] -> IO ()
 main args = do
 	let serverHost = head args
+
 	let serverPort = PortNum $ fromIntegral (read (args !! 1) :: Int)
 	let name = args !! 2
 
 	assets <- Assets.initialize
-	transport <- connectChannelsIO serverHost serverPort
+	print "client connecting..."
+	transport <- connectChannelsIO serverHost 9900
+	print "client connected!!"
 	let inbox = channelInbox transport
 	let outbox = channelOutbox transport
 

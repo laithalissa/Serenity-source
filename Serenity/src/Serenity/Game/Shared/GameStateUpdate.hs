@@ -31,6 +31,7 @@ updateGameState (AddEntity entity) gameState =
 updateGameState (UpdateEntity entity) gameState = addEntity entity gameState
 updateGameState (DeleteEntity entity) gameState = removeEntity entity gameState
 
+
 manyUpdateGameState :: [Update] -> GameState -> GameState
 manyUpdateGameState updates state = foldl (flip updateGameState) state updates
 

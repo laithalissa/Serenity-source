@@ -5,6 +5,7 @@ runClientLogFile=client.log
 
 runServerArgs= +RTS -N -K500M -M1G -RTS server
 runServerLogFile=server.log
+testLogFilePath=dist/test/Serenity-0.1-test-serenity.log
 
 clean:
 	cabal clean
@@ -15,6 +16,7 @@ build:
 
 test: build
 	cabal test
+	cat ${testLogFilePath}
 
 install: build
 	cabal install

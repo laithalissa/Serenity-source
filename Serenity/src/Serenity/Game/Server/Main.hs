@@ -32,7 +32,7 @@ main = do
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase clientCount port
 	print "all clients connected, starting game"
-	play 20 clients exampleGameState transforms step manyUpdateGameState
+	play 30 clients exampleGameState transforms step manyUpdateGameState
 	print "server finished"
 
 -- | Wait for n clients to connect

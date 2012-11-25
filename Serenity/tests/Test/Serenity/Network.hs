@@ -7,7 +7,7 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.TMVar
 import Control.Concurrent
 
-readUntilJust :: TMVar a -> IO a
+readUntilJust :: TVar (Maybe a) -> IO a
 readUntilJust tvar = atomically $ do
 	maybeOutput <- readTVar tvar
 	case maybeOutput of
@@ -19,7 +19,8 @@ serverClientFixture serverBody client = do
 	outputTvar <- atomically $ newEmptyTMVar
 	forkIO $ server outputTvar
 	forkIO client
-	readUntilJust outputTvar where
+	atomically $ readTMVar outputTvar 
+	where
 		server tvar = do
 			input <- serverBody
-			atomically $ writeTVar tvar $ Just input
+			atomically $ putTMVar tvar $ input

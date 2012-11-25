@@ -7,6 +7,8 @@ buildDir="build"
 runDir="${buildDir}/environment"
 cabalBuildFile="dist/build/serenity/serenity"
 runFile="serenity"
+runClientArgs=client localhost 9050
+runServerArgs=server
 runRTSArgs= +RTS -N -K1G -RTS
 
 testDir="${buildDir}/test"
@@ -53,9 +55,9 @@ server: dist
 
 clientCached:
 	cd ${runDir}; \
-	./${runFile} ${runRTSArgs} client localhost 9050
+	./${runFile} ${runRTSArgs} ${runClientArgs}
 
 serverCached:
 	cd ${runDir}; \
-	./${runFile} ${runRTSArgs} server
+	./${runFile} ${runRTSArgs} ${runServerArgs}
 

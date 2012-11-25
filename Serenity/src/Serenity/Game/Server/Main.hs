@@ -1,8 +1,7 @@
 {-# LANGUAGE ExplicitForAll #-}
 
 module Serenity.Game.Server.Main
-(	main
-,	port
+(	server
 ,	connectionPhase
 ,	sendToClients
 ,	getCommands
@@ -33,7 +32,7 @@ server :: Port -> ClientCount -> IO ()
 server port clientCount = do
 	print "server started"	
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
-	clients <- connectionPhase clientCount port
+	clients <- connectionPhase clientCount (fromIntegral port)
 	print "all clients connected, starting game"
 	play 5 clients exampleGameState transforms step manyUpdateGameState
 	print "server finished"

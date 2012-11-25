@@ -1,5 +1,5 @@
 module Serenity.Game.Client.Main (
-	main
+	client
 )
 where
 
@@ -32,7 +32,7 @@ client serverHost serverPort name = do
 
 	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
 
-	transport <- connectChannelsIO serverHost serverPort
+	transport <- connectChannelsIO serverHost (fromIntegral serverPort)
 	let inbox = channelInbox transport
 	let outbox = channelOutbox transport
 

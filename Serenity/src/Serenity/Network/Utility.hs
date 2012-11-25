@@ -81,12 +81,7 @@ readTChanUntilEmpty chan = readTChanUntilEmpty' chan []
 
 readTChanUntilEmpty' :: TChan a -> [a] -> IO [a]
 readTChanUntilEmpty' tchan accum = do
-	value <- atomically $ do
-		empty <- isEmptyTChan tchan
-		if empty then return Nothing else do
-			readValue <- readTChan tchan
-			return $ Just readValue
-
+	value <- atomically $ tryReadTChan tchan
 	case value of
 		Nothing -> return accum
 		Just v -> readTChanUntilEmpty' tchan (accum ++ [v])

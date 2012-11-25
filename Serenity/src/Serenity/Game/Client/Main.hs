@@ -53,6 +53,7 @@ handleEvent :: TChan Message -> Event -> ClientState -> IO ClientState
 handleEvent outbox event clientState = do
 	-- Get a list of commands
 	newClientState <- return $ handleInput (translateEvent event) clientState
+	let messages = map (\c -> CommandMessage c 0 0) (commands newClientState)
 
 	-- Send commands to the server
 	sendMessages outbox messages
@@ -66,13 +67,10 @@ handleEvent outbox event clientState = do
 		wx = fromIntegral $ (fst windowSize) `div` 2
 		wy = fromIntegral $ (snd windowSize) `div` 2
 
-		messages = map (\c -> CommandMessage c 0 0) (commands clientState)
-
 handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
-	print messages
 	let updates = concatMap getUpdate messages
 
 	-- Apply the updates to the game state

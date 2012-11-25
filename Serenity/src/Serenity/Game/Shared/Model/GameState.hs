@@ -65,20 +65,24 @@ removeEntity entity gameState = gameState{gameStateEntities=(Set.delete entity (
 isValid :: GameState -> Bool
 isValid _ = True
 
-exampleGameState = foldl f (initialize exampleGameMap) entities
+exampleGameState = GameState
+	{ gameStateGameMap = exampleGameMap
+	, gameStateEntities = Set.fromList entities
+	}
+
 	where
-		f = flip addEntity
 		entities = 
-			[	createGameEntity 0 (20,25) StayStillOrder
-			,	createGameEntity 1 (85,10) StayStillOrder
-			,	createGameEntity 2 (50,45) MoveOrder{moveOrderLocation=(10,10)}
+			[	createGameEntity 0 (25,25) StayStillOrder "Laith"
+			,	createGameEntity 1 (25,75) StayStillOrder "Jon"
+			,	createGameEntity 2 (75,75) StayStillOrder "Joseph"
+			,	createGameEntity 3 (75,25) StayStillOrder "Vic"
 			]
 
-		createGameEntity eid location order = 
+		createGameEntity eid location order player = 
 			GameEntity
-			{	entityId=eid
-			,	ownerId="ALC"
-			,	entity=createEntity location order
+			{	entityId = eid
+			,	ownerId = player
+			,	entity = createEntity location order
 			}
 			
 		createEntity location order = 	

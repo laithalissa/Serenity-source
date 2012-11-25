@@ -28,7 +28,7 @@ import System.Console.ParseArgs
 	(	ArgsComplete(ArgsComplete)
 	,	Arg(..)
 	,	Argtype(ArgtypeInt)
-	,	parseArgs
+	,	parseArgsIO
 	,	argDataRequired
 	,	getArgInt
 	)
@@ -45,7 +45,6 @@ main = do
 	print "all clients connected, starting game"
 	play 30 clients exampleGameState transforms step manyUpdateGameState
 	print "server finished"
-
 
 
 -- | Wait for n clients to connect

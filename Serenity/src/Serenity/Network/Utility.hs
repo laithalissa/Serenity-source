@@ -8,6 +8,7 @@ module Serenity.Network.Utility
 ,	listenChannelsIO
 ,	startListeningIO
 ,	readTChanUntilEmpty
+,	sendMessages
 ) where
 
 import Control.Concurrent.STM
@@ -89,3 +90,10 @@ readTChanUntilEmpty' tchan accum = do
 	case value of
 		Nothing -> return accum
 		Just v -> readTChanUntilEmpty' tchan (accum ++ [v])
+
+sendMessages :: TChan Message -> [Message] -> IO ()
+sendMessages chan messages = do 
+	atomically $ mapM (writeTChan chan) messages
+	return ()
+
+

@@ -89,38 +89,13 @@ getCommands clientDataList = do
 		getCommands _ = []
 
 -- | Send updates to all clients
-sendToClient :: [Update] -> [ClientData]
-sendToClient = undefined
+sendToClient :: [Update] -> [ClientData] -> IO ()
+sendToClient updates clientDataList = do 
+		mapM (\o -> sendMessages o messages) outboxes
+		return ()
+		where
+			outboxes = map (channelOutbox . clientTransportInterface) clientDataList
+			messages = map (\u -> UpdateMessage u 0) updates
 
---play rate initialWord messageUpdate timeUpdate = do
---	connection <- runConnection listen
---	(inbox, outbox, _) <- getTransportChannels connection
 
---	worldRef <- newIORef initialWord
---	timeRef <- newIORef (getTime)
-
---	forever $ modifyIORef (loop2 (loop (inbox, outbox)) timeRef) worldRef
---		where
---			loop = network (iterate messageUpdate timeUpdate)
---			loop2 loop timeRef oldWorld  = do
---				newTime <- getTime
---				oldTime <- readIORef timeRef
---				writeIOref timeRef newTime
---				newWorld <- loop oldWorld (newTime - oldTime)
---				return newWorld
-
--- | Combined update from time and messages
-updateWorld :: ([Message] -> world -> world)           -- ^ A function to handle messages from clients.
-            -> (Double -> world -> (world, [Message])) -- ^ A function to step the world one iteration, given the past time
-            -> (world -> [Message] -> Double -> (world, [Message]))
-
-updateWorld messageUpdate timeUpdate world messages time = timeUpdate time (messageUpdate messages world)
-
--- | Run the update with the requisite communication over the network
---network :: (world -> [Message] -> Double -> (world, [Message])) -> (inbox, outbox) -> world -> Double  -> IO world
---network calculate (inbox, outbox) world time = do
---	inMessages <- read inbox
---	(newWorld, outMessages) <- return $ calculate world inMessages time
---	append outbox outMessages
---	return newWorld
 

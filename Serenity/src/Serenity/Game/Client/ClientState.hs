@@ -6,7 +6,6 @@ module Serenity.Game.Client.ClientState
 
 import Serenity.Game.Client.Common
 import Serenity.Game.Client.Assets (Assets)
--- import Serenity.Game.Client.UIState (UIState(..))
 
 import Serenity.Game.Shared.Model.Common
 import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap)

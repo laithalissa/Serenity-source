@@ -88,7 +88,10 @@ entityMakeMove entity = entity
 
 stepEntity :: TimeDuration -> Entity -> Entity
 stepEntity tD entity@(Ship{ shipLocation=location, shipSpeed=speed }) =
-	entity{ shipLocation = nextLocation location speed tD }
+	entity
+	{	shipLocation = nextLocation location speed tD 
+	,	shipDirection = shipSpeed entity
+	}
 stepEntity tD entity = entity
 
 

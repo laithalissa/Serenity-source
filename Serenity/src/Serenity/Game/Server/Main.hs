@@ -4,6 +4,8 @@ module Serenity.Game.Server.Main
 (	main
 ,	port
 ,	connectionPhase
+,	sendToClients
+,	getCommands
 ) where
 
 import Control.Concurrent.STM
@@ -73,7 +75,7 @@ play stepsPerSecond clientDataList initialWorld transform step updateWorld = do
 			time        <- return $ toRational $ diffUTCTime newTime lastTime
 			updatesT    <- return $ step (fromRational time) gameState'
 			gameState'' <- return $ updateWorld updatesT gameState'
-			sendToClient (updatesC ++ updatesT) clientDataList
+			sendToClients (updatesC ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
 			playLoop gameState'' newTime
 
@@ -88,8 +90,8 @@ getCommands clientDataList = do
 		getCommands _ = []
 
 -- | Send updates to all clients
-sendToClient :: [Update] -> [ClientData] -> IO ()
-sendToClient updates clientDataList = do 
+sendToClients :: [Update] -> [ClientData] -> IO ()
+sendToClients updates clientDataList = do 
 		print updates
 		mapM (\o -> sendMessages o messages) outboxes
 		return ()

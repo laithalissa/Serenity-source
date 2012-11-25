@@ -28,9 +28,30 @@ testConnectionPhaseConnectsNClients n port = do
 	length clientDataList @?= n
 	where
 		client = do
-			replicateM n (do connectChannelsIO "localhost" port)
+			replicateM n (connectChannelsIO "localhost" port)
 			return ()
 
 		server = do
 			clientDataList <- connectionPhase n port
 			return clientDataList
+
+testSendToClient = do
+	updates <- serverClientFixture client server
+	let isUpdateEntity = case updates of 
+		[UpdateEntity{}] -> True
+		_ -> False
+	isUpdateEntity @?= True
+	where
+		client = do
+			TransportInterface inbox _ _ <- connectChannelsIO "localhost" port
+			messages <- readTChanUntilEmpty inbox
+			let updates = map (\(UpdateMessage m _ ) -> m) messages
+			return updates
+
+		server = do
+			clientDataList <- connectionPhase 1 port
+			let updates = [UpdateEntity{}]
+			sendToClients updates clientDataList
+			return ()
+
+		port = 9922

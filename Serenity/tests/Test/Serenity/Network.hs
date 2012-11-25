@@ -4,10 +4,10 @@ module Test.Serenity.Network (
 
 
 import Control.Concurrent.STM
-import Control.Concurrent.STM.TVar
+import Control.Concurrent.STM.TMVar
 import Control.Concurrent
 
-readUntilJust :: TVar (Maybe a) -> IO a
+readUntilJust :: TMVar a -> IO a
 readUntilJust tvar = atomically $ do
 	maybeOutput <- readTVar tvar
 	case maybeOutput of
@@ -16,7 +16,7 @@ readUntilJust tvar = atomically $ do
 
 serverClientFixture :: IO a -> IO () -> IO a
 serverClientFixture serverBody client = do
-	outputTvar <- atomically $ newTVar Nothing
+	outputTvar <- atomically $ newEmptyTMVar
 	forkIO $ server outputTvar
 	forkIO client
 	readUntilJust outputTvar where

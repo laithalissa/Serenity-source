@@ -24,6 +24,7 @@ clean:
 	cabal clean
 
 build:
+	cabal install --only-dependencies
 	cabal configure --enable-tests
 	cabal build
 

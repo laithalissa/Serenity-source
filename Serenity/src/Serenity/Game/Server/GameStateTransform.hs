@@ -44,35 +44,41 @@ import Serenity.Game.Shared.Model.Common(Direction, Speed, Location)
 import qualified Data.Set as Set
 import Data.Maybe(fromJust)
 
-transform :: Command -> GameState -> [Update]
+-- | gives the command to the relevent ship, returning the changes to the world
+transform :: Command  -- ^ ship command
+	-> GameState -- ^ current game
+	-> [Update] -- ^ updates to current game 
 transform (GiveOrder orderEntityId order) gameState =
 	if hasEntityId orderEntityId gameState 
 		then [UpdateEntity $ giveOrder (fromJust $ getEntityById orderEntityId gameState) order]
 		else []	
 
-
-transforms :: [Command] -> GameState -> [Update]
+-- | similar to transform, except it applies multiple commands to the given gamestate
+transforms :: [Command] -- ^ ship commands
+	-> GameState -- ^ current game
+	-> [Update] -- ^ updates to current game
 transforms commands gameState = concatMap ((flip transform) gameState) commands
 
 	
+-- | applies the ship order to the given GameEntity.
+giveOrder :: GameEntity -- ^ current game entity
+	-> ShipOrder  -- ^ ship order to apply to game entity
+	-> GameEntity -- ^ game entity after order applied
+giveOrder gameEntity shipOrder = wrap (mutateEntity shipOrder) gameEntity
 
 
-giveOrder :: GameEntity -> ShipOrder -> GameEntity
-giveOrder gameEntity shipOrder = gameEntity{entity=mutateEntity (entity gameEntity) shipOrder}
-
-
-mutateEntity :: Entity -> ShipOrder -> Entity
-mutateEntity ship@Ship{} order = ship{shipOrder=order}
+mutateEntity :: ShipOrder -> Entity -> Entity
+mutateEntity order ship@Ship{} = ship{shipOrder=order}
 mutateEntity entity order = entity
 		
-	
+
+wrap :: (Entity -> Entity) -> GameEntity -> GameEntity
+wrap f ge = ge{entity= (f . entity) ge}	
 
 -- | each entity updates its current shipSpeed, then next location is calculated
 step :: TimeDuration -> GameState -> [Update]
 step td = map (UpdateEntity . wrap (stepEntity td . entityMakeMove)) . Set.toList . gameStateEntities
-		where
-		wrap :: (Entity -> Entity) -> GameEntity -> GameEntity
-		wrap f ge = ge{entity= (f . entity) ge}
+
 
 
 entityMakeMove :: Entity -> Entity
@@ -103,3 +109,5 @@ unitVector :: (Float, Float) -> (Float, Float)
 unitVector (x,y) = (x/magnitude, y/magnitude)
 	where
 		magnitude = (x**2 + y**2)**0.5
+
+

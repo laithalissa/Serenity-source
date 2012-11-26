@@ -4,5 +4,8 @@ import Serenity.Game.Shared.Model.Common
 
 data ShipOrder =
 	  StayStillOrder 
-	| MoveOrder { moveOrderLocation :: Location }
+	| MoveOrder 
+	{	moveOrderLocation :: Location 
+	,	moveOrderPath :: Maybe Path
+	}
 	deriving(Show, Eq, Ord)

@@ -78,7 +78,6 @@ play stepsPerSecond clientDataList initialWorld transform step updateWorld = do
 			gameState'' <- return $ updateWorld updatesT gameState'
 			sendToClients (updatesC ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
-			print gameState''
 			playLoop gameState'' newTime
 
 -- | Receive commands from the network from all the clients

@@ -19,6 +19,7 @@ import Serenity.Network.Message
 
 import Serenity.Game.Shared.Model.GameState
 	(	GameState(..)
+	,	GameMap(..)
 	,	hasEntityId
 	,	getEntityById
 	)
@@ -44,14 +45,16 @@ import Serenity.Game.Shared.Model.Common(Direction, Speed, Location)
 import qualified Data.Set as Set
 import Data.Maybe(fromJust)
 
--- | gives the command to the relevent ship, returning the changes to the world
-transform :: Command  -- ^ ship command
-	-> GameState -- ^ current game
-	-> [Update] -- ^ updates to current game 
-transform (GiveOrder orderEntityId order) gameState =
-	if hasEntityId orderEntityId gameState 
-		then [UpdateEntity $ giveOrder (fromJust $ getEntityById orderEntityId gameState) order]
-		else []	
+
+
+	-- client command -> updates
+	-- 	- update entity with new command
+	-- 	- entity builds any information for new command, may require current game state
+
+	-- time -> updates
+	-- 	- ships move to their location
+	
+
 
 -- | similar to transform, except it applies multiple commands to the given gamestate
 transforms :: [Command] -- ^ ship commands
@@ -59,21 +62,17 @@ transforms :: [Command] -- ^ ship commands
 	-> [Update] -- ^ updates to current game
 transforms commands gameState = concatMap ((flip transform) gameState) commands
 
-	
--- | applies the ship order to the given GameEntity.
-giveOrder :: GameEntity -- ^ current game entity
-	-> ShipOrder  -- ^ ship order to apply to game entity
-	-> GameEntity -- ^ game entity after order applied
-giveOrder gameEntity shipOrder = wrap (mutateEntity shipOrder) gameEntity
+
+-- | gives the command to the relevent ship, returning the changes to the world
+transform :: Command  -- ^ ship command
+	-> GameState -- ^ current game
+	-> [Update] -- ^ updates to current game 
+transform (GiveOrder orderEntityId order) gameState =
+	if hasEntityId orderEntityId gameState 
+		then [UpdateEntity $ giveOrder gameState (fromJust $ getEntityById orderEntityId gameState) order]
+		else []	
 
 
-mutateEntity :: ShipOrder -> Entity -> Entity
-mutateEntity order ship@Ship{} = ship{shipOrder=order}
-mutateEntity entity order = entity
-		
-
-wrap :: (Entity -> Entity) -> GameEntity -> GameEntity
-wrap f ge = ge{entity= (f . entity) ge}	
 
 -- | each entity updates its current shipSpeed, then next location is calculated
 step :: TimeDuration -> GameState -> [Update]
@@ -81,11 +80,31 @@ step td = map (UpdateEntity . wrap (stepEntity td . entityMakeMove)) . Set.toLis
 
 
 
+---------- private functions ----------
+
+
+-- | applies the ship order to the given GameEntity.
+giveOrder :: GameState
+	-> GameEntity -- ^ current game entity
+	-> ShipOrder  -- ^ ship order to apply to game entity
+	-> GameEntity -- ^ game entity after order applied
+giveOrder gameState gameEntity shipOrder = wrap (giveShipOrder (gameStateGameMap gameState) shipOrder) gameEntity
+
+
+giveShipOrder :: GameMap -> ShipOrder -> Entity -> Entity
+giveShipOrder gameMap order ship = ship{shipOrder=order}
+giveShipOrder gameMap order@MoveOrder{moveOrderLocation=target} ship@Ship{shipLocation=location} = ship{shipOrder=order{moveOrderPath=Just[(250,250), target]}}
+
+		
+wrap :: (Entity -> Entity) -> GameEntity -> GameEntity
+wrap f ge = ge{entity= (f . entity) ge}	
+
+
 entityMakeMove :: Entity -> Entity
 entityMakeMove entity@(Ship{shipLocation=(x,y),shipSpeed=(dx,dy), shipOrder=order}) =
 	case order of
 		StayStillOrder -> entity{shipSpeed=(0,0), shipDirection=(0,1)}
-		MoveOrder (tx,ty) -> entity
+		MoveOrder{moveOrderLocation=(tx,ty)}-> entity
 			{	shipSpeed = unitVector (tx-x, ty-y)
 			,	shipDirection = unitVector (tx-x, ty-y)
 			}

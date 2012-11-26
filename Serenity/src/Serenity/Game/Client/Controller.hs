@@ -6,8 +6,7 @@ import Graphics.Gloss.Data.Picture (Picture)
 import Graphics.Gloss.Interface.Pure.Game (Event)
 
 import Serenity.Game.Client.ClientMessage (ClientMessage(..))
-import Serenity.Game.Client.ClientState (ClientState(..), UIState(..))
-import Serenity.Game.Client.Common
+import Serenity.Game.Client.ClientState (ClientState(..), UIState(..), windowSize)
 import qualified Serenity.Game.Client.InputFilter as InputFilter
 import qualified Serenity.Game.Client.GUI as GUI
 
@@ -36,7 +35,7 @@ handleMessages (m:ms) clientState = case m of
 initUIState :: GameState -> UIState ClientState
 initUIState gameState = UIState
 	{	views = mainView
-	,	viewPort = (0, 0, width, height)
+	,	viewPort = ((0,0), 1) --(0, 0, width, height)
 	}
 	where
 		(width, height) = gameMapSize $ gameStateGameMap gameState

@@ -2,7 +2,7 @@ module Serenity.Game.Client.ClientMessage where
 
 import Serenity.Network.Message (Command)
 
-import Serenity.Game.Client.Common
+import Serenity.Game.Client.ClientState
 
 data ClientMessage = ClientMessageGUI GUICommand
 	| ClientMessageCommand Command

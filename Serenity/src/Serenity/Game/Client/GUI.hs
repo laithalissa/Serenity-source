@@ -7,9 +7,8 @@ where
 import Graphics.Gloss.Data.Picture
 
 import Serenity.Game.Client.Assets
-import Serenity.Game.Client.ClientState (ClientState(..), UIState(..))
+import Serenity.Game.Client.ClientState (ClientState(..), UIState(..), windowSize)
 import Serenity.Game.Client.ClientMessage (GUICommand(..))
-import Serenity.Game.Client.Common
 
 import Serenity.Game.Shared.Model.Entity
 import Serenity.Game.Shared.Model.GameMap
@@ -18,13 +17,9 @@ import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, gameSt
 import qualified Data.Set as Set
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
-handleMessage (ClientScroll viewPortMove) uiState = uiState { viewPort = scrollViewPort viewPortMove (viewPort uiState) }
-	where scrollViewPort (x, y) (vpx, vpy, vpw, vph) = (vpx + x, vpy + y, vpw, vph)
-
-handleMessage (ClientZoom viewPortZoom) uiState = uiState { viewPort = zoomViewPort viewPortZoom (viewPort uiState) }
-	where zoomViewPort (x, y, w, h) (vpx, vpy, vpw, vph) = (vpx + x, vpy + y, vpw + w, vph + h)
-
-handleMessage message uiState = uiState
+handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewPort=((x, y), z) } = uiState { viewPort = ((x+dx, y+dy), z) }
+handleMessage (ClientZoom dz) uiState@UIState{ viewPort=(loc, z) } = uiState { viewPort = (loc, z+dz) }
+handleMessage _ uiState = uiState
 
 render :: GameState -> UIState ClientState -> Assets -> Picture
 render gameState uiState assets = Pictures
@@ -34,11 +29,14 @@ render gameState uiState assets = Pictures
 	where
 		background = getPictureSized "background" ww wh assets
 		drawWorldToWindow = translateWorld . scaleWorld
-		scaleWorld = scale (ww/vpw) (wh/vph)
-		translateWorld = translate (-((ww/vpw)*vpx + (ww/2))) (-((wh/vph)*vpy + (wh/2)))
+		scaleWorld = scale s s
+		translateWorld = translate (vpx*(1-s)) (vpy*(1-s))
 
-		(ww, wh) = let (w, h) = windowSize in (fromIntegral w, fromIntegral h)
-		(vpx, vpy, vpw, vph) = viewPort uiState
+		(ww, wh) = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
+		((vpx, vpy), vpz) = viewPort uiState
+		(gw, gh) = gameMapSize $ gameStateGameMap gameState
+		normScale = ((min ww wh) / (max gw gh))
+		s = vpz * normScale
 
 		renderInWorld gameState = pictures
 			[	pictures $ map spaceLaneF (worldSpaceLanes gameState)
@@ -46,20 +44,19 @@ render gameState uiState assets = Pictures
 			,	pictures $ map entityF $ map entity (Set.toList $ worldEntities gameState)
 			]
 			where
-			worldSpaceLanes = gameMapSpaceLanes . gameStateGameMap
-			worldPlanets = gameMapPlanets . gameStateGameMap
-			worldEntities = gameStateEntities
+				worldSpaceLanes = gameMapSpaceLanes . gameStateGameMap
+				worldPlanets = gameMapPlanets . gameStateGameMap
+				worldEntities = gameStateEntities
 
-		planetF planet = translate planetX planetY $ getPictureSized (planetType planet) 5 5 assets
-			where
+		planetF planet = translate planetX planetY $ getPictureSized (planetType planet) 5 5 assets where
 			planetX =  (fst . planetLocation) planet
 	 		planetY = (snd . planetLocation) planet
 
 		spaceLaneF spaceLane@(SpaceLane p1N p2N) = line
-				[ (pX p1N, pY p1N)
-				, (pX p2N, pY p2N)
+				[	(pX p1N, pY p1N)
+				,	(pX p2N, pY p2N)
 				]
-					where
+				where
 					pX = fst . planetLocation . getPlanet
 					pY = snd . planetLocation . getPlanet
 					getPlanet name = foldl

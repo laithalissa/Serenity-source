@@ -10,9 +10,8 @@ import Network.Socket (PortNumber (..))
 
 import Serenity.Game.Client.Assets (Assets)
 import qualified Serenity.Game.Client.Assets as Assets
-import Serenity.Game.Client.ClientState (ClientState(..))
+import Serenity.Game.Client.ClientState (ClientState(..), windowSize)
 import qualified Serenity.Game.Client.ClientState as ClientState
-import Serenity.Game.Client.Common
 import Serenity.Game.Client.Controller
 
 import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
@@ -22,10 +21,10 @@ import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 import Serenity.Network.Message (Message(..), Command)
 import Serenity.Network.Utility
 
--- | Run the Virtual Balloon Commander client
+-- | Run the client
 client ::
-	String -- ^ Host
-	-> Int -- ^ Port 
+	String    -- ^ Host
+	-> Int    -- ^ Port 
 	-> String -- ^ Player Name
 	-> IO () 
 client serverHost serverPort name = do

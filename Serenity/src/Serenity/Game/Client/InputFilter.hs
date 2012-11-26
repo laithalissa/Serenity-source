@@ -19,20 +19,21 @@ initialize = InputFilter
 handleInput :: Event -> ClientState -> [ClientMessage]
 handleInput event clientState = case event of
 	(EventKey (MouseButton button) Down _ point) -> case button of
+		WheelUp -> [ClientMessageGUI $ ClientZoom 1]
+		WheelDown -> [ClientMessageGUI $ ClientZoom (-1)]
 		LeftButton -> Logic.handleClick point clientState
-
 		_ -> []
 
 	(EventKey (Char key) Down _ _) -> case key of
 		-- Scrolling
-		'w' -> [ClientMessageGUI $ ClientScroll (0, 10)]
+		'w' -> [ClientMessageGUI $ ClientScroll (0, 10) ]
 		'a' -> [ClientMessageGUI $ ClientScroll (-10, 0)]
 		's' -> [ClientMessageGUI $ ClientScroll (0, -10)]
-		'd' -> [ClientMessageGUI $ ClientScroll (10, 0)]
+		'd' -> [ClientMessageGUI $ ClientScroll (10, 0) ]
 
 		-- Zooming
-		'q' -> [ClientMessageGUI $ ClientZoom (5, 5, -10, -10)]
-		'e' -> [ClientMessageGUI $ ClientZoom (-5, -5, 10, 10)]
+		'q' -> [ClientMessageGUI $ ClientZoom 1]
+		'e' -> [ClientMessageGUI $ ClientZoom (-1)]
 
 		_ -> []
 

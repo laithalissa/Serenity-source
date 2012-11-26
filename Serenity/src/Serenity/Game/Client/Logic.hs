@@ -7,8 +7,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Serenity.Game.Client.ClientMessage (ClientMessage(ClientMessageCommand))
-import Serenity.Game.Client.ClientState (ClientState(..), UIState(..))
-import Serenity.Game.Client.Common
+import Serenity.Game.Client.ClientState (ClientState(..), UIState(..), mapLocationFromView)
 
 import Serenity.Game.Shared.Model.Common (OwnerId)
 import Serenity.Game.Shared.Model.Entity (Entity(Ship), GameEntity(..))
@@ -16,12 +15,14 @@ import Serenity.Game.Shared.Model.GameMap (GameMap(..))
 import Serenity.Game.Shared.Model.GameState (GameState(..))
 import Serenity.Game.Shared.Model.ShipOrder
 
+import Debug.Trace(trace)
+
 import Serenity.Network.Message (Command(..))
 
 handleClick :: (Float, Float) -> ClientState -> [ClientMessage]
 handleClick click clientState = case playersShips (clientName clientState) entities of
 	[] -> []
-	ships -> map (\s -> ClientMessageCommand $ GiveOrder (entityId s) order) ships
+	ships -> {-trace ("Click: " ++ (show click) ++ "\n Mappedto: " ++ (show order)) $-} map (\s -> ClientMessageCommand $ GiveOrder (entityId s) order) ships
 
 	where
 		entities = gameStateEntities $ gameState clientState

@@ -93,7 +93,7 @@ getCommands clientDataList = do
 -- | Send updates to all clients
 sendToClients :: [Update] -> [ClientData] -> IO ()
 sendToClients updates clientDataList = do 
-		print updates
+		--print updates
 		mapM (\o -> sendMessages o messages) outboxes
 		return ()
 		where

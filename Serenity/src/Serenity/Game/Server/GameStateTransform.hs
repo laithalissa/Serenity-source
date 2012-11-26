@@ -40,7 +40,11 @@ import Serenity.Game.Shared.Model.Entity
 	,	GameEntity(..)
 	)
 
+
+import Serenity.Game.Server.Math(distance, unitVector)
 import Serenity.Game.Shared.Model.Common(Direction, Speed, Location)
+
+import Serenity.Game.Server.EntityController(makeDecision)
 
 import qualified Data.Set as Set
 import Data.Maybe(fromJust)
@@ -76,7 +80,7 @@ transform (GiveOrder orderEntityId order) gameState =
 
 -- | each entity updates its current shipSpeed, then next location is calculated
 step :: TimeDuration -> GameState -> [Update]
-step td = map (UpdateEntity . wrap (stepEntity td . entityMakeMove)) . Set.toList . gameStateEntities
+step td gs = (map (UpdateEntity . wrap (stepEntity td) . (makeDecision gs)) . Set.toList . gameStateEntities) gs
 
 
 
@@ -92,23 +96,29 @@ giveOrder gameState gameEntity shipOrder = wrap (giveShipOrder (gameStateGameMap
 
 
 giveShipOrder :: GameMap -> ShipOrder -> Entity -> Entity
-giveShipOrder gameMap order ship = ship{shipOrder=order}
-giveShipOrder gameMap order@MoveOrder{moveOrderLocation=target} ship@Ship{shipLocation=location} = ship{shipOrder=order{moveOrderPath=Just[(250,250), target]}}
+giveShipOrder gameMap order@MoveOrder{moveOrderLocation=target} ship@Ship{shipLocation=location} = 
+	ship{shipOrder=order{moveOrderPath=Just[(250,250), target]}}
 
 		
 wrap :: (Entity -> Entity) -> GameEntity -> GameEntity
 wrap f ge = ge{entity= (f . entity) ge}	
 
 
-entityMakeMove :: Entity -> Entity
-entityMakeMove entity@(Ship{shipLocation=(x,y),shipSpeed=(dx,dy), shipOrder=order}) =
-	case order of
-		StayStillOrder -> entity{shipSpeed=(0,0), shipDirection=(0,1)}
-		MoveOrder{moveOrderLocation=(tx,ty)}-> entity
-			{	shipSpeed = unitVector (tx-x, ty-y)
-			,	shipDirection = unitVector (tx-x, ty-y)
-			}
-entityMakeMove entity = entity
+-- entityMakeMove :: Entity -> Entity
+-- entityMakeMove entity@(Ship{shipLocation=(x,y),shipSpeed=(dx,dy), shipOrder=order}) =
+-- 	case order of
+-- 		StayStillOrder -> entity{shipSpeed=(0,0), shipDirection=(0,1)}
+-- 		MoveOrder{moveOrderPath=mPath} -> 
+-- 			if (distance (x,y) (fst $ target mPath, snd $ target mPath)) < 10
+-- 				then entityMakeMove entity{shipOrder=StayStillOrder}
+-- 				else
+-- 					entity
+-- 					{	shipSpeed = unitVector (tx-x, ty-y)
+-- 					,	shipDirection = unitVector (tx-x, ty-y)
+-- 					}
+-- 		where
+-- 		target = head . fromJust
+-- entityMakeMove entity = entity
 
 
 stepEntity :: TimeDuration -> Entity -> Entity
@@ -122,11 +132,4 @@ stepEntity tD entity = entity
 
 nextLocation :: Location -> Speed -> TimeDuration -> Location
 nextLocation (x,y) (dx, dy) dt = (x + dx * dt, y + dy * dt)
-
-
-unitVector :: (Float, Float) -> (Float, Float)
-unitVector (x,y) = (x/magnitude, y/magnitude)
-	where
-		magnitude = (x**2 + y**2)**0.5
-
 

@@ -86,7 +86,7 @@ initialize assets gameMap name = ClientState
 initUIState :: GameState -> UIState ClientState
 initUIState gameState = UIState
 	{	views = mainView
-	,	viewPort = ((50, 50), zoom)
+	,	viewPort = ((width/2, height/2), zoom)
 	}
 	where
 		(width, height) = gameMapSize $ gameStateGameMap gameState

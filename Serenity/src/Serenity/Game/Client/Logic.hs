@@ -22,7 +22,7 @@ import Serenity.Network.Message (Command(..))
 handleClick :: (Float, Float) -> ClientState -> [ClientMessage]
 handleClick click clientState = case playersShips (clientName clientState) entities of
 	[] -> []
-	ships -> {-trace ("Click: " ++ (show click) ++ "\n Mappedto: " ++ (show order)) $-} map (\s -> ClientMessageCommand $ GiveOrder (entityId s) order) ships
+	ships -> map (\s -> ClientMessageCommand $ GiveOrder (entityId s) order) ships
 
 	where
 		entities = gameStateEntities $ gameState clientState

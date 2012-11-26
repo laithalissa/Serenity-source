@@ -11,8 +11,6 @@ module Serenity.Game.Client.ClientState
 
 import Serenity.Game.Client.Assets (Assets)
 
-import Debug.Trace(trace)
-
 import Serenity.Game.Shared.Model.Common
 import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, exampleGameState)
 import qualified Serenity.Game.Shared.Model.GameState as GameState
@@ -43,9 +41,7 @@ mapLocationFromView ::
 	-> Size     -- ^ Size of the map
 	-> Location
 
---trace ("x,y = " ++ (show (x,y)) ++ "; (vx, vy) = " ++ (show (vx, vy)) ++ "; vz = " ++ (show vz) ++ "; s = " ++ (show s) ++ "; (vx', vy') = " ++ show (vx*(1-s), vy*(1-s)) ++ "; (mapX, mapY) = " ++ (show (mapX, mapY)) )
-
-mapLocationFromView (x, y) ((vx, vy), vz) (w, h) = trace ("; (mapX, mapY) = " ++ (show (mapX, mapY))) (mapX, mapY)
+mapLocationFromView (x, y) ((vx, vy), vz) (w, h) = (mapX, mapY)
 	where
 		mapX = (-(vx*(1-s)) - (ww/2) + x)/s
 		mapY = (-(vy*(1-s)) - (wh/2) + y)/s

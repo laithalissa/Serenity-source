@@ -7,6 +7,7 @@ module Serenity.Network.Message
 ,	Entity(..)
 ,	GameEntity(..)
 ,	ShipOrder(..)
+,	ShipOrderState(..)
 )
 where
 
@@ -49,6 +50,7 @@ data Command =
 
 -- Derive binary instances using deep magic.
 $(derive makeBinary ''ShipOrder)
+$(derive makeBinary ''ShipOrderState)
 $(derive makeBinary ''GameEntity)
 $(derive makeBinary ''Entity)
 $(derive makeBinary ''Update)

@@ -30,7 +30,6 @@ handleClick click clientState = case playersShips (clientName clientState) entit
 		mapSize = gameMapSize $ gameStateGameMap $ gameState clientState
 		order = MoveOrder
 			{	moveOrderLocation=(mapLocationFromView click viewport mapSize)
-			,	moveOrderPath=Nothing
 			}
 
 playersShips :: OwnerId -> Set GameEntity -> [GameEntity]

@@ -17,6 +17,7 @@ import Serenity.Game.Server.GameStateTransform
 	(	Update(..)
 	,	Command(..)
 	,	ShipOrder(..)
+	,	ShipOrderState(..)
 	,	GameEntity(..)
 	,	Entity(..)
 	,	GameEntity(..)
@@ -58,6 +59,7 @@ import Serenity.Game.Shared.Model.GameMap(exampleGameMap)
 
 $( derive makeArbitrary ''Command )
 $( derive makeArbitrary ''ShipOrder )
+$( derive makeArbitrary ''ShipOrderState )
 $( derive makeArbitrary ''GameEntity )
 $( derive makeArbitrary ''Entity )
 $( derive makeArbitrary ''GameMap )
@@ -135,9 +137,9 @@ gameState = foldl f (initialize exampleGameMap) entities
 	where
 		f = flip addEntity
 		entities = 
-			[	createGameEntity 0 (5,5) StayStillOrder
-			,	createGameEntity 1 (10,5) StayStillOrder
-			,	createGameEntity 2 (90,45) MoveOrder{moveOrderLocation=(10,10)}
+			[	createGameEntity 0 (5,5) StayStillOrderState
+			,	createGameEntity 1 (10,5) StayStillOrderState
+			,	createGameEntity 2 (90,45) (MoveOrderState [(10,10)])
 			]
 
 		createGameEntity eid location order = 
@@ -153,7 +155,7 @@ gameState = foldl f (initialize exampleGameMap) entities
 			,	shipLocation=location
 			,	shipDirection=(0,1)
 			,	shipSpeed=(0,1)
-			,	shipOrder=order
+			,	shipOrderState=order
 			}
 
 
@@ -171,7 +173,7 @@ instance FullEq Entity where
 		,	shipLocation=(xA, yA)
 		,	shipDirection=shipDirectionA
 		,	shipSpeed=shipSpeedA
-		,	shipOrder=shipOrderA
+		,	shipOrderState=shipOrderStateA
 		} 
 	
 		Ship
@@ -179,14 +181,14 @@ instance FullEq Entity where
 		,	shipLocation=(xB, yB)
 		,	shipDirection=shipDirectionB
 		,	shipSpeed=shipSpeedB
-		,	shipOrder=shipOrderB
+		,	shipOrderState=shipOrderStateB
 		}
 		= and
 		[	shipClassA == shipClassB
 		,	(floatComp xA xB) && (floatComp yA yB)
 		,	shipDirectionA == shipDirectionB
 		,	shipSpeedA == shipSpeedB
-		,	shipOrderA == shipOrderB
+		,	shipOrderStateA == shipOrderStateB
 		]
 
 	fullEq

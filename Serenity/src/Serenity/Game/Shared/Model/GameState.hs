@@ -14,16 +14,18 @@ import Serenity.Game.Shared.Model.Common(TimeDuration)
 import Serenity.Game.Shared.Model.Entity(GameEntity(..), Entity(..))
 import Serenity.Game.Shared.Model.GameMap(GameMap(..), exampleGameMap)
 import Serenity.Game.Shared.Model.Common(EntityId)
-import Serenity.Game.Shared.Model.ShipOrder(ShipOrder(..))
+import Serenity.Game.Shared.Model.ShipOrder(ShipOrder(..), ShipOrderState(..))
 
 import Data.Set(Set)
 import qualified Data.Set as Set
 import qualified Data.List as List
+import qualified Data.Map as Map
+import Data.Map(Map)
 
 data GameState =
 	GameState
-	{	gameStateGameMap :: GameMap
-	,	gameStateEntities :: Set GameEntity
+	{	gameStateGameMap :: GameMap -- ^ GameMap
+	,	gameStateEntities :: Set GameEntity -- ^ Entities in game
 	}
 	deriving (Show, Eq)
 
@@ -72,10 +74,10 @@ exampleGameState = GameState
 
 	where
 		entities = 
-			[	createGameEntity 0 (25,25) StayStillOrder "Laith"
-			,	createGameEntity 1 (25,75) StayStillOrder "Jon"
-			,	createGameEntity 2 (75,75) StayStillOrder "Joseph"
-			,	createGameEntity 3 (75,25) StayStillOrder "Vic"
+			[	createGameEntity 0 (25,25) StayStillOrderState "Laith"
+			,	createGameEntity 1 (25,75) StayStillOrderState "Jon"
+			,	createGameEntity 2 (75,75) StayStillOrderState "Joseph"
+			,	createGameEntity 3 (75,25) StayStillOrderState "Vic"
 			]
 
 		createGameEntity eid location order player = 
@@ -91,5 +93,5 @@ exampleGameState = GameState
 			,	shipLocation=location
 			,	shipDirection=(0,1)
 			,	shipSpeed=(0,1)
-			,	shipOrder=order
+			,	shipOrderState=order
 			}

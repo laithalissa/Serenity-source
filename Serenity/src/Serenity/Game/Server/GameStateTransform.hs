@@ -4,6 +4,7 @@ module Serenity.Game.Server.GameStateTransform
 ,	Update(..)
 ,	GameState(gameStateEntities)
 ,	ShipOrder(..)
+,	ShipOrderState(..)
 ,	Entity(..)
 ,	GameEntity(..)
 ,	transform
@@ -28,6 +29,7 @@ import Serenity.Game.Shared.Model.Common(TimeDuration)
 
 import Serenity.Game.Shared.Model.ShipOrder
 	(	ShipOrder(..)
+	,	ShipOrderState(..)
 	)
 
 import Serenity.Network.Message
@@ -44,7 +46,10 @@ import Serenity.Game.Shared.Model.Entity
 import Serenity.Game.Server.Math(distance, unitVector)
 import Serenity.Game.Shared.Model.Common(Direction, Speed, Location)
 
-import Serenity.Game.Server.EntityController(makeDecision)
+import Serenity.Game.Server.EntityController
+	(	entityUpdateSelf
+	,	shipNewOrder
+	)
 
 import qualified Data.Set as Set
 import Data.Maybe(fromJust)
@@ -73,31 +78,16 @@ transform :: Command  -- ^ ship command
 	-> [Update] -- ^ updates to current game 
 transform (GiveOrder orderEntityId order) gameState =
 	if hasEntityId orderEntityId gameState 
-		then [UpdateEntity $ giveOrder gameState (fromJust $ getEntityById orderEntityId gameState) order]
-		else []	
-
-
+		then [UpdateEntity $ shipNewOrder gameState order (fromJust $ getEntityById orderEntityId gameState)]
+		else []
 
 -- | each entity updates its current shipSpeed, then next location is calculated
 step :: TimeDuration -> GameState -> [Update]
-step td gs = (map (UpdateEntity . wrap (stepEntity td) . (makeDecision gs)) . Set.toList . gameStateEntities) gs
-
+step td gs = (map (UpdateEntity . wrap (stepEntity td) . (entityUpdateSelf gs)) . Set.toList . gameStateEntities) gs
 
 
 ---------- private functions ----------
 
-
--- | applies the ship order to the given GameEntity.
-giveOrder :: GameState
-	-> GameEntity -- ^ current game entity
-	-> ShipOrder  -- ^ ship order to apply to game entity
-	-> GameEntity -- ^ game entity after order applied
-giveOrder gameState gameEntity shipOrder = wrap (giveShipOrder (gameStateGameMap gameState) shipOrder) gameEntity
-
-
-giveShipOrder :: GameMap -> ShipOrder -> Entity -> Entity
-giveShipOrder gameMap order@MoveOrder{moveOrderLocation=target} ship@Ship{shipLocation=location} = 
-	ship{shipOrder=order{moveOrderPath=Just[(250,250), target]}}
 
 		
 wrap :: (Entity -> Entity) -> GameEntity -> GameEntity

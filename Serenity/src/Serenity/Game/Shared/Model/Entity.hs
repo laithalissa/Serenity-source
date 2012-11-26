@@ -2,6 +2,8 @@ module Serenity.Game.Shared.Model.Entity
 (	module Serenity.Game.Shared.Model.ShipOrder
 ,	GameEntity(..)
 ,	Entity(..)
+,	setShipOrderState
+,	getShipOrderState
 ) where
 
 import Serenity.Game.Shared.Model.ShipOrder
@@ -28,7 +30,7 @@ data Entity =
 	,	shipLocation :: Location
 	,	shipDirection :: Direction
 	,	shipSpeed :: Speed
-	,	shipOrder :: ShipOrder
+	,	shipOrderState :: ShipOrderState
 	}
 	| Gun
 	{	shipId :: EntityId
@@ -45,4 +47,10 @@ data Entity =
 	deriving (Show)
 
 
+
+setShipOrderState :: ShipOrderState -> GameEntity -> GameEntity
+setShipOrderState orderState ge@GameEntity{entity=entity} = ge{entity=entity{shipOrderState=orderState}}
+
+getShipOrderState :: GameEntity -> ShipOrderState
+getShipOrderState ge@GameEntity{entity=entity@Ship{shipOrderState=orderState}} = orderState
 

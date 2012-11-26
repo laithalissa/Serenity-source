@@ -23,7 +23,7 @@ import Serenity.Game.Shared.Model.GameState(GameState(..), hasEntity, initialize
 
 import Serenity.Game.Shared.Model.GameMap(GameMap(..), Planet(..), SpaceLane(..), exampleGameMap)
 import Serenity.Game.Shared.Model.Entity(GameEntity(..), Entity(..))
-import Serenity.Game.Shared.Model.ShipOrder(ShipOrder(..))
+import Serenity.Game.Shared.Model.ShipOrder(ShipOrder(..), ShipOrderState(..))
 import Serenity.Game.Shared.Model.Common(Resources(..))
 
 import Serenity.Network.Message(Update(..), Update(..))
@@ -41,6 +41,7 @@ $( derive makeArbitrary ''SpaceLane )
 $( derive makeArbitrary ''Entity )
 $( derive makeArbitrary ''GameEntity )
 $( derive makeArbitrary ''ShipOrder )
+$( derive makeArbitrary ''ShipOrderState )
 $( derive makeArbitrary ''Resources )
 -- $( derive makeArbitrary ''Set )
 

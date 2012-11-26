@@ -1,6 +1,7 @@
 
 module Serenity.Game.Server.EntityController
-(	makeDecision
+(	entityUpdateSelf
+,	shipNewOrder
 ) where
 
 import Serenity.Game.Server.Math(distance, unitVector)
@@ -9,14 +10,26 @@ import Serenity.Game.Shared.Model.GameState(GameState)
 import Serenity.Game.Shared.Model.Entity
 	(	GameEntity(..)
 	,	Entity(..)
+	,	setShipOrderState
+	,	getShipOrderState
 	)
 
 import Serenity.Game.Shared.Model.ShipOrder
 	(	ShipOrder(..)
+	,	ShipOrderState(..)
 	)
 
-makeDecision :: GameState -> GameEntity -> GameEntity
-makeDecision 
+
+
+shipNewOrder :: GameState -> ShipOrder -> GameEntity -> GameEntity
+shipNewOrder gameState StayStillOrder gameEntity = setShipOrderState StayStillOrderState gameEntity
+shipNewOrder gameState (MoveOrder destination) gameEntity = 
+	setShipOrderState (MoveOrderState [(250, 250), destination]) gameEntity
+	
+
+
+entityUpdateSelf :: GameState -> GameEntity -> GameEntity
+entityUpdateSelf 
 	gameState
 	gEntity@GameEntity
 	{	entityId=eId
@@ -25,29 +38,24 @@ makeDecision
 			entity@Ship
 			{	shipLocation=(x,y)
 			,	shipSpeed=(speedX, speedY)
-			,	shipOrder=shipOrder
+			,	shipOrderState=shipOrder
 			}
 	} = case shipOrder of
-		StayStillOrder -> gEntity{entity=entity{shipSpeed=(0,0)}}
-		MoveOrder{} -> handleMove shipOrder
+		StayStillOrderState -> gEntity{entity=entity{shipSpeed=(0,0)}}
+		MoveOrderState path -> handleMove path
 
 			
 			
 	where
-	handleMove
-		order@MoveOrder
-		{	moveOrderLocation=finalDestination
-		,	moveOrderPath=Just ((nx,ny):path)
-		} =  if (distance (x,y) (nx,ny)) < 10 
+	handleMove ((nx,ny):path) =  if (distance (x,y) (nx,ny)) < 10 
 			then if (null path)
-				then gEntity{entity=entity{shipOrder=StayStillOrder}}
+				then shipNewOrder gameState StayStillOrder gEntity
 				else 
 					gEntity
 					{	entity=entity
-						{	shipOrder=
-							MoveOrder
-							{	moveOrderLocation=finalDestination
-							,	moveOrderPath=Just path
+						{	shipOrderState=
+							MoveOrderState
+							{	moveOrderStatePath=path
 							}
 						,	shipSpeed=nSpeed
 						,	shipDirection=nSpeed

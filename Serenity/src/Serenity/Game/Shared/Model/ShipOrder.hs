@@ -6,6 +6,13 @@ data ShipOrder =
 	  StayStillOrder 
 	| MoveOrder 
 	{	moveOrderLocation :: Location 
-	,	moveOrderPath :: Maybe Path
 	}
 	deriving(Show, Eq, Ord)
+
+
+data ShipOrderState = 
+	StayStillOrderState
+	| MoveOrderState
+	{	moveOrderStatePath :: Path
+	} deriving(Show, Eq, Ord)
+	

@@ -72,9 +72,9 @@ tests = testGroup "GameStateTransform Tests"
 	[	testProperty 
 			"test the transform returns update which contains the entity specified and that entity has the correct order" 
 			testTransformReturnsUpdateWithEntityInCorrectState
-	,	testProperty
-			"test step doesn't do anything when 0 time has passed"
-			testStepDoesNotMoveEntityWhenNoTimeZero
+--	,	testProperty
+--			"test step doesn't do anything when 0 time has passed"
+--			testStepDoesNotMoveEntityWhenNoTimeZero
 	,	testProperty
 			"test nextLocation outputs same location if no time has passed"
 			testNextLocationDoesNotChangeLocationWhenTimeIsZero

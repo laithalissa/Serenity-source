@@ -5,6 +5,10 @@ module Serenity.Game.Shared.Model.GameMap
 ,	Planet(..)
 ,	SpaceLane(..)
 ,	exampleGameMap
+,	getPlanetLocations
+,	getPlanetLocationByName
+,	getPlanetNames
+,	getConnectedPlanets
 ) where
 
 import Serenity.Game.Shared.Model.Common(Location, Direction, Resources(..), Size)
@@ -66,26 +70,31 @@ exampleGameMap = GameMap
 			,	planetResources=Resources{fuel=10, antiMatter=10, metal=10}
 			}
 
---data GameMap = GameMap
---	{	name :: String
---	,	size :: Size
---	,	spawnPoints :: [(Location)]
---	,	planets :: [Planet]
---	,	spaceLanes :: [SpaceLane]
---	}
---deriving(Show, Eq)
 
---data Planet = Planet
---	{	planetName :: String
---	,	planetType :: String -- specifies which size / texture to use
---	,	location :: Location
---	,	direction :: Direction
---	,	resources :: Resources
---	}
---	deriving(Show, Eq)
+getPlanetLocations :: GameMap -> [Location]
+getPlanetLocations = map planetLocation . gameMapPlanets
 
---data SpaceLane = SpaceLane
---	{	planetName1 :: String
---	,	planetName2 :: String
---	}
---	deriving(Show, Eq)
+getPlanetLocationByName :: String -> GameMap -> Location
+getPlanetLocationByName name gameMap =  planetLocation $ getPlanetByName name gameMap
+
+getPlanetNames :: GameMap -> [String]
+getPlanetNames = map planetName . gameMapPlanets
+
+
+getConnectedPlanets :: String -> GameMap -> [String]
+getConnectedPlanets name gameMap = filter (isConnected gameMap name) allPlanetNames
+	where
+		allPlanetNames = getPlanetNames gameMap
+
+
+getPlanetByName :: String -> GameMap -> Planet
+getPlanetByName name = head . filter ((name==) . planetName) . gameMapPlanets
+
+
+
+isConnected :: GameMap -> String -> String -> Bool
+isConnected gameMap planet1 planet2 = not $ null (filter comp $ gameMapSpaceLanes gameMap)
+	where
+	comp (SpaceLane p1 p2) = ((planet1==p1)&&(planet2==p2)) || ((planet2==p1)&&(planet1==p2))
+
+

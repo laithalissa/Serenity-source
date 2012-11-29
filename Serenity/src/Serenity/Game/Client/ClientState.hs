@@ -18,6 +18,8 @@ import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
 
 import Serenity.Network.Message (Command)
 
+import Serenity.Game.Client.KeyboardState
+
 import Serenity.Sheen.View
 
 -- | The size of the Gloss window
@@ -56,6 +58,7 @@ mapLocationFromView (x, y) ((vx, vy), vz) (w, h) = (mapX, mapY)
 data ClientState = ClientState
 	{	gameState :: GameState         -- ^ State of the game world, e.g. ship positions
 	,	uiState :: UIState ClientState -- ^ State of the GUI, e.g. view hierarchy
+	,	keyboardState :: KeyboardState -- ^ What keys are down and in what order they went down
 	,	commands :: [Command]          -- ^ List of commands to send to the server
 	,	assets :: Assets
 	,	clientName :: OwnerId
@@ -75,6 +78,7 @@ initialize ::
 initialize assets gameMap name = ClientState
 	{	gameState = game
 	,	uiState = initUIState game
+	,	keyboardState = emptyKeyboardState
 	,	commands = []
 	,	assets = assets
 	,	clientName = name

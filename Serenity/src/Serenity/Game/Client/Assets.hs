@@ -32,13 +32,13 @@ initialize :: IO Assets
 initialize = do
 	planet1 <- loadAsset "planet1.bmp"
 	background <- loadAsset "background.bmp"
-	ship1 <- loadAsset "ship1.bmp"
-	ship2 <- loadAsset "ship2.bmp"
+	commander <- loadAsset "commander.bmp"
+	commanderGreen <- loadAsset "commander-green.bmp"
 	assets <- return $ Map.fromList
 		[	("planet1", planet1)
 		,	("background", background)
-		,	("ship1", ship1)
-		,	("ship2", ship2)
+		,	("ship-commander", commander)
+		,	("ship-commander-green", commanderGreen)
 		]
 	return Assets{textures=assets}
 

@@ -5,6 +5,7 @@ module Serenity.Game.Client.GUI
 where
 
 import Graphics.Gloss.Data.Picture
+import Graphics.Gloss.Data.Color
 
 import Serenity.Game.Client.Assets
 import Serenity.Game.Client.ClientState (ClientState(..), UIState(..), windowSize)
@@ -52,7 +53,7 @@ render gameState uiState assets = Pictures
 			planetX =  (fst . planetLocation) planet
 	 		planetY = (snd . planetLocation) planet
 
-		spaceLaneF spaceLane@(SpaceLane p1N p2N) = line
+		spaceLaneF spaceLane@(SpaceLane p1N p2N) = color (dark green) $ line
 				[	(pX p1N, pY p1N)
 				,	(pX p2N, pY p2N)
 				]

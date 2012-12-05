@@ -7,6 +7,7 @@ module Serenity.Game.Client.KeyboardState
 ,	isKeyDown
 ,	keysDown
 ,	filterOutFirst
+,	keyMostRecentDownFrom
 ) where
 
 import qualified Data.Sequence as Seq
@@ -42,3 +43,11 @@ keysDown state keys = keysDown' state (Seq.fromList keys) [] where
 			else keysDown' state' keys ans
 			where
 				(e :< state') = Seq.viewl state
+
+keyMostRecentDownFrom :: KeyboardState -> Key -> [Key] -> Bool
+keyMostRecentDownFrom ks key keys = case topKey (keysDown ks keys) of
+	Just tk -> key == tk 
+	Nothing -> False 
+	where
+		topKey (x:xs) = Just x
+		topKey [] = Nothing

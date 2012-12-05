@@ -10,7 +10,7 @@ import Network.Socket (PortNumber (..))
 
 import Serenity.Game.Client.Assets (Assets)
 import qualified Serenity.Game.Client.Assets as Assets
-import Serenity.Game.Client.ClientState (ClientState(..), windowSize)
+import Serenity.Game.Client.ClientState (ClientState(..), windowSize, viewPort)
 import qualified Serenity.Game.Client.ClientState as ClientState
 import Serenity.Game.Client.Controller
 
@@ -20,6 +20,9 @@ import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
 import Serenity.Network.Message (Message(..), Command)
 import Serenity.Network.Utility
+
+import Serenity.Game.Client.KeyboardState
+import Control.Monad.State
 
 -- | Run the client
 client ::
@@ -40,7 +43,7 @@ client serverHost serverPort name = do
 	assets <- Assets.initialize
 	playIO
 		(InWindow "Project Serenity" windowSize (0, 0))
-		white
+		black
 		30
 		(initClientState assets name)
 		(return . render)
@@ -63,7 +66,7 @@ handleEvent outbox event clientState = do
 	-- Send commands to the server
 	sendMessages outbox messages
 
-	return $ newClientState { ClientState.commands = [] }
+	return $ newClientState { ClientState.commands = [], keyboardState = getNewKeyboardState event (keyboardState newClientState) }
 
 	where
 		translateEvent (EventKey key state modifiers (x, y)) = EventKey key state modifiers (x + wx, y + wy)
@@ -71,6 +74,9 @@ handleEvent outbox event clientState = do
 
 		wx = fromIntegral $ (fst windowSize) `div` 2
 		wy = fromIntegral $ (snd windowSize) `div` 2
+
+		getNewKeyboardState (EventKey key keystate _ _) = handleKeyEvent key keystate
+		getNewKeyboardState _ = id
 
 -- | Update the game state on a time step
 -- Updates are received from the server and then applied to the game state
@@ -82,8 +88,22 @@ handleStep inbox delta clientState = do
 
 	-- Apply the updates to the game state
 	gameState' <- return $ manyUpdateGameState updates (gameState clientState)
-	return $ clientState { gameState = gameState' }
+	return $ clientState { gameState = gameState', uiState = (uiState clientState){viewPort = newViewPort} }
 
 	where
 		getUpdate (UpdateMessage update _) = [update]
 		getUpdate _ = []
+
+		ks = keyboardState clientState
+		left  = keyMostRecentDownFrom ks (Char 'a') [Char 'a', Char 'd']
+		right = keyMostRecentDownFrom ks (Char 'd') [Char 'a', Char 'd']
+		up    = keyMostRecentDownFrom ks (Char 'w') [Char 'w', Char 's']
+		down  = keyMostRecentDownFrom ks (Char 's') [Char 'w', Char 's']
+
+		a = 5
+		moveLeft   = if left  then modify (\((x,y), z) -> ((x-a,y), z) ) else return ()
+		moveRight  = if right then modify (\((x,y), z) -> ((x+a,y), z) ) else return ()
+		moveUp     = if up    then modify (\((x,y), z) -> ((x,y+a), z) ) else return ()
+		moveDown   = if down  then modify (\((x,y), z) -> ((x,y-a), z) ) else return ()
+		allUpdates = do moveLeft; moveRight; moveUp; moveDown
+		newViewPort = execState allUpdates (viewPort $ uiState clientState)

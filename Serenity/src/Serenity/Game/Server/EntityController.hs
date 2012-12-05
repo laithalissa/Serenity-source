@@ -96,7 +96,7 @@ entityUpdateSelf
 			
 			
 	where
-	handleMove ((nx,ny):path) =  if (distance (x,y) (nx,ny)) < 10 
+	handleMove ((nx,ny):path) =  if (distance (x,y) (nx,ny)) < 3
 			then if (null path)
 				then shipNewOrder gameState StayStillOrder gEntity
 				else 

@@ -16,8 +16,6 @@ import Data.Derive.Arbitrary
 import Serenity.Network.Message
 import Data.Binary (Binary(..), encode, decode)
 
-
-
 $(derive makeArbitrary ''ShipOrder)
 $(derive makeArbitrary ''ShipOrderState)
 $(derive makeArbitrary ''GameEntity)

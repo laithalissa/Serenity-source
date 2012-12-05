@@ -28,12 +28,19 @@ testConnectionPhaseConnectsNClients port n = do
 	length clientDataList @?= n
 	where
 		client = do
-			replicateM n (connectChannelsIO "localhost" port)
+			threadDelay delay
+			sequence $ map connectWithDelay [1..n]
 			return ()
+
+		connectWithDelay i = do 
+			threadDelay $ i*delay
+			connectChannelsIO "localhost" port
 
 		server = do
 			clientDataList <- connectionPhase port n
 			return clientDataList
+
+		delay = 10000
 
 testSendToClient = do
 	updates <- serverClientFixture client server

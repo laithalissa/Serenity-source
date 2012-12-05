@@ -115,8 +115,10 @@ stepEntity :: TimeDuration -> Entity -> Entity
 stepEntity tD entity@(Ship{ shipLocation=location, shipSpeed=speed }) =
 	entity
 	{	shipLocation = nextLocation location speed tD 
-	,	shipDirection = shipSpeed entity
+	,	shipDirection = if speed == 0 then shipDirection entity else speed
 	}
+	where
+		speed = shipSpeed entity
 stepEntity tD entity = entity
 
 

@@ -5,6 +5,7 @@ module Serenity.Game.Shared.Model.GameMap
 ,	Planet(..)
 ,	SpaceLane(..)
 ,	exampleGameMap
+,	demoGameMap
 ,	getPlanetLocations
 ,	getPlanetLocationByName
 ,	getPlanetNames
@@ -40,6 +41,29 @@ data SpaceLane = SpaceLane
 	}
 	deriving(Show, Eq)
 
+demoGameMap = GameMap
+	{	gameMapName = "Map for progress demo"
+	,	gameMapSize = (100, 100)
+	,	gameMapSpawnPoints = []
+	,	gameMapPlanets =
+			[	createPlanet (70, 30)
+			,	createPlanet (10, 10)
+			,	createPlanet (90, 90)
+			]
+	,	gameMapSpaceLanes =
+			[	createSpaceLane (70, 30) (90, 90)
+			,	createSpaceLane (10, 10) (70, 30)
+			]
+	}
+	where
+		createPlanet location@(x,y) = Planet
+			{	planetName="planet " ++ (show location)
+			,	planetType="planet1"
+			,	planetLocation=(fromIntegral x, fromIntegral y)
+			,	planetDirection=(0,1)
+			,	planetResources=Resources{fuel=10, antiMatter=10, metal=10}
+			}
+		createSpaceLane l1 l2 = SpaceLane ("planet " ++ (show l1)) ("planet " ++ (show l2))
 
 exampleGameMap = GameMap
 	{	gameMapName = "My First Map"

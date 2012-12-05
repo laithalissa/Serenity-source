@@ -17,7 +17,7 @@ import Serenity.Game.Server.ClientData
 import Serenity.Network.Packet
 import Serenity.Network.Message(Command(..), Update(..), Message(..))
 import Serenity.Game.Shared.GameStateUpdate(manyUpdateGameState)
-import Serenity.Game.Shared.Model.GameState(GameState, exampleGameState)
+import Serenity.Game.Shared.Model.GameState(GameState, demoGameState)
 import Serenity.Game.Server.GameStateTransform(transforms,step)
 
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
@@ -33,7 +33,7 @@ server port clientCount = do
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
-	play 5 clients exampleGameState transforms step manyUpdateGameState
+	play 5 clients demoGameState transforms step manyUpdateGameState
 	print "server finished"
 
 -- | Wait for n clients to connect

@@ -12,7 +12,7 @@ module Serenity.Game.Client.ClientState
 import Serenity.Game.Client.Assets (Assets)
 
 import Serenity.Game.Shared.Model.Common
-import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, exampleGameState)
+import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, demoGameState)
 import qualified Serenity.Game.Shared.Model.GameState as GameState
 import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
 
@@ -85,7 +85,7 @@ initialize assets gameMap name = ClientState
 	}
 	where
 		-- game = GameState.initialize gameMap
-		game = exampleGameState
+		game = demoGameState
 
 initUIState :: GameState -> UIState ClientState
 initUIState gameState = UIState

@@ -8,11 +8,12 @@ module Serenity.Game.Shared.Model.GameState
 ,	hasEntity
 ,	hasEntityId
 ,	exampleGameState
+,	demoGameState
 ) where
 
 import Serenity.Game.Shared.Model.Common(TimeDuration)
 import Serenity.Game.Shared.Model.Entity(GameEntity(..), Entity(..))
-import Serenity.Game.Shared.Model.GameMap(GameMap(..), exampleGameMap)
+import Serenity.Game.Shared.Model.GameMap(GameMap(..), exampleGameMap, demoGameMap)
 import Serenity.Game.Shared.Model.Common(EntityId)
 import Serenity.Game.Shared.Model.ShipOrder(ShipOrder(..), ShipOrderState(..))
 
@@ -66,6 +67,34 @@ removeEntity entity gameState = gameState{gameStateEntities=(Set.delete entity (
 
 isValid :: GameState -> Bool
 isValid _ = True
+
+demoGameState = GameState
+	{	gameStateGameMap = demoGameMap
+	,	gameStateEntities = Set.fromList entities
+	}
+	where
+		entities =
+			[	createGameEntity 0 (25,25) StayStillOrderState "Laith"
+			,	createGameEntity 1 (25,75) StayStillOrderState "Jon"
+			,	createGameEntity 2 (75,75) StayStillOrderState "Joseph"
+			,	createGameEntity 3 (75,25) StayStillOrderState "Vic"
+			]
+
+		createGameEntity eid location order player =
+			GameEntity
+			{	entityId = eid
+			,	ownerId = player
+			,	entity = createEntity location order
+			}
+
+		createEntity location order =
+			Ship
+			{	shipClass=1
+			,	shipLocation=location
+			,	shipDirection=(0,1)
+			,	shipSpeed=(0,1)
+			,	shipOrderState=order
+			}
 
 exampleGameState = GameState
 	{ gameStateGameMap = exampleGameMap

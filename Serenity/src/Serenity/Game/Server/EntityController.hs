@@ -46,7 +46,8 @@ shipNewOrder gameState (MoveOrder destination) gameEntity =
 		gm = gameStateGameMap gameState
 		start = shipLocation . entity 
 		path :: Path
-		path = findPath gm (start gameEntity) destination
+		--path = findPath gm (start gameEntity) destination
+		path = [destination]
 	
 
 

@@ -99,11 +99,17 @@ handleStep inbox delta clientState = do
 		right = keyMostRecentDownFrom ks (Char 'd') [Char 'a', Char 'd']
 		up    = keyMostRecentDownFrom ks (Char 'w') [Char 'w', Char 's']
 		down  = keyMostRecentDownFrom ks (Char 's') [Char 'w', Char 's']
+		inn   = keyMostRecentDownFrom ks (Char 'q') [Char 'q', Char 'e']
+		out   = keyMostRecentDownFrom ks (Char 'e') [Char 'q', Char 'e']
 
-		a = 5
+		a = 3
+		b = 0.1
+
 		moveLeft   = if left  then modify (\((x,y), z) -> ((x-a,y), z) ) else return ()
 		moveRight  = if right then modify (\((x,y), z) -> ((x+a,y), z) ) else return ()
 		moveUp     = if up    then modify (\((x,y), z) -> ((x,y+a), z) ) else return ()
 		moveDown   = if down  then modify (\((x,y), z) -> ((x,y-a), z) ) else return ()
-		allUpdates = do moveLeft; moveRight; moveUp; moveDown
+		zoomIn     = if inn   then modify (\((x,y), z) -> ((x,y), z+b) ) else return ()
+		zoomOut    = if out   then modify (\((x,y), z) -> ((x,y), z-b) ) else return ()
+		allUpdates = do moveLeft; moveRight; moveUp; moveDown; zoomIn; zoomOut
 		newViewPort = execState allUpdates (viewPort $ uiState clientState)

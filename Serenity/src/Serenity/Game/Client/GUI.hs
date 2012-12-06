@@ -28,7 +28,7 @@ render gameState uiState assets = Pictures
 	,	(drawWorldToWindow . renderInWorld) gameState
 	]
 	where
-		background = getPictureSized "background" ww wh assets
+		background = getPicture "background" assets
 		drawWorldToWindow = translateWorld . scaleWorld
 		scaleWorld = scale s s
 		translateWorld = translate (vpx*(1-s)) (vpy*(1-s))

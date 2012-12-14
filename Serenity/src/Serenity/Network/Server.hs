@@ -3,6 +3,8 @@ module Serenity.Network.Server
 ,	initTransport
 , acceptClient
 , serveClients
+, receive
+, send
 , PortNumber
 )
 where
@@ -11,7 +13,7 @@ import Control.Concurrent.STM
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad.State
 import qualified Data.Map as M
-import Network.Socket
+import Network.Socket hiding (send)
 
 import Serenity.Network.Message (Message)
 import Serenity.Network.Packet
@@ -69,9 +71,9 @@ serveClients (clients, sock) = do
 	where
 		inboxLoop inboxes socketTVar = do
 			sock <- atomically $ readTVar socketTVar
-			(packet, client) <- receivePacket sock
+			(message, client) <- receive sock
 			case M.lookup client inboxes of
-				Just inbox -> atomically $ writeTChan inbox (getPacketData packet)
+				Just inbox -> atomically $ writeTChan inbox message
 				Nothing -> return ()
 
 		outboxLoop outboxes socketTVar = do
@@ -83,8 +85,20 @@ serveClients (clients, sock) = do
 		readAndSend sock (addr, outbox) = do
 			message <- atomically $ tryReadTChan outbox
 			case message of
-				Just m -> sendPacket sock (initialPacket m) addr
+				Just m -> send sock m addr
 				Nothing -> return ()
+
+-- | Get the next Message along with the address of the
+-- sender from the given socket.
+receive :: Socket -> IO (Message, SockAddr)
+receive sock = do
+	(packet, addr) <- receivePacket sock
+	-- TODO packet verification here?
+	return (getPacketData packet, addr)
+
+-- | Send a Message on the given socket to the specified address.
+send :: Socket -> Message -> SockAddr -> IO ()
+send sock message addr = sendPacket sock (initialPacket message) addr
 
 newTransportInterface :: IO TransportInterface
 newTransportInterface = do

@@ -12,7 +12,7 @@ import Control.Concurrent
 import Test.HUnit
 import Test.QuickCheck
 
-import Control.Monad(replicateM)
+import Control.Monad (replicateM_)
 
 import Serenity.Game.Server.Main
 import Serenity.Network.Utility
@@ -27,20 +27,8 @@ testConnectionPhaseConnectsNClients port n = do
 	clientDataList <- serverClientFixture server client
 	length clientDataList @?= n
 	where
-		client = do
-			threadDelay delay
-			sequence $ map connectWithDelay [1..n]
-			return ()
-
-		connectWithDelay i = do 
-			threadDelay $ i*delay
-			connectChannelsIO "localhost" port
-
-		server = do
-			clientDataList <- connectionPhase port n
-			return clientDataList
-
-		delay = 10000
+		client = replicateM_ n (connectChannelsIO "localhost" port)
+		server = connectionPhase port n
 
 testSendToClient = do
 	updates <- serverClientFixture client server

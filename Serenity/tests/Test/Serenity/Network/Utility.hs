@@ -7,8 +7,11 @@ import Test.HUnit
 
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TChan
+import Control.Monad.State
 
 import Test.Serenity.Network (serverClientFixture)
+import Serenity.Network.Server hiding (TransportInterface, receive, send)
+import qualified Serenity.Network.Server as S (TransportInterface(..), receive, send)
 import Serenity.Network.Transport
 import Serenity.Network.Utility
 
@@ -41,9 +44,10 @@ testSendChannel = do
 			return ()
 
 		server = do
-			connection <- runListen port
-			string <- evalTransport (receive) connection
-			return string
+			transport <- initTransport port
+			(_, (_, sock)) <- runStateT acceptClient transport
+			(message, _) <- S.receive sock
+			return message
 
 		port = 9910
 
@@ -57,10 +61,12 @@ testReceiveChannel = do
 			return ()
 
 		server = do
-			connection <- startListeningIO port
-			TransportInterface inbox outbox conVar <- listenChannelsIO connection
-			string <- atomically $ readTChan inbox
-			return string
+			transport <- initTransport port
+			(client, transport') <- runStateT acceptClient transport
+			serveClients transport'
+
+			message <- atomically $ readTChan (S.channelInbox client)
+			return message
 
 		port = 9912
 

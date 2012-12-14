@@ -8,10 +8,7 @@ module Serenity.Network.Transport
 ,	runTransport
 ,	evalTransport
 ,	runConnect
-,	runListen
 ,	connect
-,	startListening
-,	accept
 ,	send
 ,	receive
 ,	isConnected
@@ -22,24 +19,15 @@ module Serenity.Network.Transport
 ,	PortNumber
 ) where
 
-import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect, isConnected)
-import Network.Socket.ByteString hiding (send)
-import System.Posix.IO
-import Data.Time.Clock.POSIX
-
-import Data.Set (Set)
-import qualified Data.Set as Set
-
-import Control.Monad (liftM)
 import Control.Monad.State
 import Data.Monoid
-
-import Serenity.Network.Packet
-
-import Data.Binary (Binary)
+import Data.Set (Set)
+import qualified Data.Set as Set
+import Data.Time.Clock.POSIX
+import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect, isConnected)
 
 import Serenity.Network.Message (Message)
-import qualified Serenity.Network.Message as Message
+import Serenity.Network.Packet
 
 data Connection =
 	Connected
@@ -49,9 +37,6 @@ data Connection =
 	,	connectionSent :: Set (Packet, POSIXTime)
 	,	connectionLocalSequence ::  Int
 	,	connectionRemoteSequence ::  Int
-	}
-	| Listening
-	{	listeningSocket :: Socket
 	}
 	| Unconnected deriving (Show, Eq)
 
@@ -82,8 +67,6 @@ getOutboundSocket host port = withSocketsDo $ do
 
 class MonadIO m => MonadTransport m where
 	connect        :: String -> PortNumber -> m ()
-	startListening :: PortNumber -> m ()
-	accept         :: m ()
 	send           :: Message -> m ()
 	receive        :: m Message
 	getConnection  :: m Connection
@@ -101,25 +84,6 @@ instance MonadTransport Transport where
 				put $ initialConnection sock addr 13
 				liftIO $ sendPacket sock emptySynPacket addr
 				return ()
-
-	startListening port = do
-		connection <- liftIO $ withSocketsDo $ do
-			sock <- socket AF_INET Datagram 0
-			bindSocket sock (SockAddrInet port iNADDR_ANY)	
-			return $ Listening{listeningSocket=sock}
-		put connection
-
-	accept = do
-		con <- getConnection
-		case con of 
-			Listening{listeningSocket=sock} -> do
-				connection <- liftIO $ withSocketsDo $ do 
-					(packet, client) <- receivePacket sock
-					if Syn `elem` (getFlags packet)
-						then return $ initialConnection sock client 12
-						else return con
-				put connection
-			_ -> put Unconnected
 
 	send string = do
 		connection <- get
@@ -155,9 +119,3 @@ runOne f = do
 
 runConnect :: String -> PortNumber -> IO Connection
 runConnect host port = runOne $ connect host port
-
-runListen :: PortNumber -> IO Connection
-runListen port = runOne $ do 
-	startListening port
-	accept
-

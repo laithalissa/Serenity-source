@@ -4,9 +4,6 @@ module Serenity.Network.Utility
 ,	getTransportChannels
 ,	connectChannels
 ,	connectChannelsIO
-,	listenChannels
-,	listenChannelsIO
-,	startListeningIO
 ,	readNTChan
 ,	readTChanUntilEmpty
 ,	sendMessages
@@ -54,9 +51,6 @@ getTransportChannels = do
 			message <- evalTransport (receive) connection
 			atomically $ writeTChan inbox message
 
-startListeningIO :: PortNumber -> IO Connection
-startListeningIO port = evalTransport (do startListening port; getConnection) Unconnected
-
 connectChannels :: (MonadTransport t) => String -> PortNumber -> t TransportInterface
 connectChannels host port = do
 	connect host port
@@ -64,14 +58,6 @@ connectChannels host port = do
 
 connectChannelsIO :: String -> PortNumber -> IO TransportInterface
 connectChannelsIO host port = evalTransport (connectChannels host port) Unconnected
-
-listenChannels :: (MonadTransport t) => t TransportInterface
-listenChannels = do
-	accept
-	getTransportChannels
-
-listenChannelsIO :: Connection -> IO TransportInterface
-listenChannelsIO connection = evalTransport listenChannels connection
 
 -- | Read the first n items from a TChan
 readNTChan :: Int -> TChan a -> IO [a]

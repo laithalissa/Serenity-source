@@ -89,8 +89,4 @@ readTChanUntilEmpty' tchan accum = do
 		Just v -> readTChanUntilEmpty' tchan (accum ++ [v])
 
 sendMessages :: TChan Message -> [Message] -> IO ()
-sendMessages chan messages = do 
-	atomically $ mapM (writeTChan chan) messages
-	return ()
-
-
+sendMessages chan messages = atomically $ mapM_ (writeTChan chan) messages

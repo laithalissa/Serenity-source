@@ -13,7 +13,6 @@ import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 import Serenity.Network.Message (Command(..), Update(..), Message(..))
 import Serenity.Network.Server
--- import Serenity.Network.Transport
 import Serenity.Network.Utility (readTChanUntilEmpty, sendMessages)
 
 import Serenity.Game.Server.ClientData
@@ -91,10 +90,7 @@ getCommands clientDataList = do
 
 -- | Send updates to all clients
 sendToClients :: [Update] -> [ClientData] -> IO ()
-sendToClients updates clientDataList = do 
-		--print updates
-		mapM (\o -> sendMessages o messages) outboxes
-		return ()
+sendToClients updates clientDataList = mapM_ (\outbox -> sendMessages outbox messages) outboxes
 		where
 			outboxes = map (channelOutbox . clientTransportInterface) clientDataList
 			messages = map (\u -> UpdateMessage u 0) updates

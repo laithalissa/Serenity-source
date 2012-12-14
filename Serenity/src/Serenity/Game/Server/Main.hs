@@ -8,11 +8,13 @@ module Serenity.Game.Server.Main
 ) where
 
 import Control.Concurrent (threadDelay)
+import Control.Monad.State (runStateT)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 import Serenity.Network.Message (Command(..), Update(..), Message(..))
-import Serenity.Network.Transport
-import Serenity.Network.Utility
+import Serenity.Network.Server
+-- import Serenity.Network.Transport
+import Serenity.Network.Utility (readTChanUntilEmpty, sendMessages)
 
 import Serenity.Game.Server.ClientData
 import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
@@ -39,16 +41,17 @@ connectionPhase ::
 	-> IO [ClientData] -- ^ Client connection information.
 
 connectionPhase port clientLimit = do 
-	connection <- startListeningIO port
-	connectionPhase' clientLimit port connection [] 
-	where 
-		connectionPhase' clientLimit port connection clientDataList = do
-			channels <- listenChannelsIO connection
-			clientDataList' <- return $ (ClientData{clientTransportInterface=channels}):clientDataList
-			threadDelay 100
-			if length clientDataList' >= clientLimit 
-				then return clientDataList' 
-				else connectionPhase' clientLimit port connection clientDataList'
+	transport <- initTransport port
+	(clients, server) <- connectionPhase' clientLimit transport []
+	serveClients server
+	return clients
+	where
+		connectionPhase' limit transport clients = do
+			(channels, transport') <- runStateT acceptClient transport
+			let clients' = (ClientData{clientTransportInterface=channels}):clients
+			if length clients' >= limit
+				then return (clients', transport')
+				else connectionPhase' limit transport' clients'
 
 -- | Run the server with given update functions.
 play :: forall world

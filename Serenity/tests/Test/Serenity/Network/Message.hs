@@ -24,7 +24,7 @@ $(derive makeArbitrary ''Message)
 $(derive makeArbitrary ''Update)
 $(derive makeArbitrary ''Command)
 
-tests = testGroup "Network Utility Tests"
+tests = testGroup "Network Message Tests"
 	[	testProperty "Test converting to binary and back returns the same message" propertyGetPutIsID
 	]
 

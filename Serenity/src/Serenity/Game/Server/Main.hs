@@ -7,21 +7,17 @@ module Serenity.Game.Server.Main
 ,	getCommands
 ) where
 
-import Control.Concurrent.STM
-import Control.Concurrent (forkIO, threadDelay)
-import Control.Monad (forever)
+import Control.Concurrent (threadDelay)
+import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
+import Serenity.Network.Message (Command(..), Update(..), Message(..))
 import Serenity.Network.Transport
 import Serenity.Network.Utility
-import Serenity.Game.Server.ClientData
-import Serenity.Network.Packet
-import Serenity.Network.Message(Command(..), Update(..), Message(..))
-import Serenity.Game.Shared.GameStateUpdate(manyUpdateGameState)
-import Serenity.Game.Shared.Model.GameState(GameState, demoGameState)
-import Serenity.Game.Server.GameStateTransform(transforms,step)
 
-import Data.Time.Clock (getCurrentTime, diffUTCTime)
-import Control.Concurrent(threadDelay)
+import Serenity.Game.Server.ClientData
+import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
+import Serenity.Game.Shared.Model.GameState (demoGameState)
+import Serenity.Game.Server.GameStateTransform (transforms,step)
 
 -- | Run the server.
 server :: 

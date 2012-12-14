@@ -4,9 +4,7 @@ module Serenity.Game.Client.Main (
 where
 
 import Control.Concurrent.STM
-import Control.Monad (when)
 import Graphics.Gloss.Interface.IO.Game
-import Network.Socket (PortNumber (..))
 
 import Serenity.Game.Client.Assets (Assets)
 import qualified Serenity.Game.Client.Assets as Assets
@@ -18,7 +16,7 @@ import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
 import Serenity.Game.Shared.Model.Common (OwnerId)
 import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
-import Serenity.Network.Message (Message(..), Command)
+import Serenity.Network.Message (Message(..))
 import Serenity.Network.Utility
 
 import Serenity.Game.Client.KeyboardState

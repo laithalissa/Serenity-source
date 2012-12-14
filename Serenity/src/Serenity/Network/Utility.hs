@@ -13,15 +13,12 @@ module Serenity.Network.Utility
 ) where
 
 import Control.Concurrent.STM
-import Control.Concurrent.STM.TVar
-import Control.Concurrent.STM.TChan
 import Control.Concurrent (forkIO)
 import Control.Monad (forever, liftM)
 
 import Serenity.Network.Transport
 
 import Serenity.Network.Message (Message)
-import qualified Serenity.Network.Message as Message
 
 data TransportInterface = TransportInterface
 	{	channelInbox      :: TChan Message

@@ -24,7 +24,7 @@ $(derive makeArbitrary ''KeyState)
 $(derive makeArbitrary ''MouseButton)
 $(derive makeArbitrary ''SpecialKey)
 
-tests = testGroup "GameStateUpdate Tests"
+tests = testGroup "KeyboardState Tests"
 	[	testProperty "Test filterOutOne removes a character if it's in the input string" testFilterOutFirst
 	,	testProperty "Test handleKeyEvent adds or removes up tp one from the stack" testHandleKeyEvent
 	,	testProperty "Test handleKeyEvent key up then down returns to initial state" testHandleKeyEventUpDown

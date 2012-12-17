@@ -4,6 +4,7 @@ module Serenity.Game.Client.Main (
 where
 
 import Control.Concurrent.STM
+import qualified Data.Map as M (elems)
 import Graphics.Gloss.Interface.IO.Game
 
 import Serenity.Game.Client.Assets (Assets)
@@ -17,6 +18,7 @@ import Serenity.Game.Shared.Model.Common (OwnerId)
 import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
 import Serenity.Network.Message (Message(..))
+import Serenity.Network.Transport
 import Serenity.Network.Utility
 
 import Serenity.Game.Client.KeyboardState
@@ -32,10 +34,11 @@ client serverHost serverPort name = do
 
 	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
 
-	transport <- connectChannelsIO serverHost (fromIntegral serverPort)
-	let inbox = channelInbox transport
-	let outbox = channelOutbox transport
-
+	transport <- connect serverHost (fromIntegral serverPort)
+	let [channels] = M.elems (fst transport)
+	let inbox = channelInbox channels
+	let outbox = channelOutbox channels
+	sendAndReceive transport
 	print "Connected!"
 
 	assets <- Assets.initialize

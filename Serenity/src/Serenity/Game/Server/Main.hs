@@ -12,7 +12,7 @@ import Control.Monad.State (runStateT)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 import Serenity.Network.Message (Command(..), Update(..), Message(..))
-import Serenity.Network.Server
+import Serenity.Network.Transport
 import Serenity.Network.Utility (readTChanUntilEmpty, sendMessages)
 
 import Serenity.Game.Server.ClientData
@@ -42,7 +42,7 @@ connectionPhase ::
 connectionPhase port clientLimit = do 
 	transport <- initTransport port
 	(clients, server) <- connectionPhase' clientLimit transport []
-	serveClients server
+	sendAndReceive server
 	return clients
 	where
 		connectionPhase' limit transport clients = do

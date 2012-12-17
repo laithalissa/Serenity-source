@@ -3,7 +3,7 @@ module Serenity.Game.Server.ClientData
 )
 where
 
-import Serenity.Network.Server (TransportInterface)
+import Serenity.Network.Transport (TransportInterface)
 
 data ClientData = ClientData
 	{	clientTransportInterface :: TransportInterface

@@ -2,82 +2,133 @@ module Test.Serenity.Network.Transport (tests) where
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit (testCase)
-
-import Control.Monad.State
 import Test.HUnit
 
+import Control.Concurrent.STM
+import Control.Monad.State
+import qualified Data.Map as M (toList)
+
 import Test.Serenity.Network (serverClientFixture)
-import Serenity.Network.Server hiding (receive, send)
-import qualified Serenity.Network.Server as S (receive, send)
+import Serenity.Network.Connection
 import Serenity.Network.Transport
 import qualified Serenity.Network.Message as Message
 
 tests = testGroup "Network Tests"
-	-- [	testCase "Test a listening process accepts a connection" testAcceptance
-	[	testCase "Test two processes can exchange info over a connection" testSendReceive
-	,	testCase "Test two processes can exchange info over a connection both ways" testSendReceiveDuplex
-	,	testCase "Connecting when already connecting shouldn't change connection" testConnectWhenAlreadyConnected
+	[	testCase "Test testGetTransportChannels returns two empty channels" testNewTransportInterface
+	,	testCase "Test a listening process accepts a connection" testAcceptance
+	,	testCase "Test input placed in the input channel is sent" testSendChannel
+	,	testCase "Test input sent arrives in the receive channel" testReceiveChannel
 	]
 
-{-
--- TODO reenable once server side connections are recreated
+testNewTransportInterface = do
+	interface <- newTransportInterface
+
+	inboxEmpty <- atomically $ isEmptyTChan (channelInbox interface)
+	outboxEmpty <- atomically $ isEmptyTChan (channelOutbox interface)
+	assertBool "Inbox/outbox not empty." (and [inboxEmpty, outboxEmpty])
+
+	connection <- atomically $ readTVar (channelConnection interface)
+	connection @?= initialConnection
+
 testAcceptance = do
-	transportInterface <- serverClientFixture server client
-	-- isConnected connection @?= True
+	channels <- serverClientFixture server client
+	connection <- atomically $ readTVar (channelConnection channels)
+	assertBool "Connection not accepted." (isConnected connection)
 	where
-		client = do runConnect "localhost" port; return ();
+		client = do connect "localhost" port; return ()
 
 		server = do
 			transport <- initTransport port
-			client <- evalStateT acceptClient transport
-			return client
+			channels <- evalStateT acceptClient transport
+			return channels
 
 		port = 9900
--}
 
-testSendReceive = do
-	message <- serverClientFixture server client
-	message @?= Message.Empty
+testSendChannel = do
+	maybeMessage <- serverClientFixture server client
+	case maybeMessage of
+		Just (message, _) -> message @?= Message.Empty
+		Nothing -> assertFailure "No message received."
 	where
 		client = do
-			connection <- runConnect "localhost" port
-			runTransport (send Message.Empty) connection
-			return ()
+			TransportInterface inbox outbox conVar <- connectTo "localhost" port
+			atomically $ writeTChan outbox Message.Empty
 
 		server = do
 			transport <- initTransport port
-			(_, (_, sock)) <- runStateT acceptClient transport
-			(message, _) <- S.receive sock
+			(_, (clients, sock)) <- runStateT acceptClient transport
+			receive clients sock
+
+		port = 9910
+
+testReceiveChannel = do
+	string <- serverClientFixture server client
+	string @?= Message.Empty
+	where
+		client = do
+			(map, sock) <- connect "localhost" port
+			let [(addr, channels)] = M.toList map
+			send (channelConnection channels) sock Message.Empty addr
+
+		server = do
+			transport <- initTransport port
+			(client, transport') <- runStateT acceptClient transport
+			sendAndReceive transport'
+
+			message <- atomically $ readTChan (channelInbox client)
+			return message
+
+		port = 9912
+
+{-
+testSendReceive = do
+	maybeMessage <- serverClientFixture server client
+	case maybeMessage of
+		Just (message, _) -> message @?= Message.Empty
+		Nothing -> assertFailure "No message received."
+	where
+		client = do
+			(map, sock) <- connect "localhost" port
+			let [(addr, channels)] = M.toList map
+			send (channelConnection channels) Message.Empty sock addr
+
+		server = do
+			transport <- initTransport port
+			(_, (clients, sock)) <- runStateT acceptClient transport
+			message <- receive clients sock
 			return message
 
 		port = 9902
 
 testSendReceiveDuplex = do
 	message <- serverClientFixture server client
-	message @?= Message.Empty
+	assertMessage message Message.Empty
 	where
 		client = do
-			connection <- runConnect "localhost" port
-			runTransport (send Message.Empty) connection
-			message <- evalTransport (receive) connection
-			runTransport (send message) connection
-			return ()
+			(map, sock) <- connect "localhost" port
+			let [(addr, channels)] = M.toList map
+
+			send (channelConnection channels) Message.Empty sock addr
+			message <- receive map sock
+			assertMessage message Message.Empty
+			send (channelConnection channels) (fst $ fromJust message) sock addr
 
 		server = do
 			-- Accept client connection
 			transport <- initTransport port
-			(_, (_, sock)) <- runStateT acceptClient transport
+			(_, (clients, sock)) <- runStateT acceptClient transport
 
 			-- Exchange messages
-			(message, addr) <- S.receive sock
-			S.send sock message addr
+			message <- receive clients sock
+			assertMessage message Message.Empty
+			send (sock message addr
 			(message2, _) <- S.receive sock
 			return message2
 
-		port = 9898
+		assertMessage actual expected = do
+			case actual of
+				Just (message, _) -> message @?= expected
+				Nothing -> assertFailure "No message received."
 
-testConnectWhenAlreadyConnected = do
-	connection1 <- runConnect "localhost" port
-	connection2 <- evalTransport (do connect "localhost" port; getConnection) connection1
-	connection1 @=? connection2 where
-		port = 9904
+		port = 9898
+-}

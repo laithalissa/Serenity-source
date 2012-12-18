@@ -15,8 +15,9 @@ import Test.QuickCheck
 import Control.Monad (replicateM_)
 
 import Serenity.Game.Server.Main
-import Serenity.Network.Utility
 import Serenity.Network.Message
+import Serenity.Network.Transport
+import Serenity.Network.Utility
 
 tests = testGroup "Server Main Tests"
 	[	testCase "Test that a client can connect using connectionPhase"  (testConnectionPhaseConnectsNClients 9920 1)
@@ -27,7 +28,7 @@ testConnectionPhaseConnectsNClients port n = do
 	clientDataList <- serverClientFixture server client
 	length clientDataList @?= n
 	where
-		client = replicateM_ n (connectChannelsIO "localhost" port)
+		client = replicateM_ n (connect "localhost" port)
 		server = connectionPhase port n
 
 testSendToClient = do
@@ -38,7 +39,7 @@ testSendToClient = do
 	isUpdateEntity @?= True
 	where
 		client = do
-			TransportInterface inbox _ _ <- connectChannelsIO "localhost" port
+			TransportInterface inbox _ _ <- connectTo "localhost" port
 			messages <- readTChanUntilEmpty inbox
 			let updates = map (\(UpdateMessage m _ ) -> m) messages
 			return updates

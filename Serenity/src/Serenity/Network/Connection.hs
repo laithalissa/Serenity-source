@@ -6,11 +6,13 @@ data Connection = Connection
 	{	connectionState :: ConnectionState
 	,	connectionReliability :: Reliability
 	}
+	deriving (Show, Eq)
 
 data ConnectionState = Connecting
 	| Connected
 	| Disconnected
 	| TimedOut
+	deriving (Show, Eq)
 
 data Reliability = Reliability
 	{	localSequence :: Int -- ^ Sequence number of most recently sent packet
@@ -18,12 +20,17 @@ data Reliability = Reliability
 	,	pendingAckPackets :: [Int] -- ^ Sent packets that haven't been acked yet
 	, receivedPackets :: [Int] -- ^ Received packets to be acked
 	}
+	deriving (Show, Eq)
 
 initialConnection :: Connection
 initialConnection = Connection
 	{	connectionState = Connecting
 	,	connectionReliability = initReliability
 	}
+
+isConnected :: Connection -> Bool
+isConnected Connection {connectionState = Connected} = True
+isConnected _ = False
 
 -- | Create initial reliability system
 initReliability :: Reliability

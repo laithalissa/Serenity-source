@@ -4,7 +4,6 @@ module Serenity.Game.Client.Main (
 where
 
 import Control.Concurrent.STM
-import qualified Data.Map as M (elems)
 import Graphics.Gloss.Interface.IO.Game
 
 import Serenity.Game.Client.Assets (Assets)
@@ -34,11 +33,9 @@ client serverHost serverPort name = do
 
 	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
 
-	transport <- connect serverHost (fromIntegral serverPort)
-	let [channels] = M.elems (fst transport)
+	channels <- connectTo serverHost (fromIntegral serverPort)
 	let inbox = channelInbox channels
 	let outbox = channelOutbox channels
-	sendAndReceive transport
 	print "Connected!"
 
 	assets <- Assets.initialize

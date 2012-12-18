@@ -3,9 +3,11 @@ module Serenity.Network.Transport
 ,	initTransport
 ,	acceptClient
 ,	connect
+,	connectTo
 ,	sendAndReceive
 ,	receive
 ,	send
+,	newTransportInterface
 ,	PortNumber
 )
 where
@@ -63,6 +65,13 @@ connect host port = do
 	channels <- newTransportInterface
 	sendPacket sock emptySynPacket addr
 	return (M.singleton addr channels, sock)
+
+connectTo :: HostName -> PortNumber -> IO TransportInterface
+connectTo host port = do
+	transport <- connect host port
+	sendAndReceive transport
+	let [channels] = M.elems (fst transport)
+	return channels
 
 -- | Computation that accepts a connection from a new client and provides
 -- inbox/outbox channels to communicate with it.

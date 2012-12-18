@@ -40,7 +40,7 @@ connectionPhase ::
 	-> IO [ClientData] -- ^ Client connection information.
 
 connectionPhase port clientLimit = do 
-	transport <- initTransport port
+	transport <- listen port
 	(clients, server) <- connectionPhase' clientLimit transport []
 	sendAndReceive server
 	return clients

@@ -1,6 +1,6 @@
 module Serenity.Network.Transport
 (	TransportInterface(..)
-,	initTransport
+,	listen
 ,	acceptClient
 ,	connect
 ,	connectTo
@@ -16,7 +16,7 @@ import Control.Concurrent.STM
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad.State
 import qualified Data.Map as M
-import Network.Socket hiding (connect, send)
+import Network.Socket hiding (connect, listen, send)
 
 import Serenity.Network.Connection
 import Serenity.Network.Message (Message)
@@ -41,8 +41,8 @@ data TransportInterface = TransportInterface
 
 -- | Create the initial server transport.
 -- A socket bound to the given port and an empty client map.
-initTransport :: PortNumber -> IO Transport
-initTransport port = withSocketsDo $ do
+listen :: PortNumber -> IO Transport
+listen port = withSocketsDo $ do
 	sock <- socket AF_INET Datagram 0
 	bindSocket sock (SockAddrInet port iNADDR_ANY)
 	return (M.empty, sock)

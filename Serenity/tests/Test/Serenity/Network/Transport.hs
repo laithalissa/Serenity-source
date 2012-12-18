@@ -38,7 +38,7 @@ testAcceptance = do
 		client = do connect "localhost" port; return ()
 
 		server = do
-			transport <- initTransport port
+			transport <- listen port
 			channels <- evalStateT acceptClient transport
 			return channels
 
@@ -55,7 +55,7 @@ testSendChannel = do
 			atomically $ writeTChan outbox Message.Empty
 
 		server = do
-			transport <- initTransport port
+			transport <- listen port
 			(_, (clients, sock)) <- runStateT acceptClient transport
 			receive clients sock
 
@@ -71,7 +71,7 @@ testReceiveChannel = do
 			send (channelConnection channels) sock Message.Empty addr
 
 		server = do
-			transport <- initTransport port
+			transport <- listen port
 			(client, transport') <- runStateT acceptClient transport
 			sendAndReceive transport'
 
@@ -93,7 +93,7 @@ testSendReceive = do
 			send (channelConnection channels) Message.Empty sock addr
 
 		server = do
-			transport <- initTransport port
+			transport <- listen port
 			(_, (clients, sock)) <- runStateT acceptClient transport
 			message <- receive clients sock
 			return message
@@ -115,7 +115,7 @@ testSendReceiveDuplex = do
 
 		server = do
 			-- Accept client connection
-			transport <- initTransport port
+			transport <- listen port
 			(_, (clients, sock)) <- runStateT acceptClient transport
 
 			-- Exchange messages

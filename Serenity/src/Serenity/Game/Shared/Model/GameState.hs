@@ -19,9 +19,8 @@ import Serenity.Game.Shared.Model.ShipOrder(ShipOrder(..), ShipOrderState(..))
 
 import Data.Set(Set)
 import qualified Data.Set as Set
-import qualified Data.List as List
-import qualified Data.Map as Map
 import Data.Map(Map)
+import qualified Data.Map as Map
 
 data GameState =
 	GameState
@@ -44,7 +43,7 @@ getEntityById :: EntityId -> GameState -> Maybe GameEntity
 getEntityById eId gameState = 
 	if Set.null results 
 		then Nothing
-		else (Just . List.head . Set.toList) results
+		else (Just . head . Set.toList) results
 	where
 		results = Set.filter 
 				(\x -> entityId x == eId) 

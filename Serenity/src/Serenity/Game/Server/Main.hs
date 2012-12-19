@@ -51,12 +51,12 @@ connectionPhase port clientLimit = do
 				else connectionPhase' clientLimit port connection clientDataList'
 
 -- | Run the server with given update functions.
-play :: forall world
-	.  (Show world) => Int                              -- ^ Number of simulation steps to take for each second of real time.
+play :: forall world . (Show world)
+	=> Int                              -- ^ Number of simulation steps to take for each second of real time.
 	-> [ClientData]                     -- ^ Clients
 	-> world                            -- ^ The initial world.
 	-> ([Command] -> world -> [Update]) -- ^ Function to handle commands from clients.
-	-> (Float -> world -> [Update])     -- ^ Function to step the world one iteration, given the past time
+	-> (Float -> world -> [Update])     -- ^ Function to step the world one iteration, given the time past
 	-> ([Update] -> world -> world)     -- ^ Function to evolve the world from updates.
 	-> IO ()
 

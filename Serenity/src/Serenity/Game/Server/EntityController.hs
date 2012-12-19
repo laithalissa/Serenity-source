@@ -4,39 +4,18 @@ module Serenity.Game.Server.EntityController
 ,	shipNewOrder
 ) where
 
-import Serenity.Game.Server.Math(distance, unitVector)
+import Serenity.Maths.Vector
 
-import Serenity.Game.Shared.Model.GameState(GameState(..))
-import Serenity.Game.Shared.Model.Entity
-	(	GameEntity(..)
-	,	Entity(..)
-	,	setShipOrderState
-	,	getShipOrderState
-	)
-
-import Serenity.Game.Shared.Model.ShipOrder
-	(	ShipOrder(..)
-	,	ShipOrderState(..)
-	)
-
-import Data.Graph.AStar(aStar)
-
-import Serenity.Game.Shared.Model.Common(Location, Path)
-
-import Serenity.Game.Shared.Model.GameMap
-	(	GameMap(..)
-	,	Planet(..)
-	,	getPlanetNames
-	,	getPlanetLocationByName
-	,	getConnectedPlanets
-	)
-
-import Serenity.Game.Server.Math
-	(	distance
-	)
+import Serenity.Game.Shared.Model.GameState (GameState(..))
+import Serenity.Game.Shared.Model.Entity    (GameEntity(..), Entity(..), setShipOrderState, getShipOrderState)
+import Serenity.Game.Shared.Model.ShipOrder (ShipOrder(..),	ShipOrderState(..))
+import Serenity.Game.Shared.Model.Common    (Location, Path)
+import Serenity.Game.Shared.Model.GameMap   (GameMap(..), Planet(..), getPlanetNames, getPlanetLocationByName, getConnectedPlanets)
 
 import Data.Maybe(fromJust)
 import qualified Data.Set as Set
+
+import Data.Graph.AStar(aStar)
 
 shipNewOrder :: GameState -> ShipOrder -> GameEntity -> GameEntity
 shipNewOrder gameState StayStillOrder gameEntity = setShipOrderState StayStillOrderState gameEntity
@@ -48,8 +27,6 @@ shipNewOrder gameState (MoveOrder destination) gameEntity =
 		path :: Path
 		--path = findPath gm (start gameEntity) destination
 		path = [destination]
-	
-
 
 -- | finds the fastest route between two points in the GameMap
 findPath :: GameMap -- ^ GameMap provides the graph to traverse
@@ -57,7 +34,6 @@ findPath :: GameMap -- ^ GameMap provides the graph to traverse
 	-> Location -- ^ finish point
 	-> Path -- ^ optimal path
 findPath gameMap (sx, sy) (fx, fy) = (map loc $ fromJust $ aStar graph dist heur goal start) ++ [(fx, fy)]
-	
 	where
 		graph planetName = (Set.fromList $ getConnectedPlanets planetName gameMap)
 		dist planetName1 planetName2 = distance (loc planetName1) (loc planetName2)
@@ -72,11 +48,6 @@ findPath gameMap (sx, sy) (fx, fy) = (map loc $ fromJust $ aStar graph dist heur
 			where
 			pc p1 p2 = if (distance (loc p1) l) < (distance (loc p2) l) then p1 else p2
 	
-
-
-
-
-
 entityUpdateSelf :: GameState -> GameEntity -> GameEntity
 entityUpdateSelf 
 	gameState
@@ -92,9 +63,6 @@ entityUpdateSelf
 	} = case shipOrder of
 		StayStillOrderState -> gEntity{entity=entity{shipSpeed=(0,0)}}
 		MoveOrderState path -> handleMove path
-
-			
-			
 	where
 	handleMove ((nx,ny):path) =  if (distance (x,y) (nx,ny)) < 3
 			then if (null path)
@@ -112,8 +80,5 @@ entityUpdateSelf
 					}
 			else gEntity{entity=entity{shipSpeed=nSpeed,shipDirection=nSpeed}}
 		where
-		nSpeed = 10 * (unitVector (nx-x, ny-y))
-
-
-
+		nSpeed = 10 * (normalized (nx-x, ny-y))
 

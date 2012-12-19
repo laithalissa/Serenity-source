@@ -13,6 +13,7 @@ import qualified Test.Serenity.Game.Shared.GameStateUpdate as GameStateUpdate
 import qualified Test.Serenity.Game.Server.GameStateTransform as GST
 -- import qualified Test.Serenity.Game.Server.Network as ServerNetwork
 import qualified Test.Serenity.Game.Client.KeyboardState as KeyboardState
+import qualified Test.Serenity.Maths.Util as MathUtil
 
 main = defaultMainWithArgs allTests htf_args
 
@@ -34,4 +35,5 @@ allTests =
 	,	GST.tests
 	-- ,	ServerNetwork.networkTests
 	,	KeyboardState.tests
+	,	MathUtil.tests
 	]

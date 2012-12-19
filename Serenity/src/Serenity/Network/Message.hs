@@ -23,7 +23,7 @@ type Time = Int
 data Message = 
 	  UpdateMessage Update Time            -- ^ Updates are messages containing new GameState information to be sent from the server to the clients.
 	| CommandMessage Command ClientId Time -- ^ Commands are intention notifications sent from a specific client to the server.
-	| Empty                                -- ^ An empty message (for testing purposes).
+	| Empty                                -- ^ An empty message (for networking and testing purposes).
 	deriving (Show, Eq)
 
 -- | Updates are sent from server to client and are used to update the GameState information on the clients. 

@@ -3,6 +3,7 @@ module Serenity.Game.Client.Main (
 )
 where
 
+import Control.Concurrent (threadDelay)
 import Control.Concurrent.STM
 import Graphics.Gloss.Interface.IO.Game
 
@@ -16,6 +17,7 @@ import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
 import Serenity.Game.Shared.Model.Common (OwnerId)
 import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
+import Serenity.Network.Connection
 import Serenity.Network.Message (Message(..))
 import Serenity.Network.Transport
 import Serenity.Network.Utility
@@ -36,6 +38,8 @@ client serverHost serverPort name = do
 	channels <- connectTo serverHost (fromIntegral serverPort)
 	let inbox = channelInbox channels
 	let outbox = channelOutbox channels
+
+	waitUntilConnected (channelConnection channels)
 	print "Connected!"
 
 	assets <- Assets.initialize
@@ -47,6 +51,13 @@ client serverHost serverPort name = do
 		(return . render)
 		(handleEvent outbox)
 		(handleStep inbox)
+
+	where
+		waitUntilConnected connTVar = do
+			connection <- atomically $ readTVar connTVar
+			if isConnected connection
+				then return ()
+				else threadDelay 10000 >> waitUntilConnected connTVar
 
 -- | Create the initial client state
 initClientState :: Assets -> OwnerId -> ClientState

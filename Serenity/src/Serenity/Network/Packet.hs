@@ -8,6 +8,7 @@ module Serenity.Network.Packet
 ,	sendPacket
 ,	Flag (..)
 ,	emptySynPacket
+,	emptySynAckPacket
 ,	emptyFinPacket
 ,	setFlags
 ,	getFlags
@@ -89,12 +90,13 @@ initialPacket message = Packet
 getPacketData :: Packet -> Message
 getPacketData Packet {packetData = dat} = binaryToMessage dat
 
-data Flag = Syn | Fin deriving (Eq, Ord, Show)
+data Flag = Syn | Ack | Fin deriving (Eq, Ord, Show)
 
 flagValues :: [(Flag, Word8)]
 flagValues =
 	[	(Syn, 0)
 	,	(Fin, 1)
+	,	(Ack, 2)
 	]
 
 getFlags :: Packet -> [Flag]
@@ -110,6 +112,7 @@ setFlags flags packet = packet {packetFlags = field} where
 	buildField currentBits flag = bit (fromIntegral ((Map.fromList flagValues) Map.! flag)) .|. currentBits
 
 emptySynPacket = setFlags [Syn] (initialPacket Message.Empty)
+emptySynAckPacket = setFlags [Syn, Ack] (initialPacket Message.Empty)
 emptyFinPacket = setFlags [Fin] (initialPacket Message.Empty)
 
 receivePacket sock = do

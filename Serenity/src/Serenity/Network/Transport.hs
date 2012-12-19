@@ -16,7 +16,7 @@ import Control.Concurrent.STM
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad.State
 import qualified Data.Map as M
-import Network.Socket hiding (connect, listen, send)
+import Network.Socket hiding (Connected, connect, listen, send)
 
 import Serenity.Network.Connection
 import Serenity.Network.Message (Message)
@@ -90,7 +90,7 @@ acceptClient' :: Transport -> IO SockAddr
 acceptClient' (clients, sock) = do
 	(packet, client) <- receivePacket sock
 	if Syn `elem` (getFlags packet) && M.notMember client clients
-		then return client
+		then sendPacket sock emptySynAckPacket client >> return client
 		else acceptClient' (clients, sock)
 
 -- | Start communications with clients connected to the given
@@ -135,8 +135,12 @@ receive clients sock = do
 	where
 		updateChannels (TransportInterface {channelConnection = connTVar}) packet = do
 			-- TODO Use modifyTVar
-			conn <- atomically $ readTVar connTVar
-			atomically $ writeTVar connTVar (conn { connectionReliability = packetReceived (packetSeq packet) (connectionReliability conn) })
+			c@(Connection {connectionReliability = r, connectionState = s}) <- atomically $ readTVar connTVar
+			case s of
+				Connecting -> if Syn `elem` getFlags packet && Ack `elem` getFlags packet
+												then atomically $ writeTVar connTVar (c { connectionReliability = packetReceived (packetSeq packet) r, connectionState = Connected })
+												else return ()
+				_ -> atomically $ writeTVar connTVar (c { connectionReliability = packetReceived (packetSeq packet) r })
 
 -- | Send a Message on the given socket to the specified address.
 send :: TVar Connection -> Socket -> Message -> SockAddr -> IO ()

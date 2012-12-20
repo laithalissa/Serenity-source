@@ -145,10 +145,10 @@ receive clients sock = do
 -- | Send a Message on the given socket to the specified address.
 send :: TVar Connection -> Socket -> Message -> SockAddr -> IO ()
 send connTVar sock message addr = do
-	-- TODO Get sequence ID and acks from reliability
-	sendPacket sock (initialPacket message) addr
-	-- TODO Use modifyTVar
 	conn <- atomically $ readTVar connTVar
+	let packet = connectionPacket conn message
+	sendPacket sock packet addr
+	-- TODO Use modifyTVar
 	atomically $ writeTVar connTVar (conn { connectionReliability = packetSent (connectionReliability conn) })
 
 newTransportInterface :: IO TransportInterface

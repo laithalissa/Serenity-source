@@ -12,6 +12,7 @@ module Serenity.Network.Packet
 ,	emptyFinPacket
 ,	setFlags
 ,	getFlags
+,	messageToBinary
 )
 where
 
@@ -38,11 +39,12 @@ import Serenity.Network.Message (Message)
 import qualified Serenity.Network.Message as Message
 
 data Packet = Packet
-	{	packetProt  :: Word32
-	,	packetSeq   :: Word32
-	,	packetAck   :: Word32
+	{	packetProt :: Word32
+	,	packetSeq :: Word32
+	,	packetAck :: Word32
+	,	packetAckBits :: Word32
 	,	packetFlags :: Word8
-	,	packetData  :: C.ByteString
+	,	packetData :: C.ByteString
 	} deriving (Show, Eq)
 
 readPacket :: ByteString -> Maybe Packet
@@ -124,5 +126,4 @@ receivePacket sock = do
 
 sendPacket sock packet = do
 	sendAllTo sock (writePacket packet)
-
 

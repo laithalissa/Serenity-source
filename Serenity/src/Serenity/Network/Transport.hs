@@ -91,7 +91,7 @@ acceptClient' (clients, sock) = do
 	if Syn `elem` (getFlags packet) && M.notMember client clients
 		then do
 			channels <- newTransportInterface
-			updateChannels channels packet
+			updateConnection (channelConnection channels) (connectionReceivedPacket packet)
 			send (channelConnection channels) sock Empty client
 			return (client, channels)
 		else acceptClient' (clients, sock)
@@ -132,7 +132,7 @@ receive clients sock = do
 	case M.lookup addr clients of
 		Just channels -> do
 			-- TODO Packet verification
-			updateChannels channels packet
+			updateConnection (channelConnection channels) (connectionReceivedPacket packet)
 			return $ Just (getPacketData packet, channels)
 		Nothing -> return Nothing
 
@@ -142,8 +142,7 @@ send connTVar sock message addr = do
 	conn <- atomically $ readTVar connTVar
 	let packet = connectionPacket conn message
 	sendPacket sock packet addr
-	-- TODO Use modifyTVar
-	atomically $ writeTVar connTVar (conn { connectionReliability = packetSent (connectionReliability conn) })
+	updateConnection connTVar connectionSentPacket
 
 newTransportInterface :: IO TransportInterface
 newTransportInterface = do
@@ -156,8 +155,16 @@ newTransportInterface = do
 		,	channelConnection = connection
 		}
 
-updateChannels :: TransportInterface -> Packet -> IO ()
-updateChannels (TransportInterface {channelConnection = connTVar}) packet = do
-	-- TODO Use modifyTVar
-	c@(Connection {connectionReliability = r}) <- atomically $ readTVar connTVar
-	atomically $ writeTVar connTVar (c { connectionReliability = packetReceived (packetSeq packet) r, connectionState = Connected })
+updateConnection :: TVar Connection -> (Connection -> Connection) -> IO ()
+updateConnection tvar f = atomically $ modifyTVar' tvar f
+
+connectionReceivedPacket :: Packet -> Connection -> Connection
+connectionReceivedPacket packet connection = connection
+	{	connectionReliability = packetReceived (packetSeq packet) (connectionReliability connection)
+	,	connectionState = Connected
+	}
+
+connectionSentPacket :: Connection -> Connection
+connectionSentPacket connection = connection
+	{	connectionReliability = packetSent (connectionReliability connection)
+	}

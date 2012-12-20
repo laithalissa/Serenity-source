@@ -37,7 +37,7 @@ isConnected Connection {connectionState = Connected} = True
 isConnected _ = False
 
 connectionPacket :: Connection -> Message -> Packet
-connectionPacket (Connection {connectionReliability = r}) message = Packet
+connectionPacket (Connection {connectionReliability = r, connectionState = state}) message = setFlags connectionFlags $ Packet
 	{	packetProt = fromIntegral 1
 	,	packetSeq = fromIntegral $ localSequence r
 	,	packetAck = fromIntegral $ remoteSequence r
@@ -45,6 +45,10 @@ connectionPacket (Connection {connectionReliability = r}) message = Packet
 	,	packetFlags = fromIntegral 0
 	,	packetData = messageToBinary message
 	}
+	where
+		connectionFlags = case state of
+												Connecting -> [Syn]
+												_ -> []
 
 -- | Create initial reliability system
 initReliability :: Reliability

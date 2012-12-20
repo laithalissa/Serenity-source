@@ -19,7 +19,7 @@ import qualified Data.Map as M
 import Network.Socket hiding (Connected, connect, listen, send)
 
 import Serenity.Network.Connection
-import Serenity.Network.Message (Message)
+import Serenity.Network.Message (Message(Empty))
 import Serenity.Network.Packet
 
 -- | The network transport represents a list of connected
@@ -63,7 +63,7 @@ connect :: HostName -> PortNumber -> IO Transport
 connect host port = do
 	(sock, addr) <- getOutboundSocket host port
 	channels <- newTransportInterface
-	sendPacket sock emptySynPacket addr
+	send (channelConnection channels) sock Empty addr
 	return (M.singleton addr channels, sock)
 
 connectTo :: HostName -> PortNumber -> IO TransportInterface
@@ -81,16 +81,19 @@ connectTo host port = do
 acceptClient :: StateT Transport IO TransportInterface
 acceptClient = do
 	(clients, sock) <- get
-	client <- lift $ acceptClient' (clients, sock)
-	channels <- lift newTransportInterface
+	(client, channels) <- lift $ acceptClient' (clients, sock)
 	put $ (M.insert client channels clients, sock)
 	return channels
 
-acceptClient' :: Transport -> IO SockAddr
+acceptClient' :: Transport -> IO (SockAddr, TransportInterface)
 acceptClient' (clients, sock) = do
 	(packet, client) <- receivePacket sock
 	if Syn `elem` (getFlags packet) && M.notMember client clients
-		then sendPacket sock emptySynAckPacket client >> return client
+		then do
+			channels <- newTransportInterface
+			updateChannels channels packet
+			send (channelConnection channels) sock Empty client
+			return (client, channels)
 		else acceptClient' (clients, sock)
 
 -- | Start communications with clients connected to the given
@@ -132,15 +135,6 @@ receive clients sock = do
 			updateChannels channels packet
 			return $ Just (getPacketData packet, channels)
 		Nothing -> return Nothing
-	where
-		updateChannels (TransportInterface {channelConnection = connTVar}) packet = do
-			-- TODO Use modifyTVar
-			c@(Connection {connectionReliability = r, connectionState = s}) <- atomically $ readTVar connTVar
-			case s of
-				Connecting -> if Syn `elem` getFlags packet && Ack `elem` getFlags packet
-												then atomically $ writeTVar connTVar (c { connectionReliability = packetReceived (packetSeq packet) r, connectionState = Connected })
-												else return ()
-				_ -> atomically $ writeTVar connTVar (c { connectionReliability = packetReceived (packetSeq packet) r })
 
 -- | Send a Message on the given socket to the specified address.
 send :: TVar Connection -> Socket -> Message -> SockAddr -> IO ()
@@ -161,3 +155,9 @@ newTransportInterface = do
 		,	channelOutbox = outbox
 		,	channelConnection = connection
 		}
+
+updateChannels :: TransportInterface -> Packet -> IO ()
+updateChannels (TransportInterface {channelConnection = connTVar}) packet = do
+	-- TODO Use modifyTVar
+	c@(Connection {connectionReliability = r}) <- atomically $ readTVar connTVar
+	atomically $ writeTVar connTVar (c { connectionReliability = packetReceived (packetSeq packet) r, connectionState = Connected })

@@ -55,6 +55,7 @@ readPacket' = runGet $ do
 	pProt  <- getWord32be
 	pSeq   <- getWord32be
 	pAck   <- getWord32be
+	pAckBits <- getWord32be
 	pFlags <- getWord8
 	r       <- remaining
 	pData  <- getByteString r
@@ -62,6 +63,7 @@ readPacket' = runGet $ do
 		{	packetProt = pProt
 		,	packetSeq = pSeq
 		,	packetAck = pAck
+		,	packetAckBits = pAckBits
 		,	packetFlags = pFlags
 		,	packetData = pData
 		}
@@ -77,16 +79,18 @@ writePacket packet = B.concat $ BL.toChunks $ runPut $ do
 	putWord32be   $ packetProt packet
 	putWord32be   $ packetSeq packet
 	putWord32be   $ packetAck packet
+	putWord32be   $ packetAckBits packet
 	putWord8      $ packetFlags packet
 	putByteString $ packetData packet
 
 initialPacket :: Message -> Packet
 initialPacket message = Packet
-	{	packetProt  = fromIntegral $ 1
-	,	packetSeq   = fromIntegral $ 1
-	,	packetAck   = fromIntegral $ 1
-	,	packetFlags = fromIntegral $ 0
-	,	packetData  = messageToBinary message
+	{	packetProt = fromIntegral 1
+	,	packetSeq = fromIntegral 1
+	,	packetAck = fromIntegral 1
+	,	packetAckBits = fromIntegral 0
+	,	packetFlags = fromIntegral 0
+	,	packetData = messageToBinary message
 	}
 
 getPacketData :: Packet -> Message

@@ -5,19 +5,23 @@ module Serenity.Network.Message
 ,	Update(..)
 ,	Command(..)
 ,	Entity(..)
-,	GameEntity(..)
+,	Ship_(..)
 ,	ShipOrder(..)
 ,	ShipOrderState(..)
 )
 where
 
 import Serenity.Game.Shared.Model.Entity
+import Serenity.Model.Entity
 
+import Serenity.Extensions.Vinyl
 import Data.Binary
 import Data.DeriveTH
 
 type ClientId = Int
 type Time = Int
+
+$(makeBinaryNewtype ''Ship "ship_" "Ship_")
 
 -- | A message that can be sent over the network.
 data Message = 
@@ -30,13 +34,17 @@ data Message =
 --   Any updates should be identically sent to all clients
 data Update = 
 	UpdateEntity
-	{	updateEntity :: GameEntity
+	{	updateEntity :: Ship_
 	}
 	| AddEntity
-	{	updateEntity :: GameEntity
+	{	updateEntity :: Ship_
 	}
 	| DeleteEntity
-	{	updateEntity :: GameEntity
+	{	updateEntity :: Ship_
+	}
+	| UpdateEntityLocation
+	{	updateEntityID :: Int
+	,	updateEntityLocation :: (Float, Float)
 	}
 	deriving (Show, Eq)
 
@@ -44,15 +52,16 @@ data Update =
 data Command = 
 	GiveOrder
 	{	commandEntityId :: Int
-	,	order :: ShipOrder
+	,	order :: Order
 	}
 	deriving (Show, Eq)
 
 -- Derive binary instances using deep magic.
-$(derive makeBinary ''ShipOrder)
-$(derive makeBinary ''ShipOrderState)
-$(derive makeBinary ''GameEntity)
-$(derive makeBinary ''Entity)
+-- $(derive makeBinary ''ShipOrder)
+-- $(derive makeBinary ''ShipOrderState)
+-- $(derive makeBinary ''Entity)
+
+$(derive makeBinary ''Order)
 $(derive makeBinary ''Update)
 $(derive makeBinary ''Command)
 $(derive makeBinary ''Message)

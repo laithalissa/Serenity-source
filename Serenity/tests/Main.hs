@@ -9,8 +9,8 @@ import qualified Test.Serenity.Network.Utility as Network_Utility
 import qualified Test.Serenity.Network.Message as Message
 import qualified Test.Serenity.Network.Packet as Packet
 import qualified Test.Serenity.Game.Server.Main as ServerMain
-import qualified Test.Serenity.Game.Shared.GameStateUpdate as GameStateUpdate
-import qualified Test.Serenity.Game.Server.GameStateTransform as GST
+--import qualified Test.Serenity.Game.Shared.GameStateUpdate as GameStateUpdate
+--import qualified Test.Serenity.Game.Server.GameStateTransform as GST
 -- import qualified Test.Serenity.Game.Server.Network as ServerNetwork
 import qualified Test.Serenity.Game.Client.KeyboardState as KeyboardState
 import qualified Test.Serenity.Maths.Util as MathUtil
@@ -31,8 +31,8 @@ allTests =
 	,	Network_Utility.tests
 	,	Message.tests
 	,	ServerMain.tests
-	,	GameStateUpdate.tests
-	,	GST.tests
+	-- ,	GameStateUpdate.tests
+	-- ,	GST.tests
 	-- ,	ServerNetwork.networkTests
 	,	KeyboardState.tests
 	,	MathUtil.tests

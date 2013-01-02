@@ -14,12 +14,14 @@ import Data.DeriveTH
 import Data.Derive.Arbitrary
 
 import Serenity.Network.Message
+import Serenity.Model.Entity
 import Data.Binary (Binary(..), encode, decode)
 
-$(derive makeArbitrary ''ShipOrder)
-$(derive makeArbitrary ''ShipOrderState)
-$(derive makeArbitrary ''GameEntity)
-$(derive makeArbitrary ''Entity)
+-- $(derive makeArbitrary ''ShipOrder 
+-- $(derive makeArbitrary ''ShipOrderState)
+-- $(derive makeArbitrary ''GameEntity)
+-- $(derive makeArbitrary ''Entity)
+$(derive makeArbitrary ''Order)
 $(derive makeArbitrary ''Message)
 $(derive makeArbitrary ''Update)
 $(derive makeArbitrary ''Command)

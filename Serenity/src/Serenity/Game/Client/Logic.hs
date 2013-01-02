@@ -9,11 +9,13 @@ import qualified Data.Set as Set
 import Serenity.Game.Client.ClientMessage (ClientMessage(ClientMessageCommand))
 import Serenity.Game.Client.ClientState (ClientState(..), UIState(..), mapLocationFromView)
 
-import Serenity.Game.Shared.Model.Common (OwnerId)
-import Serenity.Game.Shared.Model.Entity (Entity(Ship), GameEntity(..))
-import Serenity.Game.Shared.Model.GameMap (GameMap(..))
-import Serenity.Game.Shared.Model.GameState (GameState(..))
-import Serenity.Game.Shared.Model.ShipOrder
+--import Serenity.Game.Shared.Model.Common (OwnerId)
+--import Serenity.Game.Shared.Model.Entity (Entity(Ship), GameEntity(..))
+--import Serenity.Game.Shared.Model.GameMap (GameMap(..))
+--import Serenity.Game.Shared.Model.GameState (GameState(..))
+--import Serenity.Game.Shared.Model.ShipOrder
+
+import Serenity.Model.Entity
 
 import Debug.Trace(trace)
 
@@ -28,9 +30,7 @@ handleClick click clientState = case playersShips (clientName clientState) entit
 		entities = gameStateEntities $ gameState clientState
 		viewport = viewPort $ uiState clientState
 		mapSize = gameMapSize $ gameStateGameMap $ gameState clientState
-		order = MoveOrder
-			{	moveOrderLocation=(mapLocationFromView click viewport mapSize)
-			}
+		order = OrderMove (mapLocationFromView click viewport mapSize)
 
 playersShips :: OwnerId -> Set GameEntity -> [GameEntity]
 playersShips player entities = Set.toList $ Set.filter (playersShip player) entities

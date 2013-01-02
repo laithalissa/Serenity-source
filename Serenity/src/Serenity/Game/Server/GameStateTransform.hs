@@ -33,6 +33,10 @@ import Serenity.Game.Server.EntityController (entityUpdateSelf, shipNewOrder)
 import qualified Data.Set as Set
 import Data.Maybe(fromJust)
 
+
+--import Serenity.Model.Time
+
+
 -- | gives the command to the relevent ship, returning the changes to the world
 transform 
 	:: Command   -- ^ ship command
@@ -54,7 +58,7 @@ transforms commands gameState = concatMap ((flip transform) gameState) commands
 step' :: TimeDuration -> GameState -> [Update]
 step' td gs = (map (UpdateEntity . wrap (stepEntity td) . (entityUpdateSelf gs)) . Set.toList . gameStateEntities) gs
 
-type BaseWire = Wire () Identity
+type BaseWire = Wire LastException Identity
 type UpdateWire = BaseWire GameState [Update]
 
 updateOnTime :: UpdateWire -> Float -> GameState -> ([Update], UpdateWire)

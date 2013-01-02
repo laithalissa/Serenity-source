@@ -12,9 +12,11 @@ import Serenity.Game.Client.ClientState (ClientState(..), windowSize, viewPort)
 import qualified Serenity.Game.Client.ClientState as ClientState
 import Serenity.Game.Client.Controller
 
-import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
-import Serenity.Game.Shared.Model.Common (OwnerId)
-import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
+--import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
+--import Serenity.Game.Shared.Model.Common (OwnerId)
+--import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
+
+import Serenity.Model.Time
 
 import Serenity.Network.Message (Message(..))
 import Serenity.Network.Utility
@@ -82,10 +84,10 @@ handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
-	let updates = concatMap getUpdate messages
+	let us = concatMap getUpdate messages
 
 	-- Apply the updates to the game state
-	gameState' <- return $ manyUpdateGameState updates (gameState clientState)
+	gameState' <- return $ updates us (gameState clientState)
 	return $ clientState { gameState = gameState', uiState = (uiState clientState){viewPort = newViewPort} }
 
 	where

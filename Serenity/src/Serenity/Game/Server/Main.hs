@@ -22,8 +22,8 @@ import Serenity.Model
 import Serenity.Model.Wire
 
 -- | Run the server.
-server :: 
-	   Int   -- ^ Port to listen on.
+server 
+	:: Int   -- ^ Port to listen on.
 	-> Int   -- ^ Number of clients to connect.
 	-> IO ()
 server port clientCount = do
@@ -35,8 +35,8 @@ server port clientCount = do
 	print "server finished"
 
 -- | Wait for n clients to connect
-connectionPhase :: 
-	   PortNumber      -- ^ Port to listen on.
+connectionPhase
+	:: PortNumber      -- ^ Port to listen on.
 	-> Int             -- ^ Number of clients to connect.
 	-> IO [ClientData] -- ^ Client connection information.
 

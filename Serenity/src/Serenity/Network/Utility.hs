@@ -18,7 +18,7 @@ import Control.Monad (forever, liftM)
 
 import Serenity.Network.Transport
 
-import Serenity.Network.Message (Message)
+import Serenity.Model.Message (Message)
 
 data TransportInterface = TransportInterface
 	{	channelInbox      :: TChan Message

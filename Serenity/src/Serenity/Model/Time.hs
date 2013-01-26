@@ -16,9 +16,9 @@ import Prelude hiding (id, (.))
 
 import Serenity.Model.Game
 import Serenity.Model.Entity
-import Serenity.Network.Message
+import Serenity.Model.Message
 
-import Serenity.Extensions.Vinyl
+import Control.Lens
 import Serenity.Model.Wire
 import Data.Map (Map, elems, adjust)
 
@@ -38,16 +38,16 @@ class (Updateable a) => Commandable a where
 	commands cs a = concatMap (flip command a) cs
 
 instance Updateable Game where
-	update UpdateEntity {updateEntity=Ship_ entity} game = rMod _entities (adjust (\_ -> entity) (entity^.(rLens _eID))) game
-	update AddEntity    {updateEntity=Ship_ entity} game = undefined
-	update DeleteEntity {updateEntity=Ship_ entity} game = undefined
+	update UpdateEntity {updateEntity=entity} game = undefined -- over gameShips (adjust (\_ -> entity) (entity^.entityID)) game
+	update AddEntity    {updateEntity=entity} game = undefined
+	update DeleteEntity {updateEntity=entity} game = undefined
 	update UpdateEntityLocation{updateEntityID=eID, updateEntityLocation=loc} game = undefined
 	update _ g = g
 
 instance Evolvable Game where
-	evolve game = (arr concat) . (mapEvolve game) . (pure $ elems $ _entities `rGet` game) where
-		mapEvolve game = proc entities -> do
-			case entities of 
+	evolve game = (arr concat) . (mapEvolve game) . (pure $ elems $ game^.gameShips) where
+		mapEvolve game = proc ents -> do
+			case ents of 
 				(e:es) -> do
 					u  <-    evolve game -< e
 					us <- mapEvolve game -< es
@@ -63,5 +63,10 @@ instance Updateable Ship where
 instance Evolvable Ship where
 	evolve _ = pure []
 
+instance Updateable (Entity a) where
+	update _ s = s
+
+instance Evolvable (Entity a) where
+	evolve _ = pure []
 
 

@@ -1,25 +1,26 @@
-{-# LANGUAGE DataKinds, TypeOperators #-}
-{-# LANGUAGE FlexibleContexts, NoMonomorphismRestriction #-}
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module Serenity.Model.Game where
+module Serenity.Model.Game
+(	Game
+,	gameSector
+,	gameShips
+,	defaultGame
+) where
 
 import Serenity.Model.Entity
 import Serenity.Model.Sector
 
-import Data.Vinyl
+import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as Map
 
--- | The game state.
-type Game = Rec ["sector" ::: Sector, "ships" ::: Map EntityID Ship]
-_sector      = Field :: "sector" ::: Sector
-_entities    = Field :: "ships"  ::: Map EntityID Ship
+data Game = Game
+	{	_gameSector :: Sector
+	,	_gameShips  :: Map EntityID (Entity Ship)
+	}
+makeLenses ''Game
 
-_updateLocation = Field :: "updateLocation" ::: (Float, Float)
-_order = Field :: "order" ::: Order
-
-defaultGame = 
-	    _sector   =: sectorOne
-	<+> _entities =: Map.fromList []
-
+defaultGame = Game
+	{	_gameSector = sectorOne
+	,	_gameShips  = Map.fromList []
+	}

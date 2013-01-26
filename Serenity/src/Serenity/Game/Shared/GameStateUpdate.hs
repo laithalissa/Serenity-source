@@ -1,7 +1,7 @@
 
 module Serenity.Game.Shared.GameStateUpdate
 (	module Serenity.Game.Shared.Model.GameState
-,	module Serenity.Network.Message
+,	module Serenity.Model.Message
 ,	updateGameState
 ,	manyUpdateGameState
 ) where
@@ -15,7 +15,7 @@ import Serenity.Game.Shared.Model.GameState
 	,	hasEntityId
 	)
 
-import Serenity.Network.Message
+import Serenity.Model.Message
 	(	Update(..)
 	)
 

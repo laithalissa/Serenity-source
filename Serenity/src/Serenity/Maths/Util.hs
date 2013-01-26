@@ -1,6 +1,7 @@
 module Serenity.Maths.Util where
 
 import Data.Fixed (mod')
+import GHC.Float
 
 -- | Force a value to be within bounds, attaing the bound when the value is outside.
 rangeLimitAttainBounds :: Ord a 
@@ -39,3 +40,6 @@ rangeCheck minx maxx x = case x of
 	x | x <= minx -> Left x
 	x | x >= maxx -> Left x
 	x -> Right x
+
+pDouble2Float (x,y) = (double2Float x,double2Float y)
+pFloat2Double (x,y) = (float2Double x,float2Double y)

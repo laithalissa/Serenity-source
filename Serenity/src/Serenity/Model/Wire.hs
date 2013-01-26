@@ -5,14 +5,14 @@ module Serenity.Model.Wire
 ,	runWire
 ,	
 )where
-	
+
 import Prelude hiding (id, (.))
 
 import Control.Wire
 import Control.Monad.Identity (Identity, runIdentity)
 import GHC.Float
 
-import Serenity.Network.Message
+import Serenity.Model.Message
 
 type BaseWire = Wire LastException Identity
 type UpdateWire a = BaseWire a [Update]

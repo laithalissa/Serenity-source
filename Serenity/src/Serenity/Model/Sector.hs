@@ -1,90 +1,82 @@
-{-# LANGUAGE DataKinds, TypeOperators #-}
-{-# LANGUAGE FlexibleContexts, NoMonomorphismRestriction #-}
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Serenity.Model.Sector where
 
-import Data.Vinyl
+import Control.Lens
 import Data.AdditiveGroup
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Binary
 import Data.DeriveTH
 
-_name         = Field :: "name"         ::: String
-_size         = Field :: "size"         ::: (Double, Double)
-_spawnPoints  = Field :: "spawnPoints"  ::: [(Double, Double)]
-_planets      = Field :: "planets"      ::: Map PlanetID Planet
-_spaceLanes   = Field :: "spaceLanes"   ::: [SpaceLane]
-
 type SpaceLane = (PlanetID, PlanetID)
-
-type Sector = Rec 
-	[	"name"         ::: String
-	,	"size"         ::: (Double, Double)
-	,	"spawnPoints"  ::: [(Double, Double)]
-	,	"planets"      ::: Map PlanetID Planet
-	,	"spaceLanes"   ::: [SpaceLane]	
-	]
-
 type PlanetID = Int
 
-_pID       = Field :: "pID"       ::: PlanetID
-_ecotype   = Field :: "ecotype"   ::: Ecotype
-_location  = Field :: "location"  ::: (Double, Double)
-_resources = Field :: "resources" ::: Resources
+data Sector = Sector
+	{	_sectorName         :: String
+	,	_sectorSize         :: (Double, Double)
+	,	_sectorSpawnPoints  :: [(Double, Double)]
+	,	_sectorPlanets      :: Map PlanetID Planet
+	,	_sectorSpaceLanes   :: [SpaceLane]	
+	}
 
-type Planet = Rec 
-	[	"pID"       ::: PlanetID
-	,	"name"      ::: String
-	,	"ecotype"   ::: Ecotype
-	,	"location"  ::: (Double, Double)
-	,	"resources" ::: Resources
-	]
+data Planet = Planet
+	{	_planetID        :: PlanetID
+	,	_planetName      :: String
+	,	_planetEcotype   :: Ecotype
+	,	_planetLocation  :: (Double, Double)
+	,	_planetResources :: Resources
+	}
 
 data Ecotype = 
 	  Blue
-	| Dessert
+	| Desert
 	| Metal
 	| Ocean
 	deriving (Show, Eq)
 
-_fuel       = Field :: "fuel"       ::: Int
-_metal      = Field :: "metal"      ::: Int
-_antimatter = Field :: "antimatter" ::: Int
+ecotypeAssetName' :: Ecotype -> String
+ecotypeAssetName' Blue   = "planet1"
+ecotypeAssetName' Desert = "planet1"
+ecotypeAssetName' Metal  = "planet1"
+ecotypeAssetName' Ocean  = "planet1"
+ecotypeAssetName :: Getter Ecotype String
+ecotypeAssetName = to ecotypeAssetName'
 
-type Resources = Rec 
-	[	"fuel"       ::: Int
-	,	"metal"      ::: Int
-	,	"antimatter" ::: Int
-	]
+data Resources = Resources 
+	{	_resFuel       :: Int
+	,	_resMetal      :: Int
+	,	_resAntimatter :: Int
+	}
 
-res a b c = _fuel =: a <+> _metal =: b <+> _antimatter =: c
+makeLenses ''Resources
+makeLenses ''Planet
+makeLenses ''Sector
+derive makeBinary ''Ecotype
+
+res a b c = Resources {_resFuel = a, _resMetal = b, _resAntimatter = c}
 
 instance AdditiveGroup Resources where
-	zeroV = _fuel =: 0 <+> _metal =: 0 <+> _antimatter =: 0
+	zeroV = Resources {_resFuel = 0, _resMetal = 0, _resAntimatter = 0}
+	a ^+^ b = Resources
+		{	_resFuel       = (+) (a^.resFuel)       (b^.resFuel)
+		,	_resMetal      = (+) (a^.resMetal)      (b^.resMetal)
+		,	_resAntimatter = (+) (a^.resAntimatter) (b^.resAntimatter)
+		}
+	negateV a = Resources
+		{	_resFuel       = - a ^. resFuel
+		,	_resMetal      = - a ^. resMetal
+		,	_resAntimatter = - a ^. resAntimatter
+		}
 
-	a ^+^ b = 
-		    (_fuel       =: (+) (a^.(rLens _fuel))        (b^.(rLens _fuel)))
-		<+> (_metal      =: (+) (a^.(rLens _metal))       (b^.(rLens _metal)))
-		<+> (_antimatter =: (+) (a^.(rLens _antimatter))  (b^.(rLens _antimatter))) where
-
-	negateV a = 
-		    (_fuel       =: (- a^.(rLens _fuel)))
-		<+> (_metal      =: (- a^.(rLens _metal)))
-		<+> (_antimatter =: (- a^.(rLens _antimatter)))
-
-sectorOne = 
-	    _name        =: "Sector One"
-	<+> _size        =: (200, 200)
-	<+> _spawnPoints =: [(10,10), (10,190), (190,190), (190,10)]
-	<+> _planets     =: Map.fromList
-		[	(1, _pID =: 1 <+> _name =: "Splearth"  <+> _ecotype =: Blue    <+> _location  =: (10 , 100) <+> _resources =: res 10 10 0)
-		,	(2, _pID =: 2 <+> _name =: "Tatooine"  <+> _ecotype =: Dessert <+> _location  =: (100, 100) <+> _resources =: res 10 10 0)
-		,	(3, _pID =: 3 <+> _name =: "Qoruscant" <+> _ecotype =: Metal   <+> _location  =: (190, 190) <+> _resources =: res 10 0 10)
+sectorOne = Sector
+	{	_sectorName        = "Sector One"
+	,	_sectorSize        = (200, 200)
+	,	_sectorSpawnPoints = [(10,10), (10,190), (190,190), (190,10)]
+	,	_sectorPlanets     = Map.fromList
+		[	(1, Planet {_planetID = 1, _planetName = "Splearth" , _planetEcotype = Blue  , _planetLocation  = (10 , 100), _planetResources = res 10 10 0})
+		,	(2, Planet {_planetID = 2, _planetName = "Tatooine" , _planetEcotype = Desert, _planetLocation  = (100, 100), _planetResources = res 10 10 0})
+		,	(3, Planet {_planetID = 3, _planetName = "Qoruscant", _planetEcotype = Metal , _planetLocation  = (190, 190), _planetResources = res 10 0 10})
 		]
-	<+> _spaceLanes  =: [(1,2), (2,3)]
-
-
-$(derive makeBinary ''Ecotype)
+	,	_sectorSpaceLanes  = [(1,2), (2,3)]
+	}

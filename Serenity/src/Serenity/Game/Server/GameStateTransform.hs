@@ -19,7 +19,7 @@ import Control.Wire
 import Control.Monad.Identity (Identity, runIdentity)
 import GHC.Float
 
-import Serenity.Network.Message (Command(..), Update(..))
+import Serenity.Model.Message (Command(..), Update(..))
 --import Serenity.Maths.Vector
 
 import Serenity.Game.Shared.Model.GameState (GameState(..), GameMap(..), hasEntityId, getEntityById)

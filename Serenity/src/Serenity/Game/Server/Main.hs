@@ -12,7 +12,7 @@ import Prelude hiding (id, (.))
 import Control.Concurrent (threadDelay)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
-import Serenity.Network.Message (Command(..), Update(..), Message(..))
+import Serenity.Model.Message (Command(..), Update(..), Message(..))
 import Serenity.Network.Transport
 import Serenity.Network.Utility
 

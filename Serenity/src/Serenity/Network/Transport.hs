@@ -38,8 +38,8 @@ import Serenity.Network.Packet
 
 import Data.Binary (Binary)
 
-import Serenity.Network.Message (Message)
-import qualified Serenity.Network.Message as Message
+import Serenity.Model.Message (Message)
+import qualified Serenity.Model.Message as Message
 
 data Connection =
 	Connected

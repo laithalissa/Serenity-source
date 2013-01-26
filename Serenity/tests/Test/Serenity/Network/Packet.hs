@@ -14,7 +14,7 @@ import Data.DeriveTH
 import Data.Derive.Arbitrary
 
 import Serenity.Network.Packet
-import Serenity.Network.Message (Message(Empty))
+import Serenity.Model.Message (Message(Empty))
 
 import Data.Set (Set)
 import qualified Data.Set as Set

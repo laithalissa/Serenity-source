@@ -1,8 +1,4 @@
-module Serenity.Game.Client.InputFilter
-(	InputFilter
-,	initialize
-,	handleInput
-) where
+module Serenity.Game.Client.InputFilter where
 
 import Graphics.Gloss.Interface.Pure.Game (Event(..), Key(..), MouseButton(..), KeyState(..))
 
@@ -10,18 +6,14 @@ import Serenity.Game.Client.ClientMessage (ClientMessage(..), GUICommand(..))
 import Serenity.Game.Client.ClientState (ClientState)
 import qualified Serenity.Game.Client.Logic as Logic
 
-data InputFilter = InputFilter
-	deriving (Show, Eq)
-
-initialize :: InputFilter
-initialize = InputFilter
+import GHC.Float
 
 handleInput :: Event -> ClientState -> [ClientMessage]
 handleInput event clientState = case event of
-	(EventKey (MouseButton button) Down _ point) -> case button of
+	(EventKey (MouseButton button) Down _ (x,y)) -> case button of
 		WheelUp -> [ClientMessageGUI $ ClientZoom 1]
 		WheelDown -> [ClientMessageGUI $ ClientZoom (-1)]
-		LeftButton -> Logic.handleClick point clientState
+		LeftButton -> Logic.handleClick (float2Double x, float2Double y) clientState
 		_ -> []
 
 	(EventKey (Char key) Down _ _) -> case key of

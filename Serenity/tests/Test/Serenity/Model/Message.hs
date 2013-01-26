@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Test.Serenity.Network.Message (tests) where
+module Test.Serenity.Model.Message (tests) where
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit (testCase)
@@ -13,12 +13,16 @@ import Test.QuickCheck
 import Data.DeriveTH
 import Data.Derive.Arbitrary
 
-import Serenity.Network.Message
+import Serenity.Model.Message
+import Serenity.Model.Entity
 import Data.Binary (Binary(..), encode, decode)
 
-$(derive makeArbitrary ''ShipOrder)
-$(derive makeArbitrary ''ShipOrderState)
-$(derive makeArbitrary ''GameEntity)
+-- $(derive makeArbitrary ''ShipOrder 
+-- $(derive makeArbitrary ''ShipOrderState)
+-- $(derive makeArbitrary ''GameEntity)
+$(derive makeArbitrary ''Order)
+$(derive makeArbitrary ''Damage)
+$(derive makeArbitrary ''Ship)
 $(derive makeArbitrary ''Entity)
 $(derive makeArbitrary ''Message)
 $(derive makeArbitrary ''Update)

@@ -10,7 +10,7 @@ import Test.HUnit
 
 import Test.Serenity.Network (serverClientFixture)
 import Serenity.Network.Transport
-import qualified Serenity.Network.Message as Message
+import qualified Serenity.Model.Message as Message
 
 tests = testGroup "Network Tests"
 	[	testCase "Test a listening process accepts a connection" testAcceptance

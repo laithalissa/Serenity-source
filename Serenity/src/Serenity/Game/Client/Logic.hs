@@ -3,39 +3,21 @@ module Serenity.Game.Client.Logic
 )
 where
 
-import Data.Set (Set)
-import qualified Data.Set as Set
-
+import Serenity.Model
 import Serenity.Game.Client.ClientMessage (ClientMessage(ClientMessageCommand))
-import Serenity.Game.Client.ClientState (ClientState(..), UIState(..), mapLocationFromView)
+import Serenity.Game.Client.ClientState
 
-import Serenity.Game.Shared.Model.Common (OwnerId)
-import Serenity.Game.Shared.Model.Entity (Entity(Ship), GameEntity(..))
-import Serenity.Game.Shared.Model.GameMap (GameMap(..))
-import Serenity.Game.Shared.Model.GameState (GameState(..))
-import Serenity.Game.Shared.Model.ShipOrder
+import Control.Lens
+import qualified Data.Map as Map
 
-import Debug.Trace(trace)
+handleClick :: (Double, Double) -> ClientState -> [ClientMessage]
+handleClick click clientState = map f (playersShips clientState) where
+	f entity = ClientMessageCommand $ GiveOrder (entity^.entityID) order
+	order = OrderMove $ 
+		mapLocationFromView click 
+		(clientState^.clientUIState.viewport) 
+		(clientState^.clientGame.gameSector.sectorSize)
 
-import Serenity.Network.Message (Command(..))
-
-handleClick :: (Float, Float) -> ClientState -> [ClientMessage]
-handleClick click clientState = case playersShips (clientName clientState) entities of
-	[] -> []
-	ships -> map (\s -> ClientMessageCommand $ GiveOrder (entityId s) order) ships
-
-	where
-		entities = gameStateEntities $ gameState clientState
-		viewport = viewPort $ uiState clientState
-		mapSize = gameMapSize $ gameStateGameMap $ gameState clientState
-		order = MoveOrder
-			{	moveOrderLocation=(mapLocationFromView click viewport mapSize)
-			}
-
-playersShips :: OwnerId -> Set GameEntity -> [GameEntity]
-playersShips player entities = Set.toList $ Set.filter (playersShip player) entities
-	where
-		playersShip p (GameEntity { ownerId = owner, entity = entity }) =
-			owner == p && isShip entity
-		isShip (Ship {}) = True
-		isShip _ = False
+playersShips :: ClientState -> [Entity Ship]
+playersShips clientState = Map.elems $ Map.filter f $ clientState^.clientGame.gameShips where
+	f entity = entity^.ownerID == clientState^.clientOwnerID

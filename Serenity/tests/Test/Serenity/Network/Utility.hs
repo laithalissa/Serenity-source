@@ -12,8 +12,8 @@ import Test.Serenity.Network (serverClientFixture)
 import Serenity.Network.Transport
 import Serenity.Network.Utility
 
-import Serenity.Network.Message (Message)
-import qualified Serenity.Network.Message as Message
+import Serenity.Model.Message (Message)
+import qualified Serenity.Model.Message as Message
 
 tests = testGroup "Network Utility Tests"
 	[	testCase "Test testGetTransportChannels returns two empty channels" testGetTransportChannels

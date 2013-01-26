@@ -8,27 +8,30 @@ import Graphics.Gloss.Interface.IO.Game
 
 import Serenity.Game.Client.Assets (Assets)
 import qualified Serenity.Game.Client.Assets as Assets
-import Serenity.Game.Client.ClientState (ClientState(..), windowSize, viewPort)
-import qualified Serenity.Game.Client.ClientState as ClientState
+import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.Controller
 
-import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
-import Serenity.Game.Shared.Model.Common (OwnerId)
-import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
+--import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
+--import Serenity.Game.Shared.Model.Common (OwnerId)
+--import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
 
-import Serenity.Network.Message (Message(..))
+import Serenity.Model
+
+import Serenity.Model.Message (Message(..))
 import Serenity.Network.Utility
 
 import Serenity.Game.Client.KeyboardState
 import Control.Monad.State
 
+import Control.Lens
+
 -- | Run the client
 client ::
-	String    -- ^ Host
-	-> Int    -- ^ Port 
-	-> String -- ^ Player Name
+	String -- ^ Host
+	-> Int -- ^ Port 
+	-> Int -- ^ Player Name
 	-> IO () 
-client serverHost serverPort name = do
+client serverHost serverPort ownerId = do
 
 	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
 
@@ -43,14 +46,10 @@ client serverHost serverPort name = do
 		(InWindow "Project Serenity" windowSize (0, 0))
 		black
 		30
-		(initClientState assets name)
+		(initClientState assets ownerId)
 		(return . render)
 		(handleEvent outbox)
 		(handleStep inbox)
-
--- | Create the initial client state
-initClientState :: Assets -> OwnerId -> ClientState
-initClientState assets name = ClientState.initialize assets exampleGameMap name
 
 -- | Handle a Gloss input event, e.g. keyboard action
 -- The event is used to create a list of commands which are sent to the server.
@@ -59,12 +58,12 @@ handleEvent :: TChan Message -> Event -> ClientState -> IO ClientState
 handleEvent outbox event clientState = do
 	-- Get a list of commands
 	newClientState <- return $ handleInput (translateEvent event) clientState
-	let messages = map (\c -> CommandMessage c 0 0) (commands newClientState)
+	let messages = map (\c -> CommandMessage c 0 0) (newClientState^.clientCommands)
 
 	-- Send commands to the server
 	sendMessages outbox messages
 
-	return $ newClientState { ClientState.commands = [], keyboardState = getNewKeyboardState event (keyboardState newClientState) }
+	return $ newClientState {_clientCommands = [], _clientKeyboardState = getNewKeyboardState event (newClientState^.clientKeyboardState) }
 
 	where
 		translateEvent (EventKey key state modifiers (x, y)) = EventKey key state modifiers (x + wx, y + wy)
@@ -82,17 +81,17 @@ handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
 handleStep inbox delta clientState = do
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
-	let updates = concatMap getUpdate messages
+	let us = concatMap getUpdate messages
 
 	-- Apply the updates to the game state
-	gameState' <- return $ manyUpdateGameState updates (gameState clientState)
-	return $ clientState { gameState = gameState', uiState = (uiState clientState){viewPort = newViewPort} }
+	gameState' <- return $ updates us (clientState^.clientGame)
+	return $ (clientUIState.viewport .~ newViewPort $ clientState) {_clientGame = gameState'}
 
 	where
 		getUpdate (UpdateMessage update _) = [update]
 		getUpdate _ = []
 
-		ks = keyboardState clientState
+		ks = clientState^.clientKeyboardState
 		left  = keyMostRecentDownFrom ks (Char 'a') [Char 'a', Char 'd']
 		right = keyMostRecentDownFrom ks (Char 'd') [Char 'a', Char 'd']
 		up    = keyMostRecentDownFrom ks (Char 'w') [Char 'w', Char 's']
@@ -110,4 +109,4 @@ handleStep inbox delta clientState = do
 		zoomIn     = if inn   then modify (\((x,y), z) -> ((x,y), z+b) ) else return ()
 		zoomOut    = if out   then modify (\((x,y), z) -> ((x,y), z-b) ) else return ()
 		allUpdates = do moveLeft; moveRight; moveUp; moveDown; zoomIn; zoomOut
-		newViewPort = execState allUpdates (viewPort $ uiState clientState)
+		newViewPort = execState allUpdates $ clientState^.clientUIState.viewport

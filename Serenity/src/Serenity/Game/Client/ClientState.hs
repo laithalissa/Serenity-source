@@ -1,26 +1,15 @@
-module Serenity.Game.Client.ClientState
-(	ClientState(..)
-,	UIState(..)
-,	initialize
-,	ViewPort
-,	ViewPortMove
-,	ViewPortZoom
-,	mapLocationFromView
-,	windowSize
-) where
+{-# LANGUAGE TemplateHaskell #-}
+
+module Serenity.Game.Client.ClientState where
 
 import Serenity.Game.Client.Assets (Assets)
 
-import Serenity.Game.Shared.Model.Common
-import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, demoGameState)
-import qualified Serenity.Game.Shared.Model.GameState as GameState
-import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
-
-import Serenity.Network.Message (Command)
-
+import Serenity.Model.Message (Command)
 import Serenity.Game.Client.KeyboardState
-
 import Serenity.Sheen.View
+
+import Serenity.Model
+import Control.Lens
 
 -- | The size of the Gloss window
 windowSize :: (Int, Int)
@@ -28,17 +17,20 @@ windowSize = (1024, 768)
 
 -- | The view port is the area of the game world that is being viewed
 -- by the client. ((x, y), zoom)
-type ViewPort = ((Float, Float), Float)
+type ViewPort = ((Double, Double), Double)
 
 -- | A change in the view port's x and y coordinates
-type ViewPortMove = (Float, Float)
+type ViewPortMove = (Double, Double)
 
 -- | A change to the view port's zoom level
-type ViewPortZoom = Float
+type ViewPortZoom = Double
+
+type Location = (Double, Double)
+type Size = (Double, Double)
 
 -- | Convert a view port location into an in-game map location
-mapLocationFromView ::
-	Location    -- ^ Location within the view port
+mapLocationFromView
+	:: Location -- ^ Location within the view port
 	-> ViewPort -- ^ View port
 	-> Size     -- ^ Size of the map
 	-> Location
@@ -56,44 +48,45 @@ mapLocationFromView (x, y) ((vx, vy), vz) (w, h) = (mapX, mapY)
 -- | Represents the state of the client including the current game state
 -- and GUI's state
 data ClientState = ClientState
-	{	gameState :: GameState         -- ^ State of the game world, e.g. ship positions
-	,	uiState :: UIState ClientState -- ^ State of the GUI, e.g. view hierarchy
-	,	keyboardState :: KeyboardState -- ^ What keys are down and in what order they went down
-	,	commands :: [Command]          -- ^ List of commands to send to the server
-	,	assets :: Assets
-	,	clientName :: OwnerId
+	{	_clientGame :: Game                   -- ^ State of the game world, e.g. ship positions
+	,	_clientUIState :: UIState ClientState -- ^ State of the GUI, e.g. view hierarchy
+	,	_clientKeyboardState :: KeyboardState -- ^ What keys are down and in what order they went down
+	,	_clientCommands :: [Command]          -- ^ List of commands to send to the server
+	,	_clientAssets :: Assets
+	,	_clientOwnerID :: OwnerID
 	}
 
 data UIState a = UIState
-	{	views :: View a
-	,	viewPort :: ViewPort
+	{	_views :: View a
+	,	_viewport :: ViewPort
 	}
+
+makeLenses ''UIState
+makeLenses ''ClientState
 
 -- | Create the initial client state
-initialize ::
-	Assets         -- ^ Assets
-	-> GameMap     -- ^ Map
-	-> OwnerId     -- ^ Player's name
+initClientState
+	:: Assets      -- ^ Assets
+	-> OwnerID     -- ^ Player's id
 	-> ClientState
-initialize assets gameMap name = ClientState
-	{	gameState = game
-	,	uiState = initUIState game
-	,	keyboardState = emptyKeyboardState
-	,	commands = []
-	,	assets = assets
-	,	clientName = name
+initClientState assets ownerID = ClientState
+	{	_clientGame = game
+	,	_clientUIState = initUIState game
+	,	_clientKeyboardState = emptyKeyboardState
+	,	_clientCommands = []
+	,	_clientAssets = assets
+	,	_clientOwnerID = ownerID
 	}
 	where
-		-- game = GameState.initialize gameMap
-		game = demoGameState
+		game = demoGame
 
-initUIState :: GameState -> UIState ClientState
-initUIState gameState = UIState
-	{	views = mainView
-	,	viewPort = ((width/2, height/2), zoom)
+initUIState :: Game -> UIState ClientState
+initUIState game = UIState
+	{	_views = mainView
+	,	_viewport = ((width/2, height/2), zoom)
 	}
 	where
-		(width, height) = gameMapSize $ gameStateGameMap gameState
+		(width, height) = game^.gameSector.sectorSize
 		zoom = 1
 
 mainView :: View ClientState

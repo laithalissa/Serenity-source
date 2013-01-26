@@ -47,7 +47,7 @@ import Serenity.Game.Shared.Model.Common
 
 import Serenity.Game.Shared.Model.GameState(hasEntityId)
 
-import Serenity.Network.Message(updateEntity)
+import Serenity.Model.Message(updateEntity)
 
 
 import Data.DeriveTH(derive)

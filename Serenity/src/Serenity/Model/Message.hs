@@ -1,17 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Serenity.Network.Message 
-(	Message (..)
+module Serenity.Model.Message 
+(	Message(..)
 ,	Update(..)
 ,	Command(..)
 ,	Entity(..)
-,	GameEntity(..)
-,	ShipOrder(..)
-,	ShipOrderState(..)
+,	Ship(..)
 )
 where
 
-import Serenity.Game.Shared.Model.Entity
+import Serenity.Model.Entity
 
 import Data.Binary
 import Data.DeriveTH
@@ -21,7 +19,7 @@ type Time = Int
 
 -- | A message that can be sent over the network.
 data Message = 
-	  UpdateMessage Update Time            -- ^ Updates are messages containing new GameState information to be sent from the server to the clients.
+	  UpdateMessage Update Time            -- ^ Updates are messages containing GameState information to be sent from the server to the clients.
 	| CommandMessage Command ClientId Time -- ^ Commands are intention notifications sent from a specific client to the server.
 	| Empty                                -- ^ An empty message (for networking and testing purposes).
 	deriving (Show, Eq)
@@ -30,13 +28,17 @@ data Message =
 --   Any updates should be identically sent to all clients
 data Update = 
 	UpdateEntity
-	{	updateEntity :: GameEntity
+	{	updateEntity :: Entity Ship
 	}
 	| AddEntity
-	{	updateEntity :: GameEntity
+	{	updateEntity :: Entity Ship
 	}
 	| DeleteEntity
-	{	updateEntity :: GameEntity
+	{	updateEntity :: Entity Ship
+	}
+	| UpdateEntityLocation
+	{	updateEntityID :: Int
+	,	updateEntityLocation :: (Float, Float)
 	}
 	deriving (Show, Eq)
 
@@ -44,15 +46,18 @@ data Update =
 data Command = 
 	GiveOrder
 	{	commandEntityId :: Int
-	,	order :: ShipOrder
+	,	order :: Order
 	}
 	deriving (Show, Eq)
 
 -- Derive binary instances using deep magic.
-$(derive makeBinary ''ShipOrder)
-$(derive makeBinary ''ShipOrderState)
-$(derive makeBinary ''GameEntity)
-$(derive makeBinary ''Entity)
+-- $(derive makeBinary ''ShipOrder)
+-- $(derive makeBinary ''ShipOrderState)
+derive makeBinary ''Damage
+derive makeBinary ''Entity
+derive makeBinary ''Ship
+
+$(derive makeBinary ''Order)
 $(derive makeBinary ''Update)
 $(derive makeBinary ''Command)
 $(derive makeBinary ''Message)

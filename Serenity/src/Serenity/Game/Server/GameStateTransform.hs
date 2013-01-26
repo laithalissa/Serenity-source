@@ -19,7 +19,7 @@ import Control.Wire
 import Control.Monad.Identity (Identity, runIdentity)
 import GHC.Float
 
-import Serenity.Network.Message (Command(..), Update(..))
+import Serenity.Model.Message (Command(..), Update(..))
 --import Serenity.Maths.Vector
 
 import Serenity.Game.Shared.Model.GameState (GameState(..), GameMap(..), hasEntityId, getEntityById)
@@ -32,6 +32,10 @@ import Serenity.Game.Server.EntityController (entityUpdateSelf, shipNewOrder)
 
 import qualified Data.Set as Set
 import Data.Maybe(fromJust)
+
+
+--import Serenity.Model.Time
+
 
 -- | gives the command to the relevent ship, returning the changes to the world
 transform 
@@ -54,7 +58,7 @@ transforms commands gameState = concatMap ((flip transform) gameState) commands
 step' :: TimeDuration -> GameState -> [Update]
 step' td gs = (map (UpdateEntity . wrap (stepEntity td) . (entityUpdateSelf gs)) . Set.toList . gameStateEntities) gs
 
-type BaseWire = Wire () Identity
+type BaseWire = Wire LastException Identity
 type UpdateWire = BaseWire GameState [Update]
 
 updateOnTime :: UpdateWire -> Float -> GameState -> ([Update], UpdateWire)

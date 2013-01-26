@@ -18,7 +18,7 @@ import Serenity.Network.Utility
 
 import Serenity.Game.Server.ClientData
 
-import Serenity.Model.Time
+import Serenity.Model
 import Serenity.Model.Wire
 
 -- | Run the server.
@@ -31,7 +31,7 @@ server port clientCount = do
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
-	play 5 clients defaultGame commands (evolve defaultGame) updates
+	play 5 clients demoGame commands (evolve demoGame) updates
 	print "server finished"
 
 -- | Wait for n clients to connect

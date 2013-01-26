@@ -6,7 +6,6 @@
 module Serenity.Model.Time 
 (	Command
 ,	Update
-,	defaultGame
 ,	Updateable(..)
 ,	Commandable(..)
 ,	Evolvable(..)

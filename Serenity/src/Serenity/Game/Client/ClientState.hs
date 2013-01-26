@@ -4,11 +4,6 @@ module Serenity.Game.Client.ClientState where
 
 import Serenity.Game.Client.Assets (Assets)
 
---import Serenity.Game.Shared.Model.Common
---import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, demoGameState)
---import qualified Serenity.Game.Shared.Model.GameState as GameState
---import Serenity.Game.Shared.Model.GameMap (GameMap, gameMapSize)
-
 import Serenity.Model.Message (Command)
 import Serenity.Game.Client.KeyboardState
 import Serenity.Sheen.View
@@ -83,7 +78,7 @@ initClientState assets ownerID = ClientState
 	,	_clientOwnerID = ownerID
 	}
 	where
-		game = defaultGame
+		game = demoGame
 
 initUIState :: Game -> UIState ClientState
 initUIState game = UIState

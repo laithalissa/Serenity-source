@@ -5,7 +5,8 @@ where
 
 import Serenity.Game.Server.Main (server)
 import Serenity.Game.Client.Main (client)
-
+import qualified StateSwitcher as SS
+import qualified Serenity.Game.Client.MenuStates.MainMenuState as MainMenu
 import System.Console.ParseArgs
 	(	Args
 	,	Arg(..)
@@ -16,6 +17,7 @@ import System.Console.ParseArgs
 	,	argDataDefaulted
 	,	getRequiredArg
 	)
+
 
 clientMain :: IO (Args String)
 clientMain = parseArgsIO 
@@ -38,7 +40,7 @@ clientMain = parseArgsIO
 			{	argIndex="playerName"
 			,	argAbbr=Just 'n'
 			,	argName=Just "player-name"
-			,	argData=argDataRequired "player-name" ArgtypeInt
+			,	argData=argDataRequired "player-name" ArgtypeString
 			,	argDesc="Name of player"
 			}
 		]
@@ -90,5 +92,6 @@ main = do
 				(getRequiredArg cArgs "host")
 				(getRequiredArg cArgs "port")
 				(getRequiredArg cArgs "playerName")
-
-		_ -> print "invalid mode, must be either 'server' or 'client'"
+		_ -> do
+			SS.initialize MainMenu.initialize
+		-- _ -> print "invalid mode, must be either 'server' or 'client'"

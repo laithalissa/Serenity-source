@@ -25,14 +25,16 @@ import Control.Lens
 import Data.Map (Map, elems, adjust)
 import Data.Maybe (catMaybes)
 
+import Debug.Trace(trace)
+
 class Updateable a where
 	update  ::  Update  -> a -> a
 	updates :: [Update] -> a -> a
 	updates = flip (foldr update)
 
 class (Updateable a) => Evolvable a where
-	evolve :: Game -> UpdateWire a
-	evolve _ = pure []
+	evolve :: UpdateWire (a, Game)
+	evolve = pure []
 
 class (Updateable a) => Commandable a where
 	command  ::  Command  -> a -> [Update] 
@@ -66,12 +68,14 @@ instance Updateable Game where
 	update _ g = g
 
 instance Evolvable Game where
-	evolve game = (arr concat) . (mapEvolve game) . (pure $ elems $ game^.gameShips) where
-		mapEvolve game = proc ents -> do
+	evolve = proc (game, _) -> do
+		x <- mapEvolve -< (elems $ game^.gameShips, game)
+		arr concat -< x where
+		mapEvolve = proc (ents, game) -> do
 			case ents of 
 				(e:es) -> do
-					u  <-    evolve game -< e
-					us <- mapEvolve game -< es
+					u  <-    evolve -< (e, game)
+					us <- mapEvolve -< (es, game)
 					id -< u:us
 				[] -> id -< []
 
@@ -86,4 +90,4 @@ instance Commandable (Entity Ship) where
 	command _ _ = []
 
 instance Evolvable (Entity Ship) where
-	evolve game = evolveShip game
+	evolve = evolveShip

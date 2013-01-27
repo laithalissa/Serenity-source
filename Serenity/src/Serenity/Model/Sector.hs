@@ -19,6 +19,7 @@ data Sector = Sector
 	,	_sectorPlanets      :: Map PlanetID Planet
 	,	_sectorSpaceLanes   :: [SpaceLane]	
 	}
+	deriving Show
 
 data Planet = Planet
 	{	_planetID        :: PlanetID
@@ -27,6 +28,7 @@ data Planet = Planet
 	,	_planetLocation  :: (Double, Double)
 	,	_planetResources :: Resources
 	}
+	deriving Show
 
 data Ecotype = 
 	  Blue
@@ -48,6 +50,7 @@ data Resources = Resources
 	,	_resMetal      :: Int
 	,	_resAntimatter :: Int
 	}
+	deriving Show
 
 makeLenses ''Resources
 makeLenses ''Planet

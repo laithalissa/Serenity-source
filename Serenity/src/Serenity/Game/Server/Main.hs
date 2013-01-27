@@ -31,7 +31,7 @@ server port clientCount = do
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
-	play 5 clients demoGame commands (evolve demoGame) updates
+	play 5 clients demoGame commands evolve updates
 	print "server finished"
 
 -- | Wait for n clients to connect
@@ -53,12 +53,12 @@ connectionPhase port clientLimit = do
 				else connectionPhase' clientLimit port connection clientDataList'
 
 -- | Run the server with given update functions.
-play :: forall world
-	.  Int                              -- ^ Number of simulation steps to take for each second of real time.
+play :: forall world . (Show world) 
+	=> Int                              -- ^ Number of simulation steps to take for each second of real time.
 	-> [ClientData]                     -- ^ Clients
 	-> world                            -- ^ The initial world.
 	-> ([Command] -> world -> [Update]) -- ^ Function to handle commands from clients.
-	-> (UpdateWire world)               -- ^ Wire to step the world one iteration, given the time past
+	-> (UpdateWire (world, world))      -- ^ Wire to step the world one iteration, given the time past
 	-> ([Update] -> world -> world)     -- ^ Function to evolve the world from updates.
 	-> IO ()
 
@@ -72,7 +72,7 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 			game'             <- return $ updateWorld updatesC game
 			newTime           <- getCurrentTime
 			time              <- return $ toRational $ diffUTCTime newTime lastTime
-			(updatesT, wire') <- return $ runWire wire (fromRational time) game'
+			(updatesT, wire') <- return $ runWire wire (fromRational time) (game', game')
 			game''            <- return $ updateWorld updatesT game'
 			sendToClients (updatesC ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))

@@ -19,9 +19,13 @@ import Serenity.Model.Message
 import Serenity.Model.Wire
 import Serenity.Maths.Util
 
+import Serenity.AI.Plan
+
 import Control.Lens
 import Data.Map (Map, elems, adjust)
 import Data.Maybe (catMaybes)
+
+import Debug.Trace(trace)
 
 class Updateable a where
 	update  ::  Update  -> a -> a
@@ -29,8 +33,8 @@ class Updateable a where
 	updates = flip (foldr update)
 
 class (Updateable a) => Evolvable a where
-	evolve :: Game -> UpdateWire a
-	evolve _ = pure []
+	evolve :: UpdateWire (a, Game)
+	evolve = pure []
 
 class (Updateable a) => Commandable a where
 	command  ::  Command  -> a -> [Update] 
@@ -55,15 +59,23 @@ instance Updateable Game where
 	update UpdateShipOrder{updateEntityID=eID, updateShipOrder=order} game = 
 		gameShips.(at eID).traverse.entityData.shipOrder .~ order $ game
 
+	update UpdateShipPlan{updateEntityID=eID, updateShipPlan=plan} game = 
+		gameShips.(at eID).traverse.entityData.shipPlan .~ plan $ game
+
+	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
+		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
+
 	update _ g = g
 
 instance Evolvable Game where
-	evolve game = (arr concat) . (mapEvolve game) . (pure $ elems $ game^.gameShips) where
-		mapEvolve game = proc ents -> do
+	evolve = proc (game, _) -> do
+		x <- mapEvolve -< (elems $ game^.gameShips, game)
+		arr concat -< x where
+		mapEvolve = proc (ents, game) -> do
 			case ents of 
 				(e:es) -> do
-					u  <-    evolve game -< e
-					us <- mapEvolve game -< es
+					u  <-    evolve -< (e, game)
+					us <- mapEvolve -< (es, game)
 					id -< u:us
 				[] -> id -< []
 
@@ -71,20 +83,11 @@ instance Commandable Game where
 	command c@GiveOrder{commandEntityID = cID, order=order} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
 	command _ _ = []
 
-instance (Updateable a) => Updateable (Entity a) where
-	update u Entity{_entityData=d} = Entity{_entityData= update u d}
-instance (Evolvable a) => Evolvable (Entity a) where
-	evolve game = proc Entity{_entityData=d} -> do
-		evolve game -< d
-instance (Commandable a) => Commandable (Entity a) where
-	command c Entity{_entityData=d} = command c d
-
-instance Updateable Ship where
-	update _ s = s
-instance Commandable Ship where
-	command GiveOrder{commandEntityID=cID, order=order} ship = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
+instance Updateable (Entity Ship) where
+	update _ entity = entity
+instance Commandable (Entity Ship) where
+	command GiveOrder{commandEntityID=cID, order=order} _ = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
 	command _ _ = []
 
-instance Evolvable Ship where
-	evolve _ = pure []
-
+instance Evolvable (Entity Ship) where
+	evolve = evolveShip

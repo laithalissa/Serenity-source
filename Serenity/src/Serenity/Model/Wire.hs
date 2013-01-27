@@ -3,8 +3,7 @@ module Serenity.Model.Wire
 ,	BaseWire
 ,	UpdateWire
 ,	runWire
-,	
-)where
+) where
 
 import Prelude hiding (id, (.))
 

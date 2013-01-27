@@ -53,6 +53,14 @@ data Update =
 	{	updateEntityID :: Int
 	,	updateShipOrder :: Order
 	}
+	| UpdateShipPlan
+	{	updateEntityID :: Int
+	,	updateShipPlan :: Plan
+	}
+	| UpdateShipGoal
+	{	updateEntityID :: Int
+	,	updateShipGoal :: Goal
+	}
 	deriving (Show, Eq)
 
 -- | Commands are sent from the clients to the server and contain order information and other notifications of intention.
@@ -69,6 +77,8 @@ data Command =
 derive makeBinary ''Damage
 derive makeBinary ''Entity
 derive makeBinary ''Ship
+derive makeBinary ''Goal
+derive makeBinary ''ShipAction
 
 derive makeBinary ''Order
 derive makeBinary ''Update

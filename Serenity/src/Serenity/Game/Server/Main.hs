@@ -53,8 +53,8 @@ connectionPhase port clientLimit = do
 				else connectionPhase' clientLimit port connection clientDataList'
 
 -- | Run the server with given update functions.
-play :: forall world
-	.  Int                              -- ^ Number of simulation steps to take for each second of real time.
+play :: forall world . (Show world) 
+	=> Int                              -- ^ Number of simulation steps to take for each second of real time.
 	-> [ClientData]                     -- ^ Clients
 	-> world                            -- ^ The initial world.
 	-> ([Command] -> world -> [Update]) -- ^ Function to handle commands from clients.
@@ -70,10 +70,13 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 			commands          <- getCommands clientDataList
 			updatesC          <- return $ transform commands game
 			game'             <- return $ updateWorld updatesC game
+			--print game'
 			newTime           <- getCurrentTime
 			time              <- return $ toRational $ diffUTCTime newTime lastTime
 			(updatesT, wire') <- return $ runWire wire (fromRational time) game'
 			game''            <- return $ updateWorld updatesT game'
+			--print updatesT
+			--print game''
 			sendToClients (updatesC ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
 			playLoop (game'', wire') newTime

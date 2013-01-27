@@ -19,6 +19,8 @@ import Serenity.Model.Message
 import Serenity.Model.Wire
 import Serenity.Maths.Util
 
+import Serenity.AI.Plan
+
 import Control.Lens
 import Data.Map (Map, elems, adjust)
 import Data.Maybe (catMaybes)
@@ -55,6 +57,12 @@ instance Updateable Game where
 	update UpdateShipOrder{updateEntityID=eID, updateShipOrder=order} game = 
 		gameShips.(at eID).traverse.entityData.shipOrder .~ order $ game
 
+	update UpdateShipPlan{updateEntityID=eID, updateShipPlan=plan} game = 
+		gameShips.(at eID).traverse.entityData.shipPlan .~ plan $ game
+
+	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
+		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
+
 	update _ g = g
 
 instance Evolvable Game where
@@ -71,20 +79,11 @@ instance Commandable Game where
 	command c@GiveOrder{commandEntityID = cID, order=order} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
 	command _ _ = []
 
-instance (Updateable a) => Updateable (Entity a) where
-	update u Entity{_entityData=d} = Entity{_entityData= update u d}
-instance (Evolvable a) => Evolvable (Entity a) where
-	evolve game = proc Entity{_entityData=d} -> do
-		evolve game -< d
-instance (Commandable a) => Commandable (Entity a) where
-	command c Entity{_entityData=d} = command c d
-
-instance Updateable Ship where
-	update _ s = s
-instance Commandable Ship where
-	command GiveOrder{commandEntityID=cID, order=order} ship = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
+instance Updateable (Entity Ship) where
+	update _ entity = entity
+instance Commandable (Entity Ship) where
+	command GiveOrder{commandEntityID=cID, order=order} _ = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
 	command _ _ = []
 
-instance Evolvable Ship where
-	evolve _ = pure []
-
+instance Evolvable (Entity Ship) where
+	evolve game = evolveShip game

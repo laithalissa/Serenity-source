@@ -57,7 +57,9 @@ instance Updateable Game where
 		updates [UpdateEntityLocation eID loc, UpdateEntityDirection eID dir] game
 
 	update UpdateShipOrder{updateEntityID=eID, updateShipOrder=order} game = 
-		gameShips.(at eID).traverse.entityData.shipOrder .~ order $ game
+		gameShips.(at eID).traverse.entityData.shipOrder .~ order $ 
+		gameShips.(at eID).traverse.entityData.shipPlan .~ [] $ 
+		gameShips.(at eID).traverse.entityData.shipGoal .~ GoalNone $ game
 
 	update UpdateShipPlan{updateEntityID=eID, updateShipPlan=plan} game = 
 		gameShips.(at eID).traverse.entityData.shipPlan .~ plan $ game

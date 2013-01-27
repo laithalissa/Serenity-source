@@ -38,6 +38,6 @@ evolveShip :: UpdateWire (Entity Ship, Game)
 evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 	case ship^.shipPlan of
 		action:_ -> actt -< (entity, action, game)
-		[] -> id -< [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] where
+		[] -> id -< if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] where
 			g = goal game (ship^.shipOrder)
 			p = plan game g

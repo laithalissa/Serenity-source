@@ -6,6 +6,7 @@ module StateSwitcher
 ,	AppState(..)
 ,	initialize
 ,	update
+,	handleInput
 ,	render
 ) where
 
@@ -20,6 +21,11 @@ class AppState state where
 data Transition = Push | Update
 data StateWrapper = forall a. (AppState a) => StateWrapper a
 
+instance AppState StateWrapper where
+	stateUpdate (StateWrapper s) = stateUpdate s
+	stateRender (StateWrapper s) = stateRender s
+	stateInput (StateWrapper s) = stateInput s
+
 data Switcher = Switcher 
 	{	stack :: [StateWrapper]
 	,	currentState :: StateWrapper
@@ -29,36 +35,19 @@ initialize :: (AppState s) => s -> Switcher
 initialize s = Switcher{stack = [], currentState = StateWrapper s}
 
 update :: Float -> Switcher -> Switcher
---update timeDelta switcher = transitionMatcher timeDelta switcher stateUpdate
-update timeDelta switcher = transitionMatcher timeDelta switcher cock
+update timeDelta switcher = transitionMatcher timeDelta switcher stateUpdate
 
 handleInput :: Event -> Switcher -> Switcher
---handleInput event switcher = transitionMatcher event switcher stateInput
-handleInput event switcher = transitionMatcher event switcher cock
+handleInput event switcher = transitionMatcher event switcher stateInput
 
-cock :: (AppState s) => s -> a -> Maybe (StateWrapper, Transition)
-cock _ _ = Nothing
-
---transitionMatcher :: a -> Switcher -> ( StateWrapper -> a -> Maybe(StateWrapper, Transition)) -> Switcher
---transitionMatcher event switcher f =
---	case (f sw event) of
---		Nothing -> Switcher
---			{ 	stack = tail $ stack switcher
---			, 	currentState = head $ stack switcher 
---			} 
---		Just (sw2, Push) -> Switcher
---			{ 	stack = (currentState switcher):(stack switcher) 
---			, 	currentState = sw2 
---			} 
---		Just (sw2, Update) -> switcher{currentState=sw2}
---	where
---		sw = currentState switcher
-
-transitionMatcher :: (AppState s) => a -> Switcher -> 
-	( s -> a -> Maybe(StateWrapper, Transition)) -> Switcher
+transitionMatcher 
+	:: a 
+	-> Switcher 
+	-> (StateWrapper -> a -> Maybe(StateWrapper, Transition))
+	-> Switcher
 
 transitionMatcher event switcher f =
-	case (f (extract sw) event) of
+	case (f sw event) of
 		Nothing -> Switcher
 			{ 	stack = tail $ stack switcher
 			, 	currentState = head $ stack switcher 
@@ -72,8 +61,4 @@ transitionMatcher event switcher f =
 		sw = currentState switcher
 
 render :: Switcher -> Picture
-render = stateRender . extract . currentState
-
-extract :: forall s. (AppState s) => StateWrapper -> s
-extract (StateWrapper s) = s
-
+render = stateRender . currentState

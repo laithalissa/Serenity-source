@@ -1,6 +1,8 @@
 {-# LANGUAGE ExistentialQuantification #-}
 module StateSwitcher
-(	Switcher
+(	module Graphics.Gloss
+,	module Graphics.Gloss.Interface.IO.Game
+,	Switcher
 ,	Transition(..)
 ,	StateWrapper(..)
 ,	AppState(..)
@@ -19,7 +21,10 @@ class AppState state where
 	stateUpdate 
 		:: Float -- ^ seconds passed since this function was called last
 		-> state -- ^ current state of screen
-		-> Maybe (StateWrapper, Transition)
+		-> Maybe (StateWrapper, Transition) -- ^ return type allows:
+		-- the current state to update itself by returning Just(updated-state-wrapper, Update),
+		-- a transition to another state by Just (new-state-wrapper, Push),
+		-- going back to previous state by Nothing
 	stateRender :: state -> Picture
 	stateInput :: Event -> state -> Maybe (StateWrapper, Transition)
  

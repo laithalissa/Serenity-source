@@ -40,12 +40,25 @@ data Update =
 	{	updateEntityID :: Int
 	,	updateEntityLocation :: (Float, Float)
 	}
+	| UpdateEntityDirection
+	{	updateEntityID :: Int
+	,	updateEntityDirection :: (Float, Float)
+	}
+	| UpdateEntityLocationDirection
+	{	updateEntityID :: Int
+	,	updateEntityLocation :: (Float, Float)
+	,	updateEntityDirection :: (Float, Float)
+	}
+	| UpdateShipOrder
+	{	updateEntityID :: Int
+	,	updateShipOrder :: Order
+	}
 	deriving (Show, Eq)
 
 -- | Commands are sent from the clients to the server and contain order information and other notifications of intention.
 data Command = 
 	GiveOrder
-	{	commandEntityId :: Int
+	{	commandEntityID :: Int
 	,	order :: Order
 	}
 	deriving (Show, Eq)
@@ -57,7 +70,7 @@ derive makeBinary ''Damage
 derive makeBinary ''Entity
 derive makeBinary ''Ship
 
-$(derive makeBinary ''Order)
-$(derive makeBinary ''Update)
-$(derive makeBinary ''Command)
-$(derive makeBinary ''Message)
+derive makeBinary ''Order
+derive makeBinary ''Update
+derive makeBinary ''Command
+derive makeBinary ''Message

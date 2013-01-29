@@ -7,6 +7,8 @@ import Serenity.Game.Server.Main (server)
 import Serenity.Game.Client.Main (client)
 import qualified StateSwitcher as SS
 import qualified Serenity.Game.Client.MenuStates.MainMenuState as MainMenu
+import Graphics.Gloss.Interface.IO.Game
+import Serenity.Sheen.View
 import System.Console.ParseArgs
 	(	Args
 	,	Arg(..)
@@ -93,5 +95,17 @@ main = do
 				(getRequiredArg cArgs "port")
 				(getRequiredArg cArgs "playerName")
 		_ -> do
-			SS.initialize MainMenu.initialize
+		playIO
+			(InWindow "Project Serenity" (100, 100) (0, 0))
+			white
+			30
+			0
+			(depict stateSwitcher)
+			(eventHandler stateSwitcher)
+			(dummy)
+		where stateSwitcher = (View MainMenu.initializeMainMenu)
+
+dummy :: Float -> w -> IO w
+dummy timeStep world = return $ world
+		-- where stateSwitcher = SS.initialize MainMenu.initializeMainMenu
 		-- _ -> print "invalid mode, must be either 'server' or 'client'"

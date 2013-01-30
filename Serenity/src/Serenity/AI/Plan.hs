@@ -23,24 +23,24 @@ goal _ (OrderGuardPlanet a)   = GoalGuardPlanet a
 goal _ (OrderGuardLocation a) = GoalGuardLocation a
 goal _ (OrderCapture a)       = GoalCaptured a
 
-plan :: Game -> Goal -> Plan
-plan game GoalNone = []
-plan game (GoalBeAt a (Just b)) = [ActionMove (game^.gameTime) a b]
-plan game (GoalBeAt a Nothing)  = [ActionMove (game^.gameTime) a (0,1)]
-plan game _ = []
+plan :: Game -> Entity Ship -> Goal -> Plan
+plan _ _ GoalNone = []
+plan game entity (GoalBeAt a (Just b)) = [ActionMove (game^.gameTime) (entity^.entityData.shipLocation, entity^.entityData.shipDirection) a b]
+plan game entity (GoalBeAt a Nothing)  = [ActionMove (game^.gameTime) (entity^.entityData.shipLocation, entity^.entityData.shipDirection) a (0, 1)]
+plan _ _ _ = []
 
 evolveShip :: UpdateWire (Entity Ship, Game)
 evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 	case ship^.shipPlan of
 		[] -> id -< if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] where
 			g = goal game (ship^.shipOrder)
-			p = plan game g
+			p = plan game entity g
 		(action:rest) -> if finished game ship action
 			then id -< [UpdateShipPlan (entity^.entityID) rest]
 			else actt -< (entity, action, game)
 
 finished :: Game -> Ship -> ShipAction -> Bool
-finished _ ship (ActionMove _ dest dir) = ((ship^.shipLocation) =~= dest) && ((ship^.shipDirection) =~= dir)
+finished _ ship (ActionMove _ _ dest dir) = ((ship^.shipLocation) =~= dest) && ((ship^.shipDirection) =~= dir)
 finished _ ship (ActionAttack a)    = True
 finished _ ship (ActionCapture a)   = True
 
@@ -50,12 +50,10 @@ x =~= y = magnitude (x-y) < 5
 actt :: UpdateWire (Entity Ship, ShipAction, Game)
 actt = proc (entity, action, game) -> do 
 	case action of
-		ActionMove t dest dir -> move -< (entity, t, dest, dir)
+		ActionMove t start dest dir -> move -< (entity, t, start, dest, dir)
 		_ -> id -< []
 
-move :: UpdateWire (Entity Ship, Double, (Double, Double), (Double, Double))
-move = proc (entity, startTime, dest, dir) -> do
+move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), (Double, Double), (Double, Double))
+move = proc (entity, startTime, start, dest, dir) -> do
 	timeNow <- time -< ()
-	id -< [UpdateEntityLocation (entity^.entityID) (pDouble2Float $ makePath 1 (entity^.entityData.shipLocation, entity^.entityData.shipDirection) (dest,dir) $ (timeNow-startTime)/100)]
-
-
+	id -< [UpdateEntityLocation (entity^.entityID) (pDouble2Float $ makePath 10 start (dest,dir) $ (timeNow-startTime)/100)]

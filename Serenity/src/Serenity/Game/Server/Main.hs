@@ -1,4 +1,5 @@
 {-# LANGUAGE ExplicitForAll #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Serenity.Game.Server.Main
 (	server
@@ -11,6 +12,7 @@ import Prelude hiding (id, (.))
 
 import Control.Concurrent (threadDelay)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
+import Control.Lens
 
 import Serenity.Model.Message (Command(..), Update(..), Message(..))
 import Serenity.Network.Transport
@@ -53,7 +55,7 @@ connectionPhase port clientLimit = do
 				else connectionPhase' clientLimit port connection clientDataList'
 
 -- | Run the server with given update functions.
-play :: forall world . (Show world) 
+play :: forall world . (Show world, world ~ Game) 
 	=> Int                              -- ^ Number of simulation steps to take for each second of real time.
 	-> [ClientData]                     -- ^ Clients
 	-> world                            -- ^ The initial world.
@@ -73,7 +75,7 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 			newTime           <- getCurrentTime
 			time              <- return $ toRational $ diffUTCTime newTime lastTime
 			(updatesT, wire') <- return $ runWire wire (fromRational time) (game', game')
-			game''            <- return $ updateWorld updatesT game'
+			game''            <- return $ gameTime +~ (fromRational time) $ updateWorld updatesT game'
 			sendToClients (updatesC ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
 			playLoop (game'', wire') newTime

@@ -9,8 +9,10 @@ import Serenity.Model.Game
 import Serenity.Model.Message 
 import Serenity.Model.Wire
 import Serenity.Maths.Util
+import Serenity.AI.Path
 
 import Control.Lens
+import Data.VectorSpace
 
 goal :: Game -> Order -> Goal
 goal _ (OrderNone)            = GoalNone
@@ -22,22 +24,38 @@ goal _ (OrderGuardLocation a) = GoalGuardLocation a
 goal _ (OrderCapture a)       = GoalCaptured a
 
 plan :: Game -> Goal -> Plan
-plan _ GoalNone = []
-plan _ (GoalBeAt a (Just b)) = [ActionMove a b]
-plan _ (GoalBeAt a Nothing)  = [ActionMove a (0,0)]
-plan _ _ = []
-
-actt :: UpdateWire (Entity Ship, ShipAction, Game)
-actt = proc (entity, action, game) -> do 
-	case action of
-		ActionMove a b -> id -< [UpdateEntityLocation (entity^.entityID) (pDouble2Float $ currentLoc + 0.1(a-currentLoc))] 
-			where currentLoc = entity^.entityData.shipLocation
-		_ -> id -< []
+plan game GoalNone = []
+plan game (GoalBeAt a (Just b)) = [ActionMove (game^.gameTime) a b]
+plan game (GoalBeAt a Nothing)  = [ActionMove (game^.gameTime) a (0,1)]
+plan game _ = []
 
 evolveShip :: UpdateWire (Entity Ship, Game)
 evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 	case ship^.shipPlan of
-		action:_ -> actt -< (entity, action, game)
 		[] -> id -< if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] where
 			g = goal game (ship^.shipOrder)
 			p = plan game g
+		(action:rest) -> if finished game ship action
+			then id -< [UpdateShipPlan (entity^.entityID) rest]
+			else actt -< (entity, action, game)
+
+finished :: Game -> Ship -> ShipAction -> Bool
+finished _ ship (ActionMove _ dest dir) = ((ship^.shipLocation) =~= dest) && ((ship^.shipDirection) =~= dir)
+finished _ ship (ActionAttack a)    = True
+finished _ ship (ActionCapture a)   = True
+
+(=~=) :: (Double, Double) -> (Double, Double) -> Bool
+x =~= y = magnitude (x-y) < 5
+
+actt :: UpdateWire (Entity Ship, ShipAction, Game)
+actt = proc (entity, action, game) -> do 
+	case action of
+		ActionMove t dest dir -> move -< (entity, t, dest, dir)
+		_ -> id -< []
+
+move :: UpdateWire (Entity Ship, Double, (Double, Double), (Double, Double))
+move = proc (entity, startTime, dest, dir) -> do
+	timeNow <- time -< ()
+	id -< [UpdateEntityLocation (entity^.entityID) (pDouble2Float $ makePath 1 (entity^.entityData.shipLocation, entity^.entityData.shipDirection) (dest,dir) $ (timeNow-startTime)/100)]
+
+

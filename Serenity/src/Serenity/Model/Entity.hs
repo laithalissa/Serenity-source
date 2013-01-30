@@ -65,8 +65,7 @@ data Goal =
 	deriving (Show, Eq)
 
 data ShipAction = 
-	  ActionNone
-	| ActionMove (Double, Double) (Double, Double)
+	  ActionMove {startTime::Double, location::(Double, Double), direction::(Double, Double)}
 	| ActionAttack Int
 	| ActionCapture Int
 	deriving (Show, Eq)

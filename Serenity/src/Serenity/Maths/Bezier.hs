@@ -46,6 +46,9 @@ bezierM pts' t' = ((beziers ++ [last beziers]) !! (fromIntegral $ toInteger f)) 
 	makeIntermediatePoints (p1:p2:ps) = let interm = (p1+p2)*0.5 
 		in p1 : interm : interm : p2 : (makeIntermediatePoints ps)
 
+bezierRM 
+	:: (InnerSpace v, s ~ Scalar v, Num s, Floating s, Enum s, Ord s, VectorSpace s, Scalar s ~ Scalar v, RealFrac s, Fractional v)
+	=> [v] -> s -> v
 bezierRM ps = parameterizeByArcLength (bezierM ps)
 
 ------------------------- Reparameterisation by Arc Length -------------------------

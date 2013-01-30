@@ -72,14 +72,15 @@ instance Updateable Game where
 instance Evolvable Game where
 	evolve = proc (game, _) -> do
 		x <- mapEvolve -< (elems $ game^.gameShips, game)
-		arr concat -< x where
-		mapEvolve = proc (ents, game) -> do
-			case ents of 
-				(e:es) -> do
-					u  <-    evolve -< (e, game)
-					us <- mapEvolve -< (es, game)
-					id -< u:us
-				[] -> id -< []
+		arr concat -< x
+
+mapEvolve = proc (ents, game) -> do
+	case ents of 
+		(e:es) -> do
+			u  <-    evolve -< (e, game)
+			us <- mapEvolve -< (es, game)
+			id -< u:us
+		[] -> id -< []
 
 instance Commandable Game where
 	command c@GiveOrder{commandEntityID = cID, order=order} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])

@@ -11,21 +11,17 @@ module Serenity.Model.Time
 ,	Evolvable(..)
 ) where
 
-import Prelude hiding (id, (.))
-
+import Serenity.AI.Plan
+import Serenity.Maths.Util
 import Serenity.Model.Game
 import Serenity.Model.Entity
 import Serenity.Model.Message
 import Serenity.Model.Wire
-import Serenity.Maths.Util
-
-import Serenity.AI.Plan
 
 import Control.Lens
-import Data.Map (Map, elems, adjust)
+import Data.Map (elems)
 import Data.Maybe (catMaybes)
-
-import Debug.Trace(trace)
+import Prelude hiding (id, (.))
 
 class Updateable a where
 	update  ::  Update  -> a -> a
@@ -67,8 +63,6 @@ instance Updateable Game where
 	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
 
-	update _ g = g
-
 instance Evolvable Game where
 	evolve = proc (game, _) -> do
 		x <- mapEvolve -< (elems $ game^.gameShips, game)
@@ -83,14 +77,12 @@ mapEvolve = proc (ents, game) -> do
 		[] -> id -< []
 
 instance Commandable Game where
-	command c@GiveOrder{commandEntityID = cID, order=order} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
-	command _ _ = []
+	command c@GiveOrder{commandEntityID = cID} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
 
 instance Updateable (Entity Ship) where
 	update _ entity = entity
 instance Commandable (Entity Ship) where
 	command GiveOrder{commandEntityID=cID, order=order} _ = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
-	command _ _ = []
 
 instance Evolvable (Entity Ship) where
 	evolve = evolveShip

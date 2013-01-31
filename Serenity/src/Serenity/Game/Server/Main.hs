@@ -8,20 +8,17 @@ module Serenity.Game.Server.Main
 ,	getCommands
 ) where
 
-import Prelude hiding (id, (.))
-
-import Control.Concurrent (threadDelay)
-import Data.Time.Clock (getCurrentTime, diffUTCTime)
-import Control.Lens
-
-import Serenity.Model.Message (Command(..), Update(..), Message(..))
+import Serenity.Game.Server.ClientData
+import Serenity.Model
+import Serenity.Model.Wire
 import Serenity.Network.Transport
 import Serenity.Network.Utility
 
-import Serenity.Game.Server.ClientData
+import Prelude hiding (id, (.))
 
-import Serenity.Model
-import Serenity.Model.Wire
+import Control.Concurrent (threadDelay)
+import Control.Lens
+import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 -- | Run the server.
 server 

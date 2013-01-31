@@ -25,7 +25,7 @@ goal _ (OrderCapture a)       = GoalCaptured a
 
 plan :: Game -> Entity Ship -> Goal -> Plan
 plan _ _ GoalNone = []
-plan game entity (GoalBeAt a b) = [ActionMove (game^.gameTime) (entity^.entityData.shipLocation, entity^.entityData.shipDirection) a b'] where
+plan game entity (GoalBeAt a b) = [ActionMove (game^.gameTime) (entity^.entityData.shipLocation, entity^.entityData.shipDirection) (a,b')] where
 	b' = case b of {Just x -> x; Nothing -> (0,1)}
 plan _ _ _ = []
 
@@ -43,7 +43,7 @@ evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 			else actt -< (entity, action, game)
 
 finishedAction :: Game -> Ship -> ShipAction -> Bool
-finishedAction _ ship (ActionMove _ _ dest dir) = ((ship^.shipLocation) =~= dest) -- && ((ship^.shipDirection) =~= dir)
+finishedAction _ ship ActionMove{endLocDir=(dest,dir)} = ((ship^.shipLocation) =~= dest) -- && ((ship^.shipDirection) =~= dir)
 finishedAction _ ship (ActionAttack a)  = True
 finishedAction _ ship (ActionCapture a) = True
 
@@ -65,11 +65,11 @@ x =~= y = magnitude (x-y) < 5
 actt :: UpdateWire (Entity Ship, ShipAction, Game)
 actt = proc (entity, action, game) -> do 
 	case action of
-		ActionMove t start dest dir -> move -< (entity, t, start, dest, dir)
+		ActionMove {startTime = t, startLocDir=start, endLocDir=(dest,dir)} -> move -< (entity, t, start, (dest,dir))
 		_ -> id -< []
 
-move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), (Double, Double), (Double, Double))
-move = proc (entity, startTime, start, dest, dir) -> do
+move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)))
+move = proc (entity, startTime, start, (dest,dir)) -> do
 	timeNow <- time -< ()
 	let (curve, curveLength) = (makePath 15) start (dest, dir)
 	let s = (timeNow-startTime)/(curveLength*0.1)

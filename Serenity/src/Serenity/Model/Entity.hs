@@ -65,8 +65,12 @@ data Goal =
 	deriving (Show, Eq)
 
 data ShipAction = 
-	  ActionMove {startTime::Double, startLocDir::((Double,Double),(Double,Double)), location::(Double, Double), direction::(Double, Double)}
-	| ActionAttack Int
+	ActionMove 
+	{	startTime :: Double
+	,	startLocDir :: ((Double,Double),(Double,Double))
+	,	endLocDir   :: ((Double,Double),(Double,Double))
+	}
+	| ActionAttack {targetID :: Int}
 	| ActionCapture Int
 	deriving (Show, Eq)
 

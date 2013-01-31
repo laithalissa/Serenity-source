@@ -6,6 +6,7 @@ module Serenity.Maths.Bezier
 ,	bezierR
 ,	bezierM
 ,	bezierRM
+,	bezierRMLength
 ,	parameterizeByArcLength
 ,	parameterizeByArcLength'
 ,	arcLength
@@ -29,7 +30,7 @@ bezier ps  t = lerp (bezier (init ps) t) (bezier (tail ps) t) t
 -- | A bezier curve reparameterised for constant arc length with respect to curve parameter.
 bezierR :: (InnerSpace v, s ~ Scalar v, Num s, Floating s, Enum s, Ord s, VectorSpace s, Scalar s ~ Scalar v)
 	=> [v] -> s -> v
-bezierR ps = parameterizeByArcLength (bezier ps)
+bezierR ps = fst $ parameterizeByArcLength (bezier ps)
 
 bezierM :: (VectorSpace v, s ~ Scalar v, Fractional v, Num s, RealFrac s) => [v] -> s -> v
 bezierM pts' t' = ((beziers ++ [last beziers]) !! (fromIntegral $ toInteger f)) ((t*n)- (fromIntegral f)) where
@@ -49,7 +50,12 @@ bezierM pts' t' = ((beziers ++ [last beziers]) !! (fromIntegral $ toInteger f)) 
 bezierRM 
 	:: (InnerSpace v, s ~ Scalar v, Num s, Floating s, Enum s, Ord s, VectorSpace s, Scalar s ~ Scalar v, RealFrac s, Fractional v)
 	=> [v] -> s -> v
-bezierRM ps = parameterizeByArcLength (bezierM ps)
+bezierRM ps = fst $ parameterizeByArcLength (bezierM ps)
+
+bezierRMLength
+	:: (InnerSpace v, s ~ Scalar v, Num s, Floating s, Enum s, Ord s, VectorSpace s, Scalar s ~ Scalar v, RealFrac s, Fractional v)
+	=> [v] -> ((s -> v), s)
+bezierRMLength ps = parameterizeByArcLength (bezierM ps)
 
 ------------------------- Reparameterisation by Arc Length -------------------------
 
@@ -91,8 +97,8 @@ getCurveParameter
 	-> s        -- ^ Divisions
 	-> (s, s)   -- ^ Range
 	-> s        -- ^ Curve parameter for original curve
-	-> s        -- ^ Curve parameter for reparameterised curve
-getCurveParameter curve divs (start, end) s = findIndex lengths 0 0 (s*curveLength) where
+	-> (s,s)    -- ^ Curve parameter for reparameterised curve
+getCurveParameter curve divs (start, end) s = (findIndex lengths 0 0 (s*curveLength), curveLength) where
 	lengths = arcLengthSums curve divs (start,end)
 	curveLength = last lengths
 	step = (end-start)/divs
@@ -104,18 +110,18 @@ getCurveParameter curve divs (start, end) s = findIndex lengths 0 0 (s*curveLeng
 -- | Convert curve to arc length parameterised curve.
 parameterizeByArcLength'
 	:: (InnerSpace v, s ~ Scalar v, Num s, Floating s, Enum s, Ord s, VectorSpace s, Scalar s ~ Scalar v)
-	=> (s -> v) -- ^ Curve
-	-> s        -- ^ Divisions
-	-> (s, s)   -- ^ Range
-	-> (s -> v) -- ^ Reparameterised curve
-parameterizeByArcLength' curve divs range s = curve $ getCurveParameter curve divs range s
+	=> (s -> v)      -- ^ Curve
+	-> s             -- ^ Divisions
+	-> (s, s)        -- ^ Range
+	-> ((s -> v), s) -- ^ Reparameterised curve
+parameterizeByArcLength' curve divs range = (\s -> curve $ fst $ getCurveParameter curve divs range s, snd $ getCurveParameter curve divs range 0)
 
 -- | Convert curve to arc length parameterised curve between 0 and 1 using 100 divisions.
 parameterizeByArcLength
 	:: (InnerSpace v, s ~ Scalar v, Num s, Floating s, Enum s, Ord s, VectorSpace s, Scalar s ~ Scalar v)
 	=> (s -> v) -- ^ Curve
-	-> (s -> v) -- ^ Reparameterised curve
-parameterizeByArcLength  curve s = curve $ getCurveParameter curve 100 (0,1) s
+	-> ((s -> v), s) -- ^ Reparameterised curve
+parameterizeByArcLength curve = parameterizeByArcLength' curve 100 (0,1)
 
 ------------------------------------- Handy --------------------------------------------
 

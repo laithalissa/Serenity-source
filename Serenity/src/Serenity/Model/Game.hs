@@ -31,7 +31,7 @@ demoGame = Game
 	where
 		entities =
 			[	createEntity 0 (25,25) OrderNone 0 "Vic"
-			,	createEntity 1 (25,75) (OrderMove (1,1) Nothing) 1 "Jon"
+			,	createEntity 1 (25,75) OrderNone 1 "Jon"
 			,	createEntity 2 (75,75) OrderNone 2 "Squidballs"
 			,	createEntity 3 (75,25) OrderNone 3 "Laith"
 			]

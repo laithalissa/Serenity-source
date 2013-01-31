@@ -33,5 +33,5 @@ makePath :: (Floating s, Num (s, s), Ord s, InnerSpace s, Scalar s ~ s, v ~ (s,s
 	=> s                -- ^ Minimum radius of curvature at turning points
 	-> ((s, s), (s, s)) -- ^ Starting location with direction
 	-> ((s, s), (s, s)) -- ^ Ending location with direction
-	-> (s -> v)         -- ^ Path
-makePath radius start end = bezierRM (makePoints radius start end)
+	-> ((s -> v), s)    -- ^ Path
+makePath radius start end = bezierRMLength (makePoints radius start end)

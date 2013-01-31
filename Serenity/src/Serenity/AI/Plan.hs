@@ -71,9 +71,10 @@ actt = proc (entity, action, game) -> do
 move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), (Double, Double), (Double, Double))
 move = proc (entity, startTime, start, dest, dir) -> do
 	timeNow <- time -< ()
-	let curve = (makePath 15) start
-	let position = curve (dest, dir) $ (timeNow-startTime)/10
-	let position' = differentiate (curve (dest, dir), (timeNow-startTime)/10)
+	let (curve, curveLength) = (makePath 15) start (dest, dir)
+	let s = (timeNow-startTime)/(curveLength*0.1)
+	let position = curve s
+	let position' = differentiate (curve, s)
 	id -< return UpdateEntityLocationDirection
 		{	updateEntityID = entity^.entityID
 		,	updateEntityLocation = pDouble2Float position

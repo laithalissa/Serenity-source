@@ -25,8 +25,10 @@ goal _ (OrderCapture a)       = GoalCaptured a
 
 plan :: Game -> Entity Ship -> Goal -> Plan
 plan _ _ GoalNone = []
-plan game entity (GoalBeAt a b) = [ActionMove (game^.gameTime) (entity^.entityData.shipLocation, entity^.entityData.shipDirection) (a,b')] where
-	b' = case b of {Just x -> x; Nothing -> (0,1)}
+plan game entity (GoalBeAt goalLoc mGoalDir) = [ActionMove (game^.gameTime) (shippLoc,shipDir) (goalLoc,goalDir)] where
+	goalDir = case mGoalDir of {Just x -> x; Nothing -> normalized (goalLoc - shippLoc)}
+	shippLoc = entity^.entityData.shipLocation
+	shipDir = entity^.entityData.shipDirection
 plan _ _ _ = []
 
 evolveShip :: UpdateWire (Entity Ship, Game)

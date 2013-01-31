@@ -117,7 +117,6 @@ parameterizeByArcLength
 	-> (s -> v) -- ^ Reparameterised curve
 parameterizeByArcLength  curve s = curve $ getCurveParameter curve 100 (0,1) s
 
-
 ------------------------------------- Handy --------------------------------------------
 
 splitEvery :: Int -> [a] -> [[a]]

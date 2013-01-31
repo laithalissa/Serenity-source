@@ -29,7 +29,7 @@ makePoints radius (startLoc, startDir) (endLoc, endDir) = [startS, forwardS, sid
 	rotateStart = rotate $ (if sideStart then 1 else -1) * (rangeLimitAttainBounds 0  (pi/2) $ angleBetween startDir $ backE - forwardS)
 	rotateEnd   = rotate $ (if sideEnd   then 1 else -1) * (rangeLimitAttainBounds (pi/2) pi $ angleBetween endDir   $ forwardS - backE)
 
-makePath :: (Floating s, Num (s, s), Ord s, InnerSpace s, Scalar s ~ s, v ~ (s,s), RealFrac s, Fractional (s,s), Enum s) 
+makePath :: (Floating s, Num (s, s), Ord s, InnerSpace s, Scalar s ~ s, v ~ (s,s), RealFrac s, Fractional (s,s), Enum s)
 	=> s                -- ^ Minimum radius of curvature at turning points
 	-> ((s, s), (s, s)) -- ^ Starting location with direction
 	-> ((s, s), (s, s)) -- ^ Ending location with direction

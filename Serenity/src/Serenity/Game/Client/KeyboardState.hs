@@ -11,7 +11,7 @@ module Serenity.Game.Client.KeyboardState
 ) where
 
 import qualified Data.Sequence as Seq
-import Data.Sequence (Seq, (|>), (<|), (><), ViewL(..))
+import Data.Sequence (Seq, (<|), (><), ViewL(..))
 import Data.Foldable (toList)
 
 import Graphics.Gloss.Interface.Pure.Game (Key(..), KeyState(..))
@@ -49,5 +49,5 @@ keyMostRecentDownFrom ks key keys = case topKey (keysDown ks keys) of
 	Just tk -> key == tk 
 	Nothing -> False 
 	where
-		topKey (x:xs) = Just x
+		topKey (x:_) = Just x
 		topKey [] = Nothing

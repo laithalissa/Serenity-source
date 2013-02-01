@@ -1,11 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Serenity.Model.Game
-(	Game
-,	gameSector
-,	gameShips
-,	demoGame
-) where
+module Serenity.Model.Game where
 
 import Serenity.Model.Entity
 import Serenity.Model.Sector
@@ -15,18 +10,22 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 data Game = Game
-	{	_gameSector :: Sector
+	{	_gameTime :: Double
+	,	_gameSector :: Sector
 	,	_gameShips  :: Map EntityID (Entity Ship)
 	}
+	deriving Show
 makeLenses ''Game
 
 defaultGame = Game
-	{	_gameSector = sectorOne
+	{	_gameTime = 0
+	,	_gameSector = sectorOne
 	,	_gameShips  = Map.fromList []
 	}
 
 demoGame = Game
-	{	_gameSector = sectorOne
+	{	_gameTime = 0
+	,	_gameSector = sectorOne
 	,	_gameShips = Map.fromList entities
 	}
 	where
@@ -50,4 +49,6 @@ demoGame = Game
 			,	_shipDirection = (0,1)
 			,	_shipDamage = Damage 0 0
 			,	_shipOrder = order
+			,	_shipGoal = GoalNone
+			,	_shipPlan = []
 			}

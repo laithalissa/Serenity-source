@@ -27,6 +27,8 @@ $(derive makeArbitrary ''Entity)
 $(derive makeArbitrary ''Message)
 $(derive makeArbitrary ''Update)
 $(derive makeArbitrary ''Command)
+$(derive makeArbitrary ''Goal)
+$(derive makeArbitrary ''ShipAction)
 
 tests = testGroup "Network Message Tests"
 	[	testProperty "Test converting to binary and back returns the same message" propertyGetPutIsID

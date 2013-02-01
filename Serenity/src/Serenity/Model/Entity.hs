@@ -26,6 +26,8 @@ data Ship = Ship
 	,	_shipDirection :: (Double, Double)
 	,	_shipDamage :: Damage
 	,	_shipOrder :: Order
+	,	_shipGoal :: Goal
+	,	_shipPlan :: Plan
 	}
 	deriving (Show, Eq)
 
@@ -44,19 +46,39 @@ data Torpedo = Torpedo
 
 data Order = 
 	  OrderNone
-	| OrderMove (Double, Double) 
+	| OrderMove (Double, Double) (Maybe (Double, Double))
 	| OrderAttack Int
-	| OrderGuard Int
+	| OrderGuardShip Int
+	| OrderGuardPlanet Int
+	| OrderGuardLocation (Double, Double)
+	| OrderCapture Int
 	deriving (Show, Eq)
 
-data Plan = 
-	  PlanNone
-	| PlanMove (Double, Double) 
-	| PlanAttack Int
+data Goal = 
+	  GoalNone
+	| GoalBeAt (Double, Double) (Maybe (Double, Double))
+	| GoalDestroyed Int
+	| GoalGuardShip Int
+	| GoalGuardPlanet Int
+	| GoalGuardLocation (Double, Double)
+	| GoalCaptured Int
 	deriving (Show, Eq)
+
+data ShipAction = 
+	ActionMove 
+	{	startTime :: Double
+	,	startLocDir :: ((Double,Double),(Double,Double))
+	,	endLocDir   :: ((Double,Double),(Double,Double))
+	}
+	| ActionAttack {targetID :: Int}
+	| ActionCapture Int
+	deriving (Show, Eq)
+
+type Plan = [ShipAction]
 
 makeLenses ''Entity
-makeLenses ''Plan
 makeLenses ''Order
+makeLenses ''Goal
+makeLenses ''ShipAction
 makeLenses ''Torpedo
 makeLenses ''Ship

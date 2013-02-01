@@ -3,27 +3,17 @@ module Serenity.Game.Client.Main (
 )
 where
 
-import Control.Concurrent.STM
-import Graphics.Gloss.Interface.IO.Game
-
-import Serenity.Game.Client.Assets (Assets)
 import qualified Serenity.Game.Client.Assets as Assets
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.Controller
-
---import Serenity.Game.Shared.GameStateUpdate (manyUpdateGameState)
---import Serenity.Game.Shared.Model.Common (OwnerId)
---import Serenity.Game.Shared.Model.GameMap (exampleGameMap)
-
+import Serenity.Game.Client.KeyboardState
 import Serenity.Model
-
-import Serenity.Model.Message (Message(..))
 import Serenity.Network.Utility
 
-import Serenity.Game.Client.KeyboardState
-import Control.Monad.State
-
+import Control.Concurrent.STM
 import Control.Lens
+import Control.Monad.State
+import Graphics.Gloss.Interface.IO.Game
 
 -- | Run the client
 client ::
@@ -78,7 +68,7 @@ handleEvent outbox event clientState = do
 -- | Update the game state on a time step
 -- Updates are received from the server and then applied to the game state
 handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
-handleStep inbox delta clientState = do
+handleStep inbox _ clientState = do
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
 	let us = concatMap getUpdate messages

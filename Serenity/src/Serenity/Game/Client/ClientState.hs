@@ -3,12 +3,10 @@
 module Serenity.Game.Client.ClientState where
 
 import Serenity.Game.Client.Assets (Assets)
-
-import Serenity.Model.Message (Command)
 import Serenity.Game.Client.KeyboardState
+import Serenity.Model
 import Serenity.Sheen.View
 
-import Serenity.Model
 import Control.Lens
 
 -- | The size of the Gloss window

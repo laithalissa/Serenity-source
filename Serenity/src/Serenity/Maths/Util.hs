@@ -1,7 +1,11 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
+
 module Serenity.Maths.Util where
 
 import Data.Fixed (mod')
 import GHC.Float
+import Data.VectorSpace
 
 -- | Force a value to be within bounds, attaing the bound when the value is outside.
 rangeLimitAttainBounds :: Ord a 
@@ -43,3 +47,8 @@ rangeCheck minx maxx x = case x of
 
 pDouble2Float (x,y) = (double2Float x,double2Float y)
 pFloat2Double (x,y) = (float2Double x,float2Double y)
+
+differentiate 
+	:: (Floating s, Num (s, s), Ord s, InnerSpace s, Scalar s ~ s, v ~ (s,s), RealFrac s, Fractional (s,s), Enum s)
+	=> ((s->v),s) -> v
+differentiate (curve, s) = (curve(s+h)^-^curve(s-h))^/(2*h) where h = 0.01

@@ -46,9 +46,6 @@ render game uiState assets = Pictures
 			,	pictures $ map picturePlanet $ Map.elems $ game^.gameSector.sectorPlanets
 			,	pictures $ map pictureEntity $ Map.elems $ game^.gameShips
 			]
-			where
-				worldSpaceLanes = game^.gameSector.sectorSpaceLanes
-				worldPlanets = game^.gameSector.sectorPlanets
 
 		picturePlanet planet = translate x y $ getPictureSized (planet^.planetEcotype.ecotypeAssetName) 5 5 assets where
 			(x,y) = pDouble2Float $ planet^.planetLocation

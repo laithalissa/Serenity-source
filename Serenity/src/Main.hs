@@ -6,6 +6,8 @@ where
 import Serenity.Game.Server.Main (server)
 import Serenity.Game.Client.Main (client)
 
+import Log(logprint)
+
 import System.Console.ParseArgs
 	(	Args
 	,	Arg(..)
@@ -75,7 +77,10 @@ topMain = parseArgsIO
 		]
 
 main :: IO ()
-main = do
+main = logprint "hello world" main2
+
+main2 :: IO ()
+main2 = do
 	args <- topMain
 	case getRequiredArg args "mode" of
 		"server" -> do

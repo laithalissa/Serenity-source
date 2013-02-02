@@ -22,6 +22,7 @@ import Control.Lens
 import Data.Map (elems)
 import Data.Maybe (catMaybes)
 import Prelude hiding (id, (.))
+import Log(logprint)
 
 class Updateable a where
 	update  ::  Update  -> a -> a
@@ -80,7 +81,8 @@ instance Commandable Game where
 	command c@GiveOrder{commandEntityID = cID} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
 
 instance Updateable (Entity Ship) where
-	update _ entity = entity
+	update _ entity = logprint "update on entity" entity
+
 instance Commandable (Entity Ship) where
 	command GiveOrder{commandEntityID=cID, order=order} _ = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
 

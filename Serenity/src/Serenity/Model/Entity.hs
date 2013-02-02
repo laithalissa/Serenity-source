@@ -28,6 +28,7 @@ data Ship = Ship
 	,	_shipOrder :: Order
 	,	_shipGoal :: Goal
 	,	_shipPlan :: Plan
+	,	_shipBeamTargets :: [EntityID]
 	}
 	deriving (Show, Eq)
 

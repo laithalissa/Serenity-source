@@ -51,4 +51,5 @@ demoGame = Game
 			,	_shipOrder = order
 			,	_shipGoal = GoalNone
 			,	_shipPlan = []
+			,	_shipBeamTargets = []
 			}

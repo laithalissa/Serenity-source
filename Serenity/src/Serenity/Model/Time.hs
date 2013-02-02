@@ -70,7 +70,7 @@ instance Evolvable Game where
 		arr concat -< x
 
 mapEvolve = proc (ents, game) -> do
-	case ents of 
+	case ents of
 		(e:es) -> do
 			u  <-    evolve -< (e, game)
 			us <- mapEvolve -< (es, game)

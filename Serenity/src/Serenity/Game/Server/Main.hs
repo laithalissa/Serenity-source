@@ -97,5 +97,3 @@ sendToClients updates clientDataList = do
 			outboxes = map (channelOutbox . clientTransportInterface) clientDataList
 			messages = map (\u -> UpdateMessage u 0) updates
 
-
-

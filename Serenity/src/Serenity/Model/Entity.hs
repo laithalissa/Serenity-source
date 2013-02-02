@@ -73,6 +73,7 @@ data ShipAction =
 	}
 	| ActionAttack {targetID :: EntityID}
 	| ActionCapture Int
+	| ActionMoveToEntity EntityID ShipAction
 	deriving (Show, Eq)
 
 type Plan = [ShipAction]

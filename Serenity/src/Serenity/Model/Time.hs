@@ -64,6 +64,9 @@ instance Updateable Game where
 	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
 
+	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
+		gameShips.(at eID).traverse.entityData.shipBeamTargets .~ targets $ game
+
 instance Evolvable Game where
 	evolve = proc (game, _) -> do
 		x <- mapEvolve -< (elems $ game^.gameShips, game)

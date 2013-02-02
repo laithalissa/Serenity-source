@@ -12,6 +12,8 @@ import Serenity.Maths.Util
 import Serenity.AI.Path
 
 import Control.Lens
+import Data.Map (notMember)
+import Data.Maybe (fromJust, isJust)
 import Data.VectorSpace
 
 goal :: Game -> Order -> Goal
@@ -27,6 +29,11 @@ plan :: Game -> Entity Ship -> Goal -> Plan
 plan _ _ GoalNone = []
 plan game entity (GoalBeAt goalLoc mGoalDir) = [ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir)] where
 	goalDir = case mGoalDir of {Just x -> x; Nothing -> normalized (goalLoc - shipLoc)}
+	shipLoc = entity^.entityData.shipLocation
+	shipDir = entity^.entityData.shipDirection
+plan game entity (GoalDestroyed target) = [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] where
+	goalLoc = case game^.gameShips.at target of {Just e -> e^.entityData.shipLocation; Nothing -> shipLoc}
+	goalDir = normalized (goalLoc - shipLoc)
 	shipLoc = entity^.entityData.shipLocation
 	shipDir = entity^.entityData.shipDirection
 plan _ _ _ = []
@@ -46,8 +53,9 @@ evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 
 finishedAction :: Game -> Ship -> ShipAction -> Bool
 finishedAction _ ship ActionMove{endLocDir=(dest,dir)} = ((ship^.shipLocation) =~= dest) -- && ((ship^.shipDirection) =~= dir)
-finishedAction _ ship (ActionAttack a)  = True
+finishedAction game ship (ActionAttack target) = not ((game^.gameShips.contains target) && (inRange ship (fromJust $ game^.gameShips.at target)))
 finishedAction _ ship (ActionCapture a) = True
+finishedAction game ship (ActionMoveToEntity target _) = (not (game^.gameShips.contains target)) || ((ship^.shipLocation) =~= (game^.gameShips.(at target).(to fromJust).entityData.shipLocation))
 
 finishedOrder :: Game -> Ship -> Order -> Bool
 finishedOrder _ _ OrderNone = False
@@ -55,7 +63,7 @@ finishedOrder _ ship (OrderMove dest mDir) = ((ship^.shipLocation) =~= dest) && 
 	x = case mDir of
 		Just dir -> ((ship^.shipDirection) =~= dir)
 		Nothing -> True
-finishedOrder _ ship (OrderAttack a)        = True
+finishedOrder game _ (OrderAttack target) = notMember target (game^.gameShips)
 finishedOrder _ ship (OrderGuardShip a)     = True
 finishedOrder _ ship (OrderGuardPlanet a)   = True
 finishedOrder _ ship (OrderGuardLocation a) = True
@@ -68,6 +76,11 @@ actt :: UpdateWire (Entity Ship, ShipAction, Game)
 actt = proc (entity, action, game) -> do 
 	case action of
 		ActionMove {startTime = t, startLocDir=start, endLocDir=end} -> move -< (entity, t, start, end)
+		(ActionMoveToEntity tID m) -> if isJust target
+			then moveToEntity -< (entity, fromJust target, m, game)
+			else id -< []
+			where
+				target = game^.gameShips.at tID
 		_ -> id -< []
 
 move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)))
@@ -82,3 +95,21 @@ move = proc (entity, startTime, start, end) -> do
 		,	updateEntityLocation = pDouble2Float position
 		,	updateEntityDirection = pDouble2Float position'
 		}
+
+-- | UpdateWire to move a ship towards another, possibly moving, entity.
+--
+-- If the currently planned end location is too far away from the current
+-- position of the target then the move is re-planned.
+moveToEntity :: UpdateWire (Entity Ship, Entity Ship, ShipAction, Game)
+moveToEntity = proc (entity, target, action, game) -> do
+	if magnitude ((fst $ endLocDir action) - (target^.entityData.shipLocation)) > 50
+		|| finishedAction game (entity^.entityData) action
+		then id -< [UpdateShipPlan (entity^.entityID) []]
+		else move -< (entity, startTime action, startLocDir action, endLocDir action)
+
+-- | Check if the target ship is in range
+inRange
+	:: Ship -- ^ Ship
+	-> Entity Ship -- ^ Target
+	-> Bool
+inRange ship target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25

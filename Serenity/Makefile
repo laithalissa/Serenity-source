@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-runClientArgs= +RTS -N -K500M -m20 -M3G -RTS -m client -h localhost -p 9900 -n Joseph
+runClientArgs= +RTS -N -K500M -m20 -M3G -RTS -m client -h localhost -p 9900 -n 2
 runClientLogFile=client.log
 
 runServerArgs= +RTS -N -K500M -M1G -RTS -m server -p 9900

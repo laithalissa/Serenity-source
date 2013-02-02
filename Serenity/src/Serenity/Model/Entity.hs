@@ -33,7 +33,7 @@ data Ship = Ship
 
 data Damage = Damage 
 	{	_damageHull   :: Int
-	,	_damageSheild :: Int
+	,	_damageShield :: Int
 	}
 	deriving (Show, Eq)
 

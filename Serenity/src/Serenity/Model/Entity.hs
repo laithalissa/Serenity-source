@@ -48,8 +48,8 @@ data Torpedo = Torpedo
 data Order = 
 	  OrderNone
 	| OrderMove (Double, Double) (Maybe (Double, Double))
-	| OrderAttack Int
-	| OrderGuardShip Int
+	| OrderAttack EntityID
+	| OrderGuardShip EntityID
 	| OrderGuardPlanet Int
 	| OrderGuardLocation (Double, Double)
 	| OrderCapture Int
@@ -58,8 +58,8 @@ data Order =
 data Goal = 
 	  GoalNone
 	| GoalBeAt (Double, Double) (Maybe (Double, Double))
-	| GoalDestroyed Int
-	| GoalGuardShip Int
+	| GoalDestroyed EntityID
+	| GoalGuardShip EntityID
 	| GoalGuardPlanet Int
 	| GoalGuardLocation (Double, Double)
 	| GoalCaptured Int
@@ -71,7 +71,7 @@ data ShipAction =
 	,	startLocDir :: ((Double,Double),(Double,Double))
 	,	endLocDir   :: ((Double,Double),(Double,Double))
 	}
-	| ActionAttack {targetID :: Int}
+	| ActionAttack {targetID :: EntityID}
 	| ActionCapture Int
 	deriving (Show, Eq)
 

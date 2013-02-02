@@ -17,12 +17,12 @@ import Serenity.Model.Game
 import Serenity.Model.Entity
 import Serenity.Model.Message
 import Serenity.Model.Wire
+import Debug.Trace(traceShow)
 
 import Control.Lens
 import Data.Map (elems)
 import Data.Maybe (catMaybes)
 import Prelude hiding (id, (.))
-import Log(logprint)
 
 class Updateable a where
 	update  ::  Update  -> a -> a
@@ -64,6 +64,9 @@ instance Updateable Game where
 	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
 
+	update UpdateShipDamage{updateEntityID=eID, updateShipDamage=damage} game =
+		gameShips.(at eID).traverse.entityData.shipDamage .~ damage $ game
+
 instance Evolvable Game where
 	evolve = proc (game, _) -> do
 		x <- mapEvolve -< (elems $ game^.gameShips, game)
@@ -81,7 +84,7 @@ instance Commandable Game where
 	command c@GiveOrder{commandEntityID = cID} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
 
 instance Updateable (Entity Ship) where
-	update _ entity = logprint "update on entity" entity
+	update _ = id
 
 instance Commandable (Entity Ship) where
 	command GiveOrder{commandEntityID=cID, order=order} _ = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}

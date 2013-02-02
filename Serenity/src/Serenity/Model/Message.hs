@@ -65,6 +65,10 @@ data Update =
 	{	updateEntityID :: EntityID
 	,	updateShipBeamTargets :: [EntityID]
 	}
+	| UpdateShipDamage
+	{	updateEntityID :: EntityID
+	,	updateShipDamage :: Damage
+	}
 	deriving (Show, Eq)
 
 -- | Commands are sent from the clients to the server and contain order information and other notifications of intention.

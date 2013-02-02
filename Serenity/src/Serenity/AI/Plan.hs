@@ -11,6 +11,9 @@ import Serenity.Model.Wire
 import Serenity.Maths.Util
 import Serenity.AI.Path
 
+import Debug.Trace(traceShow)
+
+import Control.Wire
 import Control.Lens
 import Data.VectorSpace
 
@@ -31,8 +34,19 @@ plan game entity (GoalBeAt goalLoc mGoalDir) = [ActionMove (game^.gameTime) (shi
 	shipDir = entity^.entityData.shipDirection
 plan _ _ _ = []
 
+
 evolveShip :: UpdateWire (Entity Ship, Game)
-evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
+evolveShip = proc (entity, game) -> do
+	case  (entity^.entityData^.shipDamage^.damageHull) of
+		100 -> id -< traceShow "destroying ship" [DeleteEntity entity]
+		dmg -> do
+			us <- evolveShipPlan -< (entity, game)
+			u <- id -< UpdateShipDamage (entity^.entityID) ((entity^.entityData^.shipDamage){_damageHull=dmg+1})
+			id -< u:us
+
+
+evolveShipPlan :: UpdateWire (Entity Ship, Game)
+evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 	case ship^.shipPlan of
 		[] -> id -< 
 			if finishedOrder game ship (ship^.shipOrder)
@@ -43,6 +57,8 @@ evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 		(action:rest) -> if finishedAction game ship action
 			then id -< [UpdateShipPlan (entity^.entityID) rest]
 			else actt -< (entity, action, game)
+
+
 
 finishedAction :: Game -> Ship -> ShipAction -> Bool
 finishedAction _ ship ActionMove{endLocDir=(dest,dir)} = ((ship^.shipLocation) =~= dest) -- && ((ship^.shipDirection) =~= dir)

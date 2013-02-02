@@ -83,3 +83,4 @@ makeLenses ''Goal
 makeLenses ''ShipAction
 makeLenses ''Torpedo
 makeLenses ''Ship
+makeLenses ''Damage

@@ -88,4 +88,4 @@ initUIState game = UIState
 		zoom = 1
 
 mainView :: View ClientState
-mainView = makeView "main" (0, fst windowSize, 0, snd windowSize)
+mainView = initView (0, fst windowSize, 0, snd windowSize)

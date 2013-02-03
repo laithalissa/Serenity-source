@@ -3,26 +3,13 @@ module Main
 )
 where
 
-import Serenity.Game.Server.Main (server)
 import Serenity.Game.Client.Main (client)
-import qualified StateSwitcher as SS
-import qualified Serenity.Game.Client.MenuStates.MainMenuState as MainMenu
-import Graphics.Gloss.Interface.IO.Game
-import Serenity.Sheen.View
+import Serenity.Game.Server.Main (server)
+import Serenity.Game.UI.Main     (gui)
 import System.Console.ParseArgs
-	(	Args
-	,	Arg(..)
-	,	Argtype(..)
-	,	ArgsComplete(..)
-	,	parseArgsIO
-	,	argDataRequired
-	,	argDataDefaulted
-	,	getRequiredArg
-	)
 
-
-clientMain :: IO (Args String)
-clientMain = parseArgsIO 
+clientMainArgs :: IO (Args String)
+clientMainArgs = parseArgsIO 
 		ArgsInterspersed
 		[	Arg
 			{	argIndex="host"
@@ -42,13 +29,13 @@ clientMain = parseArgsIO
 			{	argIndex="playerName"
 			,	argAbbr=Just 'n'
 			,	argName=Just "player-name"
-			,	argData=argDataRequired "player-name" ArgtypeString
+			,	argData=argDataRequired "player-name" ArgtypeInt
 			,	argDesc="Name of player"
 			}
 		]
 
-serverMain :: IO (Args String)
-serverMain = parseArgsIO 
+serverMainArgs :: IO (Args String)
+serverMainArgs = parseArgsIO 
 		ArgsInterspersed
 		[	Arg
 			{	argIndex="port"
@@ -66,46 +53,35 @@ serverMain = parseArgsIO
 			}
 		]
 
-topMain :: IO (Args String)
-topMain = parseArgsIO 
+topMainArgs :: IO (Args String)
+topMainArgs = parseArgsIO 
 		ArgsInterspersed
 		[	Arg
 			{	argIndex="mode"
 			,	argAbbr=Just 'm'
 			,	argName=Just "mode"
-			,	argData=argDataRequired "client/server" ArgtypeString
+			,	argData=argDataDefaulted "client/server/gui" ArgtypeString "gui"
 			,	argDesc="Whether to start in server or client mode"
 			}		
 		]
 
 main :: IO ()
 main = do
-	args <- topMain
+	args <- topMainArgs
 	case getRequiredArg args "mode" of
 		"server" -> do
-			sArgs <- serverMain
+			sArgs <- serverMainArgs
 			server 
 				(getRequiredArg sArgs "port")
 				(getRequiredArg sArgs "clientCount")
 				
 		"client" -> do
-			cArgs <- clientMain
+			cArgs <- clientMainArgs
 			client
 				(getRequiredArg cArgs "host")
 				(getRequiredArg cArgs "port")
 				(getRequiredArg cArgs "playerName")
-		_ -> do
-		playIO
-			(InWindow "Project Serenity" (100, 100) (0, 0))
-			white
-			30
-			0
-			(depict stateSwitcher)
-			(eventHandler stateSwitcher)
-			(dummy)
-		where stateSwitcher = (View MainMenu.initializeMainMenu)
 
-dummy :: Float -> w -> IO w
-dummy timeStep world = return $ world
-		-- where stateSwitcher = SS.initialize MainMenu.initializeMainMenu
-		-- _ -> print "invalid mode, must be either 'server' or 'client'"
+		"gui" -> gui
+
+		_ -> print $ argsUsage args

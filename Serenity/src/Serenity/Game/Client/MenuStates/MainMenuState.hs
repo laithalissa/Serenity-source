@@ -1,4 +1,3 @@
-
 module Serenity.Game.Client.MenuStates.MainMenuState where
 
 import StateSwitcher

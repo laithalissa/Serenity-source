@@ -32,3 +32,8 @@ server: install
 run: install
 	(sleep 2; serenity ${runClientArgs} > ${logDir}/${runClientLogFile}) &
 	serenity ${runServerArgs} > ${logDir}/${runServerLogFile}
+
+runD:
+	(sleep 2; serenity ${runClientArgs} > ${logDir}/${runClientLogFile}) &
+	serenity ${runServerArgs} > ${logDir}/${runServerLogFile}
+

@@ -17,11 +17,10 @@ import Serenity.Model.Game
 import Serenity.Model.Entity
 import Serenity.Model.Message
 import Serenity.Model.Wire
-import Debug.Trace(traceShow)
 
 import Control.Lens
-import Data.Map (elems)
-import Data.Maybe (catMaybes)
+import Data.Map (elems, keys)
+import Data.Maybe (catMaybes, fromJust)
 import Prelude hiding (id, (.))
 
 class Updateable a where
@@ -65,7 +64,17 @@ instance Updateable Game where
 		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
 
 	update UpdateShipDamage{updateEntityID=eID, updateShipDamage=damage} game =
-		gameShips.(at eID).traverse.entityData.shipDamage .~ damage $ game
+		if eID `elem` (keys $ game^.gameShips)
+			then gameShips.(at eID).traverse.entityData.shipDamage %~ recieveDamage damage $ game
+			else game
+		where
+			recieveDamage :: Damage -> Damage -> Damage
+			recieveDamage delta dmg = hullDmg $ shieldDmg $ dmg
+				where
+				hullDmg = (damageHull +~ delta^.damageHull)
+				shieldDmg = (damageShield +~ delta^.damageShield)
+
+		
 
 instance Evolvable Game where
 	evolve = proc (game, _) -> do

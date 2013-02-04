@@ -11,11 +11,12 @@ import Serenity.Model.Wire
 import Serenity.Maths.Util
 import Serenity.AI.Path
 
-import Debug.Trace(traceShow)
-
 import Control.Wire
 import Control.Lens
 import Data.VectorSpace
+
+import qualified Data.Map as Map
+import Data.Maybe(fromJust)
 
 goal :: Game -> Order -> Goal
 goal _ (OrderNone)            = GoalNone
@@ -38,11 +39,15 @@ plan _ _ _ = []
 evolveShip :: UpdateWire (Entity Ship, Game)
 evolveShip = proc (entity, game) -> do
 	case  (entity^.entityData^.shipDamage^.damageHull) of
-		100 -> id -< traceShow "destroying ship" [DeleteEntity entity]
+		100 -> id -< [DeleteEntity entity]
 		dmg -> do
 			us <- evolveShipPlan -< (entity, game)
-			u <- id -< UpdateShipDamage (entity^.entityID) ((entity^.entityData^.shipDamage){_damageHull=dmg+1})
-			id -< u:us
+			dmgs <- id -< targetEntities entity game
+			id -< us++dmgs
+		where
+		targetEntities :: Entity Ship -> Game -> [Update]
+		targetEntities entity game = map (\eId -> damageEntity $ fromJust $ Map.lookup eId $ game^.gameShips) (entity^.entityData^.shipBeamTargets)
+		damageEntity entity = UpdateShipDamage (entity^.entityID) (Damage 1 0)
 
 
 evolveShipPlan :: UpdateWire (Entity Ship, Game)

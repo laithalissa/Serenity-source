@@ -41,7 +41,7 @@ class (Updateable a) => Commandable a where
 instance Updateable Game where
 	update UpdateEntity {updateEntity=entity} game = gameShips.(at i) .~ Just entity $ game where i=entity^.entityID
 	update AddEntity    {updateEntity=entity} game = gameShips.(at i) .~ Just entity $ game where i=entity^.entityID
-	update DeleteEntity {updateEntity=entity} game = gameShips.(at i) .~ Nothing $ game where i=entity^.entityID
+	update DeleteEntity {updateEntityID=eID} game = gameShips.(at eID) .~ Nothing $ game
 
 	update UpdateEntityLocation{updateEntityID=eID, updateEntityLocation=loc} game = 
 		gameShips.(at eID).traverse.entityData.shipLocation .~ (pFloat2Double loc) $ game

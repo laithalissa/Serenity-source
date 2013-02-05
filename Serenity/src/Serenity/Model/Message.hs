@@ -34,7 +34,7 @@ data Update =
 	{	updateEntity :: Entity Ship
 	}
 	| DeleteEntity
-	{	updateEntity :: Entity Ship
+	{	updateEntityID :: EntityID
 	}
 	| UpdateEntityLocation
 	{	updateEntityID :: EntityID

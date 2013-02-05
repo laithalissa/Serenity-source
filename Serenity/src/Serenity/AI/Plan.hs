@@ -48,7 +48,7 @@ evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 evolveShipDamage :: UpdateWire (Entity Ship, Game)
 evolveShipDamage = proc (entity, game) -> do
 	case entity^.entityData.shipDamage.damageHull of
-		100 -> id -< [DeleteEntity entity]
+		100 -> id -< [DeleteEntity (entity^.entityID)]
 		dmg -> id -< damageTargets entity game
 		where
 		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipBeamTargets)

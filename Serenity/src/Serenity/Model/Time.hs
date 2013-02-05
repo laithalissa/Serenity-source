@@ -64,15 +64,7 @@ instance Updateable Game where
 		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
 
 	update UpdateShipDamage{updateEntityID=eID, updateShipDamage=damage} game =
-		if eID `elem` (keys $ game^.gameShips)
-			then gameShips.(at eID).traverse.entityData.shipDamage %~ recieveDamage damage $ game
-			else game
-		where
-			recieveDamage :: Damage -> Damage -> Damage
-			recieveDamage delta dmg = hullDmg $ shieldDmg $ dmg
-				where
-				hullDmg = (damageHull +~ delta^.damageHull)
-				shieldDmg = (damageShield +~ delta^.damageShield)
+		gameShips.(at eID).traverse.entityData.shipDamage .~ damage $ game
 
 	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
 		gameShips.(at eID).traverse.entityData.shipBeamTargets .~ targets $ game

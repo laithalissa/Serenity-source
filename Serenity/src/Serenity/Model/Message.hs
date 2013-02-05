@@ -67,7 +67,7 @@ data Update =
 	}
 	| UpdateShipDamage
 	{	updateEntityID :: EntityID
-	,	updateShipDamage :: Damage -- is a delta not a new damage object for the ship
+	,	updateShipDamage :: Damage
 	}
 	deriving (Show, Eq)
 

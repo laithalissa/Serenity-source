@@ -47,13 +47,14 @@ evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 
 evolveShipDamage :: UpdateWire (Entity Ship, Game)
 evolveShipDamage = proc (entity, game) -> do
-	case entity^.entityData^.shipDamage^.damageHull of
+	case entity^.entityData.shipDamage.damageHull of
 		100 -> id -< [DeleteEntity entity]
-		dmg -> id -< targetEntities entity game
+		dmg -> id -< damageTargets entity game
 		where
-		targetEntities :: Entity Ship -> Game -> [Update]
-		targetEntities entity game = map (\eId -> damageEntity $ fromJust $ M.lookup eId $ game^.gameShips) (entity^.entityData^.shipBeamTargets)
-		damageEntity entity = UpdateShipDamage (entity^.entityID) (Damage 1 0)
+		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipBeamTargets)
+		damageTarget game target = case M.lookup target (game^.gameShips) of
+			Just entity -> [UpdateShipDamage (entity^.entityID) (entity^.entityData.shipDamage & damageHull +~ 1)]
+			Nothing -> []
 
 evolveShipPlan :: UpdateWire (Entity Ship, Game)
 evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do

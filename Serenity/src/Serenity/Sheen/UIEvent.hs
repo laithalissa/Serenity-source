@@ -5,7 +5,7 @@ module Serenity.Sheen.UIEvent
 ,	translateEvent
 ) where
 
-import Graphics.Gloss.Interface.Pure.Game (Event(..), Key(..), MouseButton(..), KeyState(..), Modifiers(..), Point)
+import Graphics.Gloss.Interface.Pure.Game
 
 data UIEvent =
 	  UIEventKey Point Key KeyState Modifiers

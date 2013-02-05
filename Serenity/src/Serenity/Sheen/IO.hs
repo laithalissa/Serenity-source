@@ -5,7 +5,7 @@ module Serenity.Sheen.IO
 import Graphics.Gloss.Interface.IO.Game
 import Serenity.Sheen.UIEvent (translateEvent)
 
-playIOZero display@(InWindow windowName (sizeX, sizeY) position) color steps initialWorld depict respond evolve = 
+playIOZero display@(InWindow _ (sizeX, sizeY) _) color steps initialWorld depict respond evolve = 
 	playIO display color steps initialWorld 
 	(\world -> do x <- depict world; return $ Translate (fromIntegral $ -sizeX `div` 2) (fromIntegral $ -sizeY `div` 2) x;)
 	(\event -> \world -> respond (translateEvent (fromIntegral $ sizeX `div` 2) (fromIntegral $ sizeY `div` 2) event) world)

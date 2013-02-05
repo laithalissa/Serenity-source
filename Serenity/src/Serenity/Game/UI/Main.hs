@@ -7,7 +7,6 @@ module Serenity.Game.UI.Main
 import Serenity.Sheen
 
 import Graphics.Gloss.Interface.IO.Game
-import Graphics.Gloss.Data.Picture
 import Control.Lens
 
 gui = do
@@ -16,21 +15,22 @@ gui = do
 		(InWindow "Project Serenity" (1024, 768) (0, 0))
 		black
 		30
-		(SerenityApplication ["Menu 1", "Menu 2"] 0)
+		(SerenityApplicationController ["Menu 1", "Menu 2"] 0 (Label "This is a label" black (Just red) 1))
 		(\a -> return $ draw a)
 		(\event -> \a -> return $ handleEvent event a)
 		(\_ -> \a -> return a)
 
-data SerenityApplication = SerenityApplication
+data SerenityApplicationController = SerenityApplicationController
 	{	_appMenus :: [String]
 	,	_appCount :: Int
+	,	_appLabel :: Label
 	}
-makeLenses ''SerenityApplication
+makeLenses ''SerenityApplicationController
 
-instance ViewController SerenityApplication where
-	getView = (initView (0, 1024, 0, 768))
-		{	_viewDepict = Just $ \app -> Color green $ Text $ (app^.appMenus) !! 0
-		,	_viewBackground = Just black
-		}
-
---makeMenus = 
+instance ViewController SerenityApplicationController where
+	getView app = 
+		(initView ((0, 0), (1024, 768)))
+		<++ 
+		[	label app appLabel ((100,100),(16,110))
+		,	label app appLabel ((100,400),(16,110))
+		]

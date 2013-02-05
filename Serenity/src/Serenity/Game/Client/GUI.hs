@@ -54,6 +54,12 @@ render game uiState assets = Pictures
 			planets = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
 			planetsMap = game^.gameSector.sectorPlanets
 
-		pictureEntity entity = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" 10 10 assets) where
+		pictureEntity entity = pictures $ ship:beams where
+			ship = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" 10 10 assets) 
+			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
 			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
 			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
+
+			pictureBeam target = case Map.lookup target (game^.gameShips) of
+				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
+				Nothing -> []

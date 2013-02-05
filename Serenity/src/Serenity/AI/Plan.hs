@@ -11,12 +11,10 @@ import Serenity.Model.Wire
 import Serenity.Maths.Util
 import Serenity.AI.Path
 
-import Control.Wire
 import Control.Lens
+import qualified Data.Map as M
+import Data.Maybe (fromJust, isJust)
 import Data.VectorSpace
-
-import qualified Data.Map as Map
-import Data.Maybe(fromJust)
 
 goal :: Game -> Order -> Goal
 goal _ (OrderNone)            = GoalNone
@@ -33,27 +31,34 @@ plan game entity (GoalBeAt goalLoc mGoalDir) = [ActionMove (game^.gameTime) (shi
 	goalDir = case mGoalDir of {Just x -> x; Nothing -> normalized (goalLoc - shipLoc)}
 	shipLoc = entity^.entityData.shipLocation
 	shipDir = entity^.entityData.shipDirection
+plan game entity (GoalDestroyed target) = [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] where
+	goalLoc = case game^.gameShips.at target of {Just e -> e^.entityData.shipLocation; Nothing -> shipLoc}
+	goalDir = normalized (goalLoc - shipLoc)
+	shipLoc = entity^.entityData.shipLocation
+	shipDir = entity^.entityData.shipDirection
 plan _ _ _ = []
 
-
 evolveShip :: UpdateWire (Entity Ship, Game)
-evolveShip = proc (entity, game) -> do
-	case  (entity^.entityData^.shipDamage^.damageHull) of
+evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
+	upT <- evolveShipTargets -< (entity, game)
+	upP <- evolveShipPlan -< (entity, game)
+	upD <- evolveShipDamage -< (entity, game)
+	id -< upT ++ upP ++ upD
+
+evolveShipDamage :: UpdateWire (Entity Ship, Game)
+evolveShipDamage = proc (entity, game) -> do
+	case entity^.entityData^.shipDamage^.damageHull of
 		100 -> id -< [DeleteEntity entity]
-		dmg -> do
-			us <- evolveShipPlan -< (entity, game)
-			dmgs <- id -< targetEntities entity game
-			id -< us++dmgs
+		dmg -> id -< targetEntities entity game
 		where
 		targetEntities :: Entity Ship -> Game -> [Update]
-		targetEntities entity game = map (\eId -> damageEntity $ fromJust $ Map.lookup eId $ game^.gameShips) (entity^.entityData^.shipBeamTargets)
+		targetEntities entity game = map (\eId -> damageEntity $ fromJust $ M.lookup eId $ game^.gameShips) (entity^.entityData^.shipBeamTargets)
 		damageEntity entity = UpdateShipDamage (entity^.entityID) (Damage 1 0)
-
 
 evolveShipPlan :: UpdateWire (Entity Ship, Game)
 evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 	case ship^.shipPlan of
-		[] -> id -< 
+		[] -> id -<
 			if finishedOrder game ship (ship^.shipOrder)
 				then [UpdateShipOrder (entity^.entityID) OrderNone]
 				else if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] where
@@ -63,12 +68,20 @@ evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 			then id -< [UpdateShipPlan (entity^.entityID) rest]
 			else actt -< (entity, action, game)
 
-
+evolveShipTargets :: UpdateWire (Entity Ship, Game)
+evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
+	let targets = M.keys $ M.filter (otherInRange entity) (game^.gameShips)
+	if (not $ null targets) || (not $ null $ ship^.shipBeamTargets)
+		then id -< [UpdateShipBeamTargets (entity^.entityID) targets]
+		else id -< []
+	where
+		otherInRange e t = e /= t && inRange (e^.entityData) t
 
 finishedAction :: Game -> Ship -> ShipAction -> Bool
 finishedAction _ ship ActionMove{endLocDir=(dest,dir)} = ((ship^.shipLocation) =~= dest) -- && ((ship^.shipDirection) =~= dir)
-finishedAction _ ship (ActionAttack a)  = True
+finishedAction game ship (ActionAttack target) = not ((game^.gameShips.contains target) && (inRange ship (fromJust $ game^.gameShips.at target)))
 finishedAction _ ship (ActionCapture a) = True
+finishedAction game ship (ActionMoveToEntity target _) = (not (game^.gameShips.contains target)) || ((ship^.shipLocation) =~= (game^.gameShips.(at target).(to fromJust).entityData.shipLocation))
 
 finishedOrder :: Game -> Ship -> Order -> Bool
 finishedOrder _ _ OrderNone = False
@@ -76,7 +89,7 @@ finishedOrder _ ship (OrderMove dest mDir) = ((ship^.shipLocation) =~= dest) && 
 	x = case mDir of
 		Just dir -> ((ship^.shipDirection) =~= dir)
 		Nothing -> True
-finishedOrder _ ship (OrderAttack a)        = True
+finishedOrder game _ (OrderAttack target) = M.notMember target (game^.gameShips)
 finishedOrder _ ship (OrderGuardShip a)     = True
 finishedOrder _ ship (OrderGuardPlanet a)   = True
 finishedOrder _ ship (OrderGuardLocation a) = True
@@ -89,6 +102,11 @@ actt :: UpdateWire (Entity Ship, ShipAction, Game)
 actt = proc (entity, action, game) -> do 
 	case action of
 		ActionMove {startTime = t, startLocDir=start, endLocDir=end} -> move -< (entity, t, start, end)
+		(ActionMoveToEntity tID m) -> if isJust target
+			then moveToEntity -< (entity, fromJust target, m, game)
+			else id -< []
+			where
+				target = game^.gameShips.at tID
 		_ -> id -< []
 
 move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)))
@@ -103,3 +121,21 @@ move = proc (entity, startTime, start, end) -> do
 		,	updateEntityLocation = pDouble2Float position
 		,	updateEntityDirection = pDouble2Float position'
 		}
+
+-- | UpdateWire to move a ship towards another, possibly moving, entity.
+--
+-- If the currently planned end location is too far away from the current
+-- position of the target then the move is re-planned.
+moveToEntity :: UpdateWire (Entity Ship, Entity Ship, ShipAction, Game)
+moveToEntity = proc (entity, target, action, game) -> do
+	if magnitude ((fst $ endLocDir action) - (target^.entityData.shipLocation)) > 50
+		|| finishedAction game (entity^.entityData) action
+		then id -< [UpdateShipPlan (entity^.entityID) []]
+		else move -< (entity, startTime action, startLocDir action, endLocDir action)
+
+-- | Check if the target ship is in range
+inRange
+	:: Ship -- ^ Ship
+	-> Entity Ship -- ^ Target
+	-> Bool
+inRange ship target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25

@@ -74,7 +74,8 @@ instance Updateable Game where
 				hullDmg = (damageHull +~ delta^.damageHull)
 				shieldDmg = (damageShield +~ delta^.damageShield)
 
-		
+	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
+		gameShips.(at eID).traverse.entityData.shipBeamTargets .~ targets $ game
 
 instance Evolvable Game where
 	evolve = proc (game, _) -> do

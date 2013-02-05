@@ -32,7 +32,7 @@ demoGame = Game
 		entities =
 			[	createEntity 0 (25,25) OrderNone 0 "Vic"
 			,	createEntity 1 (25,75) OrderNone 1 "Jon"
-			,	createEntity 2 (75,75) OrderNone 2 "Squidballs"
+			,	createEntity 2 (75,75) (OrderAttack 1) 2 "Squidballs"
 			,	createEntity 3 (75,25) OrderNone 3 "Laith"
 			]
 
@@ -51,5 +51,5 @@ demoGame = Game
 			,	_shipOrder = order
 			,	_shipGoal = GoalNone
 			,	_shipPlan = []
-			,	_shipBeamTargets = [3]
+			,	_shipBeamTargets = []
 			}

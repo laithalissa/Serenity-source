@@ -12,7 +12,7 @@ import Serenity.Maths.Util
 import Serenity.AI.Path
 
 import Control.Lens
-import Data.Map (notMember)
+import qualified Data.Map as M
 import Data.Maybe (fromJust, isJust)
 import Data.VectorSpace
 
@@ -40,8 +40,14 @@ plan _ _ _ = []
 
 evolveShip :: UpdateWire (Entity Ship, Game)
 evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
+	upT <- evolveShipTargets -< (entity, game)
+	upP <- evolveShipPlan -< (entity, game)
+	id -< upT ++ upP
+
+evolveShipPlan :: UpdateWire (Entity Ship, Game)
+evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 	case ship^.shipPlan of
-		[] -> id -< 
+		[] -> id -<
 			if finishedOrder game ship (ship^.shipOrder)
 				then [UpdateShipOrder (entity^.entityID) OrderNone]
 				else if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] where
@@ -50,6 +56,15 @@ evolveShip = proc (entity@Entity{_entityData=ship}, game) -> do
 		(action:rest) -> if finishedAction game ship action
 			then id -< [UpdateShipPlan (entity^.entityID) rest]
 			else actt -< (entity, action, game)
+
+evolveShipTargets :: UpdateWire (Entity Ship, Game)
+evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
+	let targets = M.keys $ M.filter (otherInRange entity) (game^.gameShips)
+	if (not $ null targets) || (not $ null $ ship^.shipBeamTargets)
+		then id -< [UpdateShipBeamTargets (entity^.entityID) targets]
+		else id -< []
+	where
+		otherInRange e t = e /= t && inRange (e^.entityData) t
 
 finishedAction :: Game -> Ship -> ShipAction -> Bool
 finishedAction _ ship ActionMove{endLocDir=(dest,dir)} = ((ship^.shipLocation) =~= dest) -- && ((ship^.shipDirection) =~= dir)
@@ -63,7 +78,7 @@ finishedOrder _ ship (OrderMove dest mDir) = ((ship^.shipLocation) =~= dest) && 
 	x = case mDir of
 		Just dir -> ((ship^.shipDirection) =~= dir)
 		Nothing -> True
-finishedOrder game _ (OrderAttack target) = notMember target (game^.gameShips)
+finishedOrder game _ (OrderAttack target) = M.notMember target (game^.gameShips)
 finishedOrder _ ship (OrderGuardShip a)     = True
 finishedOrder _ ship (OrderGuardPlanet a)   = True
 finishedOrder _ ship (OrderGuardLocation a) = True

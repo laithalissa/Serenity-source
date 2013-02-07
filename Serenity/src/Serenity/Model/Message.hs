@@ -10,6 +10,7 @@ module Serenity.Model.Message
 where
 
 import Serenity.Model.Entity
+import Serenity.Model.Sector
 
 import Data.Binary
 import Data.DeriveTH
@@ -76,6 +77,12 @@ data Command =
 -- $(derive makeBinary ''ShipOrderState)
 derive makeBinary ''Damage
 derive makeBinary ''Entity
+derive makeBinary ''ShipType
+derive makeBinary ''ShipConfiguration
+derive makeBinary ''SystemUpgrade
+derive makeBinary ''Weapon
+derive makeBinary ''Resources
+derive makeBinary ''WeaponEffect
 derive makeBinary ''Ship
 derive makeBinary ''Goal
 derive makeBinary ''ShipAction

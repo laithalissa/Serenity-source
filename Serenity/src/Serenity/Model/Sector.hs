@@ -50,7 +50,7 @@ data Resources = Resources
 	,	_resMetal      :: Int
 	,	_resAntimatter :: Int
 	}
-	deriving Show
+	deriving (Show, Eq)
 
 makeLenses ''Resources
 makeLenses ''Planet

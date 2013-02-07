@@ -19,8 +19,8 @@ import Serenity.Model.Message
 import Serenity.Model.Wire
 
 import Control.Lens
-import Data.Map (elems)
-import Data.Maybe (catMaybes)
+import Data.Map (elems, keys)
+import Data.Maybe (catMaybes, fromJust)
 import Prelude hiding (id, (.))
 
 class Updateable a where
@@ -41,7 +41,7 @@ class (Updateable a) => Commandable a where
 instance Updateable Game where
 	update UpdateEntity {updateEntity=entity} game = gameShips.(at i) .~ Just entity $ game where i=entity^.entityID
 	update AddEntity    {updateEntity=entity} game = gameShips.(at i) .~ Just entity $ game where i=entity^.entityID
-	update DeleteEntity {updateEntity=entity} game = gameShips.(at i) .~ Nothing $ game where i=entity^.entityID
+	update DeleteEntity {updateEntityID=eID} game = gameShips.(at eID) .~ Nothing $ game
 
 	update UpdateEntityLocation{updateEntityID=eID, updateEntityLocation=loc} game = 
 		gameShips.(at eID).traverse.entityData.shipLocation .~ (pFloat2Double loc) $ game
@@ -63,13 +63,19 @@ instance Updateable Game where
 	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
 
+	update UpdateShipDamage{updateEntityID=eID, updateShipDamage=damage} game =
+		gameShips.(at eID).traverse.entityData.shipDamage .~ damage $ game
+
+	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
+		gameShips.(at eID).traverse.entityData.shipBeamTargets .~ targets $ game
+
 instance Evolvable Game where
 	evolve = proc (game, _) -> do
 		x <- mapEvolve -< (elems $ game^.gameShips, game)
 		arr concat -< x
 
 mapEvolve = proc (ents, game) -> do
-	case ents of 
+	case ents of
 		(e:es) -> do
 			u  <-    evolve -< (e, game)
 			us <- mapEvolve -< (es, game)
@@ -80,7 +86,8 @@ instance Commandable Game where
 	command c@GiveOrder{commandEntityID = cID} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
 
 instance Updateable (Entity Ship) where
-	update _ entity = entity
+	update _ = id
+
 instance Commandable (Entity Ship) where
 	command GiveOrder{commandEntityID=cID, order=order} _ = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
 

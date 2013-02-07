@@ -1,5 +1,5 @@
 
-module AssetManager where
+module AssetsManager where
 
 -- standard modules
 import qualified Data.Map as Map
@@ -25,4 +25,4 @@ makeLenses ''Assets
 
 
 initAssets :: IO (Either String Assets)
-initAssets
+initAssets = return $ Left "not implemented"

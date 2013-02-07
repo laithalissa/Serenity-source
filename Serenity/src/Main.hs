@@ -5,6 +5,7 @@ where
 
 import Serenity.Game.Server.Main (server)
 import Serenity.Game.Client.Main (client)
+import AssetsManager
 
 import System.Console.ParseArgs
 	(	Args
@@ -76,6 +77,10 @@ topMain = parseArgsIO
 
 main :: IO ()
 main = do
+	assetsResult <- initAssets
+	print assetsResult
+
+main2 = do
 	args <- topMain
 	case getRequiredArg args "mode" of
 		"server" -> do

@@ -82,9 +82,9 @@ data Weapon = Weapon
 	deriving (Show, Eq)
 
 data System = System
-	{	_shield :: Int -- ^ additional shield capacity
-	,	_hull 	:: Int -- ^ additional hull capacity
-	,	_engine :: Int -- ^ additional engine(speed)
+	{	_systemShield :: Int -- ^ additional shield capacity
+	,	_systemHull 	:: Int -- ^ additional hull capacity
+	,	_systemEngine :: Int -- ^ additional engine(speed)
 	}
 	deriving(Show, Eq)
 

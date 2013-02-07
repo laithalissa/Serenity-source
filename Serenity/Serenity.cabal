@@ -30,6 +30,7 @@ executable serenity
         derive,
         parseargs == 0.1.3.2,
         template-haskell,
+        random == 1.0.1.1,
         QuickCheck
     hs-source-dirs: src
     ghc-options:    -W -threaded -rtsopts

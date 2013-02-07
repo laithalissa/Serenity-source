@@ -5,6 +5,7 @@ module Serenity.Model.Ship where
 import Serenity.Model.Sector
 
 import Control.Lens
+import System.Random
 
 data Ship = Ship
 	{	_shipName :: String
@@ -60,27 +61,26 @@ type Plan = [ShipAction]
 ----------------- Weapons and Configuration -------------------
 
 data ShipType = ShipType
-	{	shipTypeFrontWeaponSlots   :: Int
-	,	shipTypeSideWeaponSlots    :: Int
-	,	shipTypeDorsalWeaponSlots  :: Int
-	,	shipTypeSystemUpgradeSlots :: Int
-	,	classMaxDamage :: Damage 
+	{	_shipTypeFrontWeaponSlots   :: Int
+	,	_shipTypeSideWeaponSlots    :: Int
+	,	_shipTypeDorsalWeaponSlots  :: Int
+	,	_shipTypeSystemUpgradeSlots :: Int
+	,	_classMaxDamage :: Damage 
 	}
 
 data ShipConfiguration = ShipConfiguration 
-	{	shipConfFrontWeapons   :: Weapon
-	,	shipConfSideWeapons    :: Weapon
-	,	shipConfDorsalWeapons  :: Weapon
-	,	shipConfSystemUpgrades :: SystemUpgrade
-	,	shipConfMaxDamage :: Damage 
+	{	_shipConfFrontWeapons   :: [Weapon]
+	,	_shipConfSideWeapons    :: [Weapon]
+	,	_shipConfDorsalWeapons  :: [Weapon]
+	,	_shipConfSystemUpgrades :: SystemUpgrade
 	}
 
 data Weapon = Weapon
-	{	weaponRange      :: Int
-	,	weaponEffect     :: WeaponEffect
-	,	weaponReloadTime :: Int
-	,	weaponAccuracy   :: Double
-	,	weaponFiringCost :: Resources
+	{	_weaponRange      :: Int
+	,	_weaponEffect     :: WeaponEffect
+	,	_weaponReloadTime :: Int
+	,	_weaponAccuracy   :: Double
+	,	_weaponFiringCost :: Resources
 	}
 
 data SystemUpgrade = 
@@ -89,12 +89,10 @@ data SystemUpgrade =
 	| EngineUpgrade Int
 
 data WeaponEffect = WeaponEffect
-	{	effectShield :: Int
-	,	effectHull :: Int
-	,	effectPenetration :: Double
+	{	_effectShield      :: Int    -- ^ Effect on a shielded ship to shield
+	,	_effectHull        :: Int    -- ^ Effect on an unshielded ship to hull
+	,	_effectPenetration :: Double -- ^ Probability of damage applying to hull rather than shieled
 	}
-
------------------ Make Lenses -------------------
 
 makeLenses ''Order
 makeLenses ''Goal
@@ -104,4 +102,13 @@ makeLenses ''WeaponEffect
 makeLenses ''SystemUpgrade
 makeLenses ''ShipType
 makeLenses ''ShipConfiguration
+makeLenses ''Damage
 makeLenses ''Ship
+
+applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
+applyWeaponDamage gen effect ship
+	| shielded || penetrated = shipDamage.damageHull   -~ effect^.effectHull   $ ship
+	| otherwise              = shipDamage.damageShield -~ effect^.effectShield $ ship
+	where
+		shielded   = ship^.shipDamage^.damageShield == 0
+		penetrated = fst (randomR (0,1) gen) < effect^.effectPenetration

@@ -60,7 +60,7 @@ render game uiState assets = Pictures
 				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []
 
-			shipAndHealth = [rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" dim dim assets), 
+			shipAndHealth = map (translate x y) [rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" dim dim assets), 
 														(translate (-boundingX / 2) 5 $ Pictures [boundingBox, 
 														healthMeter]), 
 														(translate (-boundingX / 2) 5.6 $ Pictures [boundingBox, 
@@ -82,16 +82,16 @@ render game uiState assets = Pictures
 			boundingY = 0.5
 			boundingX = 5
 			--lostHealth = boundingX * healthValue
-			healthValue = entity^.entityData.shipDamage.damageHull
-			shipTotalHealth = entity^.entityData.shipType.classMaxDamage.damageHull
-			lostHealth = shipTotalHealth - healthValue
+			lostHealth = entity^.entityData.shipDamage.damageHull
+			shipTotalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
+			healthValue = shipTotalHealth - lostHealth
 			lostHealthPerc = fromIntegral lostHealth / fromIntegral shipTotalHealth
 			healthPercentage = fromIntegral healthValue / fromIntegral shipTotalHealth
 			--Shield shiz
 			shieldBarWidth = boundingX - (lostShieldPerc * boundingX)
-			shieldValue = entity^.entityData.shipDamage.damageShield
-			shipTotalShield = entity^.entityData.shipType.classMaxDamage.damageShield
-			lostShield = shipTotalShield - shieldValue
+			lostShield = entity^.entityData.shipDamage.damageShield
+			shipTotalShield = entity^.entityData.shipType.shipTypeMaxDamage.damageShield
+			shieldValue = shipTotalShield - lostShield
 			lostShieldPerc = fromIntegral lostShield / fromIntegral shipTotalShield
 			shieldPercentage = fromIntegral shieldValue / fromIntegral shipTotalShield
 			-- Colour for the shields

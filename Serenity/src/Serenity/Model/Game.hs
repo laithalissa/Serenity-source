@@ -55,6 +55,7 @@ demoGame = Game
 			,	_shipOrder = order
 			,	_shipGoal = GoalNone
 			,	_shipPlan = []
+			,	_shipBeamTargets = []
 			}
 
 		shipTypeExample = ShipType
@@ -62,7 +63,7 @@ demoGame = Game
 			,	_shipTypeSideWeaponSlots = 2
 			,	_shipTypeDorsalWeaponSlots = 0
 			,	_shipTypeSystemUpgradeSlots = 0
-			,	_classMaxDamage = healthMaxExample 
+			,	_shipTypeMaxDamage = healthMaxExample 
 			}
 
 		healthMaxExample = Damage

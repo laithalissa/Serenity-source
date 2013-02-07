@@ -3,7 +3,7 @@ module Serenity.Network.Connection where
 import Data.Bits
 import Data.Word (Word32)
 
-import Serenity.Network.Message
+import Serenity.Model.Message
 import Serenity.Network.Packet
 
 data Connection = Connection

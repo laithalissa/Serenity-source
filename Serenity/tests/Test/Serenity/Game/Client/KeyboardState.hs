@@ -29,8 +29,8 @@ tests = testGroup "KeyboardState Tests"
 	,	testProperty "Test handleKeyEvent adds or removes up tp one from the stack" testHandleKeyEvent
 	,	testProperty "Test handleKeyEvent key up then down returns to initial state" testHandleKeyEventUpDown
 	,	testCase "Test a simple sequence of key events are recorded correctly" testCorrectKeysAreDown
-	,	testCase "Test whether querying a key that is down" testQueryAKey
-	,	testCase "Test whether querying a key that is not down" testQueryWKey
+	,	testCase "Test querying a key that is down" testQueryAKey
+	,	testCase "Test querying a key that is not down" testQueryWKey
 	,	testCase "Test querying order of several keys" testQueryAWKeys
 	]
 

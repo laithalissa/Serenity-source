@@ -28,15 +28,15 @@ import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Put
 import Data.Binary.Strict.Get
 
-import Serenity.Network.Message
+import Serenity.Model.Message
 import Data.Binary (encode, decode)
 import Data.Bits
 
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-import Serenity.Network.Message (Message)
-import qualified Serenity.Network.Message as Message
+import Serenity.Model.Message (Message)
+import qualified Serenity.Model.Message as Message
 
 data Packet = Packet
 	{	packetProt :: Word32

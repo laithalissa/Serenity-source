@@ -11,7 +11,7 @@ import qualified Data.Map as M (toList)
 import Test.Serenity.Network (serverClientFixture)
 import Serenity.Network.Connection
 import Serenity.Network.Transport
-import qualified Serenity.Network.Message as Message
+import qualified Serenity.Model.Message as Message
 
 tests = testGroup "Network Tests"
 	[	testCase "Test testGetTransportChannels returns two empty channels" testNewTransportInterface

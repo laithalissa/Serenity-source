@@ -18,8 +18,8 @@ import Control.Monad.State
 import qualified Data.Map as M
 import Network.Socket hiding (Connected, connect, listen, send)
 
+import Serenity.Model.Message
 import Serenity.Network.Connection
-import Serenity.Network.Message (Message(Empty))
 import Serenity.Network.Packet
 
 -- | The network transport represents a list of connected

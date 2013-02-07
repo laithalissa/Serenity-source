@@ -26,7 +26,7 @@ import Serenity.Game.Shared.Model.Entity(GameEntity(..), Entity(..))
 import Serenity.Game.Shared.Model.ShipOrder(ShipOrder(..), ShipOrderState(..))
 import Serenity.Game.Shared.Model.Common(Resources(..))
 
-import Serenity.Network.Message(Update(..), Update(..))
+import Serenity.Model.Message(Update(..), Update(..))
 
 import Data.Set(Set(..))
 

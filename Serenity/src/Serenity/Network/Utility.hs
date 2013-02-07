@@ -7,7 +7,7 @@ module Serenity.Network.Utility
 import Control.Concurrent.STM
 import Control.Monad (liftM, mapM_)
 
-import Serenity.Network.Message (Message)
+import Serenity.Model.Message (Message)
 
 -- | Read the first n items from a TChan
 readNTChan :: Int -> TChan a -> IO [a]

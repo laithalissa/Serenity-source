@@ -17,7 +17,6 @@ import System.Console.ParseArgs
 	,	getRequiredArg
 	)
 
-
 clientMain :: IO (Args String)
 clientMain = parseArgsIO 
 		ArgsInterspersed
@@ -39,10 +38,9 @@ clientMain = parseArgsIO
 			{	argIndex="playerName"
 			,	argAbbr=Just 'n'
 			,	argName=Just "player-name"
-			,	argData=argDataRequired "player-name" ArgtypeString
+			,	argData=argDataRequired "player-name" ArgtypeInt
 			,	argDesc="Name of player"
 			}
-		
 		]
 
 serverMain :: IO (Args String)
@@ -62,7 +60,6 @@ serverMain = parseArgsIO
 			,	argData=argDataDefaulted "number" ArgtypeInt 1
 			,	argDesc="Number of clients required to start a game (defaults to 1)"
 			}
-		
 		]
 
 topMain :: IO (Args String)
@@ -80,7 +77,6 @@ topMain = parseArgsIO
 main :: IO ()
 main = do
 	args <- topMain
-	
 	case getRequiredArg args "mode" of
 		"server" -> do
 			sArgs <- serverMain
@@ -94,5 +90,5 @@ main = do
 				(getRequiredArg cArgs "host")
 				(getRequiredArg cArgs "port")
 				(getRequiredArg cArgs "playerName")
-				
+
 		_ -> print "invalid mode, must be either 'server' or 'client'"

@@ -4,67 +4,62 @@ module Serenity.Game.Client.GUI
 )
 where
 
+import Serenity.Game.Client.Assets
+import Serenity.Game.Client.ClientState
+import Serenity.Game.Client.ClientMessage (GUICommand(..))
+
+import Serenity.Maths.Util
+import Serenity.Model
+
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Data.Color
 
-import Serenity.Game.Client.Assets
-import Serenity.Game.Client.ClientState (ClientState(..), UIState(..), windowSize)
-import Serenity.Game.Client.ClientMessage (GUICommand(..))
-
-import Serenity.Game.Shared.Model.Entity
-import Serenity.Game.Shared.Model.GameMap
-import Serenity.Game.Shared.Model.GameState (GameState, gameStateGameMap, gameStateEntities)
-
-import qualified Data.Set as Set
+import Control.Lens
+import qualified Data.Map as Map
+import Data.Maybe (catMaybes)
+import GHC.Float
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
---handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewPort=((x, y), z) } = uiState { viewPort = ((x+dx, y+dy), z) }
---handleMessage (ClientZoom dz) uiState@UIState{ viewPort=(loc, z) } = uiState { viewPort = (loc, z+dz) }
+--handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewport=((x, y), z) } = uiState { viewport = ((x+dx, y+dy), z) }
+--handleMessage (ClientZoom dz) uiState@UIState{ viewport=(loc, z) } = uiState { viewport = (loc, z+dz) }
 handleMessage _ uiState = uiState
 
-render :: GameState -> UIState ClientState -> Assets -> Picture
-render gameState uiState assets = Pictures
+render :: Game -> UIState ClientState -> Assets -> Picture
+render game uiState assets = Pictures
 	[	background
-	,	(drawWorldToWindow . renderInWorld) gameState
+	,	(drawWorldToWindow . renderInWorld) game
 	]
 	where
 		background = getPicture "background" assets
 		drawWorldToWindow = translateWorld . scaleWorld
-		scaleWorld = scale s s
-		translateWorld = translate (vpx*(1-s)) (vpy*(1-s))
+		scaleWorld = scale (double2Float s) (double2Float s)
+		translateWorld = translate (double2Float$ vpx*(1-s)) (double2Float$ vpy*(1-s))
 
 		(ww, wh) = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
-		((vpx, vpy), vpz) = viewPort uiState
-		(gw, gh) = gameMapSize $ gameStateGameMap gameState
+		((vpx, vpy), vpz) = uiState^.viewport
+		(gw, gh) =  game^.gameSector.sectorSize
 		normScale = ((min ww wh) / (max gw gh))
 		s = vpz * normScale
 
-		renderInWorld gameState = pictures
-			[	pictures $ map spaceLaneF (worldSpaceLanes gameState)
-			,	pictures $ map planetF (worldPlanets gameState)
-			,	pictures $ map entityF $ map entity (Set.toList $ worldEntities gameState)
+		renderInWorld game = pictures
+			[	pictures $ map pictureSpaceLane $ game^.gameSector.sectorSpaceLanes
+			,	pictures $ map picturePlanet $ Map.elems $ game^.gameSector.sectorPlanets
+			,	pictures $ map pictureEntity $ Map.elems $ game^.gameShips
 			]
-			where
-				worldSpaceLanes = gameMapSpaceLanes . gameStateGameMap
-				worldPlanets = gameMapPlanets . gameStateGameMap
-				worldEntities = gameStateEntities
 
-		planetF planet = translate planetX planetY $ getPictureSized (planetType planet) 5 5 assets where
-			planetX =  (fst . planetLocation) planet
-	 		planetY = (snd . planetLocation) planet
+		picturePlanet planet = translate x y $ getPictureSized (planet^.planetEcotype.ecotypeAssetName) 5 5 assets where
+			(x,y) = pDouble2Float $ planet^.planetLocation
 
-		spaceLaneF spaceLane@(SpaceLane p1N p2N) = color (dark green) $ line
-				[	(pX p1N, pY p1N)
-				,	(pX p2N, pY p2N)
-				]
-				where
-					pX = fst . planetLocation . getPlanet
-					pY = snd . planetLocation . getPlanet
-					getPlanet name = foldl
-						(\f s -> if (planetName f) == name
-								then f
-								else s)
-						(head $ gameMapPlanets $ gameStateGameMap gameState)
-						(gameMapPlanets $ gameStateGameMap gameState)
-		entityF Ship{shipLocation=(x,y), shipDirection=(dx,dy)} =
-			translate x y $ rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" 10 10 assets)
+		pictureSpaceLane (p1, p2) = color (dark green) $ line $ map (\p -> pDouble2Float $ p^.planetLocation) planets where
+			planets = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
+			planetsMap = game^.gameSector.sectorPlanets
+
+		pictureEntity entity = pictures $ ship:beams where
+			ship = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" 10 10 assets) 
+			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
+			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
+			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
+
+			pictureBeam target = case Map.lookup target (game^.gameShips) of
+				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
+				Nothing -> []

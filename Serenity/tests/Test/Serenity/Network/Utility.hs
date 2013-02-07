@@ -11,6 +11,9 @@ import Control.Monad.State
 
 import Serenity.Network.Utility
 
+import Serenity.Model.Message (Message)
+import qualified Serenity.Model.Message as Message
+
 tests = testGroup "Network Utility Tests"
 	[	testCase "Test readNTChan" testReadNTChan
 	,	testCase "Test readTChanUntilEmpty on empty TChan returns empty list" testReadUntilEmptyOnEmptyTChan

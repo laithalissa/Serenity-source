@@ -15,9 +15,9 @@ import Test.QuickCheck
 import Control.Monad (replicateM_)
 
 import Serenity.Game.Server.Main
-import Serenity.Network.Message
 import Serenity.Network.Transport
 import Serenity.Network.Utility
+import Serenity.Model.Message
 
 tests = testGroup "Server Main Tests"
 	[	testCase "Test that a client can connect using connectionPhase"  (testConnectionPhaseConnectsNClients 9920 1)

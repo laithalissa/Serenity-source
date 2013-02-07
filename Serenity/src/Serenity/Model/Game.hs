@@ -15,6 +15,9 @@ data Game = Game
 	,	_gameRandom :: StdGen
 	,	_gameSector :: Sector
 	,	_gameShips  :: Map EntityID (Entity Ship)
+	,	_gameShipClasses :: Map String ShipClass
+	,	_gameWeapons :: Map String Weapon
+	,	_gameSystems :: Map String System
 	}
 	deriving Show
 makeLenses ''Game
@@ -23,13 +26,19 @@ defaultGame = Game
 	{	_gameTime = 0
 	,	_gameRandom = mkStdGen 1758836
 	,	_gameSector = sectorOne
-	,	_gameShips  = Map.fromList []
+	,	_gameShips  = Map.fromList empty
+	,	_gameShipClasses = Map.empty
+	,	_gameWeapons = Map.empty
+	,	_gameSystems = Map.empty
 	}
 
 demoGame = Game
 	{	_gameTime = 0
 	,	_gameSector = sectorOne
 	,	_gameShips = Map.fromList entities
+	,	_gameShipClasses = Map.empty
+	,	_gameWeapons = Map.empty
+	,	_gameSystems = Map.empty
 	}
 	where
 		entities =
@@ -48,6 +57,7 @@ demoGame = Game
 
 		createShip location order name = Ship
 			{	_shipName = name
+			,	_shipConfiguration = configuration
 			,	_shipLocation = location
 			,	_shipDirection = (0,1)
 			,	_shipDamage = Damage 0 0
@@ -56,3 +66,9 @@ demoGame = Game
 			,	_shipPlan = []
 			,	_shipBeamTargets = []
 			}
+			where
+			configuration = ShipConfiguration
+				{	_shipConfigurationShipClass="Destroyer"
+				,	_shipConfigurationWeapons=[]
+				,	_shipConfigurationSystems=[]
+				}

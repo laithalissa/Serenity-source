@@ -88,6 +88,8 @@ data System = System
 	}
 	deriving(Show, Eq)
 
+data WeaponType = Side, Special, Turret deriving(Show, Eq)
+
 data WeaponEffect = WeaponEffect
 	{	_effectShield      :: Int    -- ^ Effect on a shielded ship to shield
 	,	_effectHull        :: Int    -- ^ Effect on an unshielded ship to hull

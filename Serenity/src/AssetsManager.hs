@@ -3,13 +3,14 @@
 module AssetsManager where
 
 -- standard modules
+import Data.Map(Map)
 import qualified Data.Map as Map
 
 -- library modules
 import Control.Lens
 
 -- serenity modules
-import qualified Serenity.Model.Ship
+import Serenity.Model.Ship
 
 import Graphics.Gloss.Data.Picture
 	(	Picture(..)

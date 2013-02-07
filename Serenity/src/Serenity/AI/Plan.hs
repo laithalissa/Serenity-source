@@ -76,7 +76,7 @@ evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
 		then id -< [UpdateShipBeamTargets (entity^.entityID) targets]
 		else id -< []
 	where
-		otherInRange e t = e /= t && inRange (e^.entityData) t
+		otherInRange e t = e /= t && (e^.ownerID) /= (t^.ownerID) && inRange (e^.entityData) t
 
 finishedAction :: Game -> Ship -> ShipAction -> Bool
 finishedAction _ ship ActionMove{endLocDir=(dest,dir)} = ((ship^.shipLocation) =~= dest) -- && ((ship^.shipDirection) =~= dir)

@@ -73,9 +73,10 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 			time              <- return $ toRational $ diffUTCTime newTime lastTime
 			(updatesT, wire') <- return $ runWire wire (fromRational time) (game', game')
 			game''            <- return $ gameTime +~ (fromRational time) $ updateWorld updatesT game'
+			game'''           <- return $ gameRandom %~ (snd.next) $ game''
 			sendToClients (updatesC ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
-			playLoop (game'', wire') newTime
+			playLoop (game''', wire') newTime
 
 -- | Receive commands from the network from all the clients
 getCommands :: [ClientData] -> IO [Command]

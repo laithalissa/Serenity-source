@@ -48,10 +48,29 @@ demoGame = Game
 
 		createShip location order name = Ship
 			{	_shipName = name
+			,	_shipType = shipTypeExample
 			,	_shipLocation = location
 			,	_shipDirection = (0,1)
-			,	_shipDamage = Damage 0 0
+			,	_shipDamage = healthExample
 			,	_shipOrder = order
 			,	_shipGoal = GoalNone
 			,	_shipPlan = []
+			}
+
+		shipTypeExample = ShipType
+			{	_shipTypeFrontWeaponSlots = 1
+			,	_shipTypeSideWeaponSlots = 2
+			,	_shipTypeDorsalWeaponSlots = 0
+			,	_shipTypeSystemUpgradeSlots = 0
+			,	_classMaxDamage = healthMaxExample 
+			}
+
+		healthMaxExample = Damage
+			{	_damageHull = 200
+			,	_damageShield = 300
+			}
+
+		healthExample = Damage
+			{	_damageHull = 50
+			,	_damageShield = 20
 			}

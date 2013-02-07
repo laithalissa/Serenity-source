@@ -18,6 +18,7 @@ data Ship = Ship
 	,	_shipOrder :: Order
 	,	_shipGoal :: Goal
 	,	_shipPlan :: Plan
+	,	_shipBeamTargets :: [Int]
 	}
 	deriving (Show, Eq)
 
@@ -57,6 +58,7 @@ data ShipAction =
 	}
 	| ActionAttack {targetID :: Int}
 	| ActionCapture Int
+	|	ActionMoveToEntity Int ShipAction
 	deriving (Show, Eq)
 
 type Plan = [ShipAction]

@@ -6,11 +6,13 @@ import Serenity.Model.Entity
 import Serenity.Model.Sector
 
 import Control.Lens
+import System.Random
 import Data.Map (Map)
 import qualified Data.Map as Map
 
 data Game = Game
 	{	_gameTime :: Double
+	,	_gameRandom :: StdGen
 	,	_gameSector :: Sector
 	,	_gameShips  :: Map EntityID (Entity Ship)
 	}
@@ -19,6 +21,7 @@ makeLenses ''Game
 
 defaultGame = Game
 	{	_gameTime = 0
+	,	_gameRandom = mkStdGen 1758836
 	,	_gameSector = sectorOne
 	,	_gameShips  = Map.fromList []
 	}

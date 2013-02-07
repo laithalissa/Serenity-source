@@ -102,25 +102,25 @@ data WeaponEffect = WeaponEffect
 -- ship class --
 
 data ShipClass = ShipClass
-	{	shipClassName 			:: String
-	,	shipClassCenterOfRotation	:: Location
-	,	shipClassWeaponSlots		:: [WeaponSlot]
-	,	shipClassSystemSlots		:: [SystemSlot]
+	{	_shipClassName 			:: String
+	,	_shipClassCenterOfRotation	:: Location
+	,	_shipClassWeaponSlots		:: [WeaponSlot]
+	,	_shipClassSystemSlots		:: [SystemSlot]
 	}
 	deriving (Show, Eq)
 
 data WeaponSlot = WeaponSlot
-	{	weaponSlotName 		:: String
-	,	weaponSlotLocation	:: Location
-	,	weaponSlotDirection	:: Direction
-	,	weaponSlotType 		:: WeaponType
+	{	_weaponSlotName 	:: String
+	,	_weaponSlotLocation	:: Location
+	,	_weaponSlotDirection	:: Direction
+	,	_weaponSlotType 	:: WeaponType
 	}
 	deriving (Show, Eq)
 
 data SystemSlot = SystemSlot
-	{	systemSlotName 		:: String
-	,	systemSlotLocation 	:: Location
-	,	systemSlotDirection	:: Direction
+	{	_systemSlotName 	:: String
+	,	_systemSlotLocation 	:: Location
+	,	_systemSlotDirection	:: Direction
 	}
 	deriving (Show, Eq)
 
@@ -133,6 +133,10 @@ makeLenses ''WeaponEffect
 makeLenses ''System
 makeLenses ''Damage
 makeLenses ''Ship
+
+makeLenses ''ShipClass
+makeLenses ''WeaponSlot
+makeLenses ''SystemSlot
 
 applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
 applyWeaponDamage gen effect ship

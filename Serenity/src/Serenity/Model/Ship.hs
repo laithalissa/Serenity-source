@@ -108,6 +108,13 @@ data ShipClass = ShipClass
 	}
 	deriving (Show, Eq)
 
+data WeaponSlot = WeaponSlot
+	{	weaponSlotLocation :: Location
+	,	weaponSlotDirection :: Direction
+	,	weaponSlotType :: WeaponType
+	}
+	deriving (Show, Eq)
+
 makeLenses ''Order
 makeLenses ''Goal
 makeLenses ''ShipAction

@@ -65,20 +65,10 @@ type Plan = [ShipAction]
 
 ----------------- Weapons and Configuration -------------------
 
-data ShipType = ShipType
-	{	_shipTypeFrontWeaponSlots   :: Int
-	,	_shipTypeSideWeaponSlots    :: Int
-	,	_shipTypeDorsalWeaponSlots  :: Int
-	,	_shipTypeSystemUpgradeSlots :: Int
-	,	_shipTypeMaxDamage :: Damage 
-	}
-	deriving (Show, Eq)
-
-data ShipConfiguration = ShipConfiguration 
-	{	_shipConfFrontWeapons   :: [Weapon]
-	,	_shipConfSideWeapons    :: [Weapon]
-	,	_shipConfDorsalWeapons  :: [Weapon]
-	,	_shipConfSystemUpgrades :: SystemUpgrade
+data ShipConfiguration = ShipConfiguration
+	{	_shipConfigurationShipClass :: String
+	,	_shipConfigurationWeapons :: [Maybe String]
+	,	_shipConfigurationSystems :: [Maybe String]
 	}
 	deriving (Show, Eq)
 
@@ -91,11 +81,12 @@ data Weapon = Weapon
 	}
 	deriving (Show, Eq)
 
-data SystemUpgrade = 
-	  ShieldUpgrade Int
-	| HullUpgrade Int
-	| EngineUpgrade Int
-	deriving (Show, Eq)
+data System = System
+	{	_shield :: Int -- ^ additional shield capacity
+	,	_hull 	:: Int -- ^ additional hull capacity
+	,	_engine :: Int -- ^ additional engine(speed)
+	}
+	deriving(Show, Eq)
 
 data WeaponEffect = WeaponEffect
 	{	_effectShield      :: Int    -- ^ Effect on a shielded ship to shield
@@ -109,9 +100,7 @@ makeLenses ''Goal
 makeLenses ''ShipAction
 makeLenses ''Weapon
 makeLenses ''WeaponEffect
-makeLenses ''SystemUpgrade
-makeLenses ''ShipType
-makeLenses ''ShipConfiguration
+makeLenses ''System
 makeLenses ''Damage
 makeLenses ''Ship
 

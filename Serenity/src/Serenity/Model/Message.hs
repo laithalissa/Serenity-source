@@ -85,10 +85,12 @@ data Command =
 -- $(derive makeBinary ''ShipOrderState)
 derive makeBinary ''Damage
 derive makeBinary ''Entity
-derive makeBinary ''ShipType
 derive makeBinary ''ShipConfiguration
-derive makeBinary ''SystemUpgrade
+derive makeBinary ''System
 derive makeBinary ''Weapon
+derive makeBinary ''ShipClass
+derive makeBinary ''WeaponSlot
+derive makeBinary ''SystemSlot
 derive makeBinary ''Resources
 derive makeBinary ''WeaponEffect
 derive makeBinary ''Ship

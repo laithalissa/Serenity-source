@@ -3,6 +3,7 @@
 module Serenity.Model.Ship where
 
 import Serenity.Model.Sector
+import Serenity.Maths.Util
 
 import Control.Lens
 import System.Random
@@ -67,7 +68,7 @@ data ShipType = ShipType
 	,	_shipTypeSideWeaponSlots    :: Int
 	,	_shipTypeDorsalWeaponSlots  :: Int
 	,	_shipTypeSystemUpgradeSlots :: Int
-	,	_classMaxDamage :: Damage 
+	,	_shipTypeMaxDamage :: Damage 
 	}
 	deriving (Show, Eq)
 
@@ -114,8 +115,11 @@ makeLenses ''Ship
 
 applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
 applyWeaponDamage gen effect ship
-	| shielded || penetrated = shipDamage.damageHull   -~ effect^.effectHull   $ ship
-	| otherwise              = shipDamage.damageShield -~ effect^.effectShield $ ship
+	| shielded || penetrated = shipDamage.damageHull   %~ updateHull $ ship
+	| otherwise              = shipDamage.damageShield %~ updateShield $ ship
 	where
+		updateHull   = f (ship^.shipType.shipTypeMaxDamage.damageHull) (effect^.effectHull)
+		updateShield = f (ship^.shipType.shipTypeMaxDamage.damageShield) (effect^.effectShield)
+		f maxDamage a b = rangeLimitAttainBounds 0 maxDamage (b-a)
 		shielded   = ship^.shipDamage^.damageShield == 0
 		penetrated = fst (randomR (0,1) gen) < effect^.effectPenetration

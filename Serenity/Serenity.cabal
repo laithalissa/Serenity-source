@@ -9,6 +9,7 @@ executable serenity
     main-is:        Main.hs
     build-depends:   
         base,
+        easy-file == 0.1.1,
         stm,
         mtl,
         unix,
@@ -46,6 +47,7 @@ Test-Suite test-serenity
         QuickCheck,
         HUnit,
         derive,
+        easy-file == 0.1.1,
         stm,
         mtl,
         unix,

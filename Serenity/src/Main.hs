@@ -77,7 +77,7 @@ topMain = parseArgsIO
 
 main :: IO ()
 main = do
-	assetsResult <- initAssets
+	assetsResult <- initAssets "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
 	print assetsResult
 
 main2 = do

@@ -10,7 +10,7 @@ import qualified Data.Map as Map
 import Control.Lens
 import Data.Yaml.YamlLight
 import Paths_Serenity(getDataFileName)
-import System.Directory(getDirectoryContents)
+import System.EasyFile(getDirectoryContents)
 
 -- serenity modules
 import Serenity.Model.Ship

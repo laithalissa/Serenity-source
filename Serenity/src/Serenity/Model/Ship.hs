@@ -143,12 +143,13 @@ makeLenses ''WeaponSlot
 makeLenses ''SystemSlot
 
 applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
-applyWeaponDamage gen effect ship
-	| shielded || penetrated = shipDamage.damageHull   %~ updateHull $ ship
-	| otherwise              = shipDamage.damageShield %~ updateShield $ ship
-	where
-		updateHull   = f (ship^.shipType.shipTypeMaxDamage.damageHull) (effect^.effectHull)
-		updateShield = f (ship^.shipType.shipTypeMaxDamage.damageShield) (effect^.effectShield)
-		f maxDamage a b = rangeLimitAttainBounds 0 maxDamage (b+a)
-		shielded   = ship^.shipDamage^.damageShield == 0
-		penetrated = fst (randomR (0,1) gen) < effect^.effectPenetration
+applyWeaponDamage gen effect ship = ship
+-- applyWeaponDamage gen effect ship
+-- 	| shielded || penetrated = shipDamage.damageHull   %~ updateHull $ ship
+-- 	| otherwise              = shipDamage.damageShield %~ updateShield $ ship
+-- 	where
+-- 		updateHull   = f (ship^.shipType.shipTypeMaxDamage.damageHull) (effect^.effectHull)
+-- 		updateShield = f (ship^.shipType.shipTypeMaxDamage.damageShield) (effect^.effectShield)
+-- 		f maxDamage a b = rangeLimitAttainBounds 0 maxDamage (b+a)
+-- 		shielded   = ship^.shipDamage^.damageShield == 0
+-- 		penetrated = fst (randomR (0,1) gen) < effect^.effectPenetration

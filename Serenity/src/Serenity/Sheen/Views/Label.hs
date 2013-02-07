@@ -15,6 +15,14 @@ data Label = Label
 	,	_labelBackground :: Maybe Color
 	,	_labelScale :: Double
 	}
+
+initLabel value color backg = Label
+	{	_labelValue = value
+	,	_labelColor = color
+	,	_labelBackground = backg
+	,	_labelScale = 1
+	}
+
 makeLenses ''Label
 
 label :: a -> Getter a Label -> ((Int, Int), (Int, Int)) -> View a

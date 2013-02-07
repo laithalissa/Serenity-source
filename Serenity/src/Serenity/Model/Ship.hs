@@ -102,22 +102,25 @@ data WeaponEffect = WeaponEffect
 -- ship class --
 
 data ShipClass = ShipClass
-	{	shipClassCenterOfRotation	:: Location
+	{	shipClassName 			:: String
+	,	shipClassCenterOfRotation	:: Location
 	,	shipClassWeaponSlots		:: [WeaponSlot]
 	,	shipClassSystemSlots		:: [SystemSlot]
 	}
 	deriving (Show, Eq)
 
 data WeaponSlot = WeaponSlot
-	{	weaponSlotLocation	:: Location
+	{	weaponSlotName 		:: String
+	,	weaponSlotLocation	:: Location
 	,	weaponSlotDirection	:: Direction
 	,	weaponSlotType 		:: WeaponType
 	}
 	deriving (Show, Eq)
 
 data SystemSlot = SystemSlot
-	{	systemSlotLocation :: Location
-	,	systemSlotDirection :: Direction
+	{	systemSlotName 		:: String
+	,	systemSlotLocation 	:: Location
+	,	systemSlotDirection	:: Direction
 	}
 	deriving (Show, Eq)
 

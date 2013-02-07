@@ -115,6 +115,11 @@ data WeaponSlot = WeaponSlot
 	}
 	deriving (Show, Eq)
 
+data SystemSlot = SystemSlot
+	{	systemSlotLocation :: Location
+	,	systemSlotDirection :: Direction
+	}
+	deriving (Show, Eq)
 
 
 makeLenses ''Order

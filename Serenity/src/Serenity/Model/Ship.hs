@@ -9,6 +9,8 @@ import System.Random
 
 data Ship = Ship
 	{	_shipName :: String
+	,	_shipType :: ShipType
+	,	_shipConfiguration :: ShipConfiguration
 	,	_shipLocation :: (Double, Double)
 	,	_shipDirection :: (Double, Double)
 	,	_shipDamage :: Damage
@@ -67,6 +69,7 @@ data ShipType = ShipType
 	,	_shipTypeSystemUpgradeSlots :: Int
 	,	_classMaxDamage :: Damage 
 	}
+	deriving (Show, Eq)
 
 data ShipConfiguration = ShipConfiguration 
 	{	_shipConfFrontWeapons   :: [Weapon]
@@ -74,6 +77,7 @@ data ShipConfiguration = ShipConfiguration
 	,	_shipConfDorsalWeapons  :: [Weapon]
 	,	_shipConfSystemUpgrades :: SystemUpgrade
 	}
+	deriving (Show, Eq)
 
 data Weapon = Weapon
 	{	_weaponRange      :: Int
@@ -82,17 +86,20 @@ data Weapon = Weapon
 	,	_weaponAccuracy   :: Double
 	,	_weaponFiringCost :: Resources
 	}
+	deriving (Show, Eq)
 
 data SystemUpgrade = 
 	  ShieldUpgrade Int
 	| HullUpgrade Int
 	| EngineUpgrade Int
+	deriving (Show, Eq)
 
 data WeaponEffect = WeaponEffect
 	{	_effectShield      :: Int    -- ^ Effect on a shielded ship to shield
 	,	_effectHull        :: Int    -- ^ Effect on an unshielded ship to hull
 	,	_effectPenetration :: Double -- ^ Probability of damage applying to hull rather than shieled
 	}
+	deriving (Show, Eq)
 
 makeLenses ''Order
 makeLenses ''Goal

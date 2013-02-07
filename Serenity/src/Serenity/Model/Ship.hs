@@ -104,7 +104,10 @@ data WeaponEffect = WeaponEffect
 data ShipClass =
 	ShipClass
 	{	shipClassCenterOfRotation :: Location
+	,	shipClassWeaponSlots :: [WeaponSlot]
+	,	shipClassSystemSlots :: [SystemSlot]
 	}
+	deriving (Show, Eq)
 
 makeLenses ''Order
 makeLenses ''Goal

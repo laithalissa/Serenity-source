@@ -8,6 +8,9 @@ import qualified Data.Map as Map
 
 -- library modules
 import Control.Lens
+import Data.Yaml.YamlLight
+import Paths_Serenity(getDataFileName)
+import System.Directory(getDirectoryContents)
 
 -- serenity modules
 import Serenity.Model.Ship
@@ -26,5 +29,13 @@ data Assets = Assets
 makeLenses ''Assets
 
 
-initAssets :: IO (Either String Assets)
-initAssets = return $ Left "not implemented"
+initAssets :: FilePath -> IO (Either String Assets)
+initAssets addonsDir = do
+	files <- getDirectoryContents (addonsDir ++ "/ships")
+	return $ Left $ show $ files
+
+
+	-- path <- getDataFileName "templates/ships/destroyer.yml"
+	-- return $ Left $ show $ path
+	-- node <- parseYamlFile "templates/ships/destroyer.yml"
+	-- return $ Left $ show node

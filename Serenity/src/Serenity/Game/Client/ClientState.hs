@@ -4,7 +4,7 @@ module Serenity.Game.Client.ClientState where
 
 import Serenity.Game.Client.Assets (Assets)
 import Serenity.Game.Client.KeyboardState
-import Serenity.Model
+import Serenity.Model hiding(Location, Direction)
 import Serenity.Sheen.View
 
 import Control.Lens

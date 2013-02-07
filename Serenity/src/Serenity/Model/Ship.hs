@@ -8,11 +8,14 @@ import Serenity.Maths.Util
 import Control.Lens
 import System.Random
 
+type Location = (Double, Double)
+type Direction = (Double, Double)
+
 data Ship = Ship
 	{	_shipName :: String
 	,	_shipConfiguration :: ShipConfiguration
-	,	_shipLocation :: (Double, Double)
-	,	_shipDirection :: (Double, Double)
+	,	_shipLocation :: Location
+	,	_shipDirection :: Direction
 	,	_shipDamage :: Damage
 	,	_shipOrder :: Order
 	,	_shipGoal :: Goal
@@ -31,29 +34,29 @@ data Damage = Damage
 
 data Order = 
 	  OrderNone
-	| OrderMove (Double, Double) (Maybe (Double, Double))
+	| OrderMove Location (Maybe Direction)
 	| OrderAttack Int
 	| OrderGuardShip Int
 	| OrderGuardPlanet Int
-	| OrderGuardLocation (Double, Double)
+	| OrderGuardLocation Location
 	| OrderCapture Int
 	deriving (Show, Eq)
 
 data Goal = 
 	  GoalNone
-	| GoalBeAt (Double, Double) (Maybe (Double, Double))
+	| GoalBeAt Location (Maybe Direction)
 	| GoalDestroyed Int
 	| GoalGuardShip Int
 	| GoalGuardPlanet Int
-	| GoalGuardLocation (Double, Double)
+	| GoalGuardLocation Location
 	| GoalCaptured Int
 	deriving (Show, Eq)
 
 data ShipAction = 
 	ActionMove 
 	{	startTime :: Double
-	,	startLocDir :: ((Double,Double),(Double,Double))
-	,	endLocDir   :: ((Double,Double),(Double,Double))
+	,	startLocDir :: (Location, Direction)
+	,	endLocDir   :: (Location, Direction)
 	}
 	| ActionAttack {targetID :: Int}
 	| ActionCapture Int
@@ -95,6 +98,13 @@ data WeaponEffect = WeaponEffect
 	,	_effectPenetration :: Double -- ^ Probability of damage applying to hull rather than shieled
 	}
 	deriving (Show, Eq)
+
+-- ship class --
+
+data ShipClass =
+	ShipClass
+	{	shipClassCenterOfRotation :: Location
+	}
 
 makeLenses ''Order
 makeLenses ''Goal

@@ -54,6 +54,18 @@ render game uiState assets = Pictures
 			planets = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
 			planetsMap = game^.gameSector.sectorPlanets
 
-		pictureEntity entity = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" 10 10 assets) where
+		pictureEntity entity = translate x y $ Pictures [rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" dim dim assets), 
+														(translate (-3) 5 $ Pictures [boundingBox, 
+														healthMeter])] where
 			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
 			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
+			dim = 10
+			--Need to fix the scoping for dim to change boundingDim to dim
+			boundingBox = color (makeColor8 200 200 200 30) $ Polygon $ [(0,0), (boundingX, 0), (boundingX, boundingY), (0, boundingY)]
+			healthMeter = color (makeColor8 41 181 16 60) $ Polygon $ [(0,0), (boundingX-lostHealth,0), (boundingX-lostHealth, boundingY), (0, boundingY)]
+			--healthDim = 100 - entity^.entityData.shipDamage.damageHull
+			lostHealth = boundingX * 0.31
+			healthDim = 0.69
+			boundingY = 1
+			boundingX = 5
+

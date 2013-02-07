@@ -15,20 +15,24 @@ import Data.Derive.Arbitrary
 
 import Serenity.Model.Message
 import Serenity.Model.Entity
+import Serenity.Model.Sector
 import Data.Binary (Binary(..), encode, decode)
 
--- $(derive makeArbitrary ''ShipOrder 
--- $(derive makeArbitrary ''ShipOrderState)
--- $(derive makeArbitrary ''GameEntity)
-$(derive makeArbitrary ''Order)
-$(derive makeArbitrary ''Damage)
-$(derive makeArbitrary ''Ship)
-$(derive makeArbitrary ''Entity)
-$(derive makeArbitrary ''Message)
-$(derive makeArbitrary ''Update)
-$(derive makeArbitrary ''Command)
-$(derive makeArbitrary ''Goal)
-$(derive makeArbitrary ''ShipAction)
+derive makeArbitrary ''Command
+derive makeArbitrary ''Damage
+derive makeArbitrary ''Entity
+derive makeArbitrary ''Goal
+derive makeArbitrary ''Message
+derive makeArbitrary ''Order
+derive makeArbitrary ''Resources
+derive makeArbitrary ''Ship
+derive makeArbitrary ''ShipAction
+derive makeArbitrary ''ShipConfiguration
+derive makeArbitrary ''ShipType
+derive makeArbitrary ''SystemUpgrade
+derive makeArbitrary ''Update
+derive makeArbitrary ''Weapon
+derive makeArbitrary ''WeaponEffect
 
 tests = testGroup "Network Message Tests"
 	[	testProperty "Test converting to binary and back returns the same message" propertyGetPutIsID

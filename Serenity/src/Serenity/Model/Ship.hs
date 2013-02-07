@@ -10,7 +10,6 @@ import System.Random
 
 data Ship = Ship
 	{	_shipName :: String
-	,	_shipType :: ShipType
 	,	_shipConfiguration :: ShipConfiguration
 	,	_shipLocation :: (Double, Double)
 	,	_shipDirection :: (Double, Double)
@@ -82,9 +81,9 @@ data Weapon = Weapon
 	deriving (Show, Eq)
 
 data System = System
-	{	_systemShield :: Int -- ^ additional shield capacity
-	,	_systemHull 	:: Int -- ^ additional hull capacity
-	,	_systemEngine :: Int -- ^ additional engine(speed)
+	{	_systemShield	:: Int -- ^ additional shield capacity
+	,	_systemHull	:: Int -- ^ additional hull capacity
+	,	_systemEngine 	:: Int -- ^ additional engine(speed)
 	}
 	deriving(Show, Eq)
 

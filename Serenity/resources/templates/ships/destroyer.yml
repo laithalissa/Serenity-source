@@ -1,0 +1,17 @@
+fileName: ship1.bmp
+centerOfRotation: (512, 128)
+weaponSlots:
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: SIDE
+    
+  -
+    location: (10, 12)
+    direction: (9, 12)
+    type: SPECIAL
+
+systemSlots:
+  -
+    location: (18, 12)
+    direction: (10, 15)

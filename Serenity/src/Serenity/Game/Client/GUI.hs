@@ -54,12 +54,52 @@ render game uiState assets = Pictures
 			planets = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
 			planetsMap = game^.gameSector.sectorPlanets
 
-		pictureEntity entity = pictures $ ship:beams where
-			ship = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" 10 10 assets) 
+		pictureEntity entity = pictures $ shipAndHealth ++ beams where
 			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
-			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
-			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
-
 			pictureBeam target = case Map.lookup target (game^.gameShips) of
 				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []
+
+			shipAndHealth = [rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" dim dim assets), 
+														(translate (-boundingX / 2) 5 $ Pictures [boundingBox, 
+														healthMeter]), 
+														(translate (-boundingX / 2) 5.6 $ Pictures [boundingBox, 
+														shieldMeter])] where
+			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
+			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
+			dim = 10
+			boundingBox = color (makeColor8 200 200 200 40) $ Polygon $ [(0,0), (boundingX, 0), (boundingX, boundingY), (0, boundingY)]
+			healthMeter = color (healthColor healthPercentage) $ Polygon $ [(0,0), 
+																(healthBarWidth, 0), 
+																(healthBarWidth, boundingY), 
+																(0, boundingY)]
+			shieldMeter = color shieldBlue $ Polygon $ [(0,0), 
+											(shieldBarWidth, 0), 
+											(shieldBarWidth, boundingY), 
+											(0, boundingY)]
+			--healthBarWidth = 20
+			healthBarWidth = boundingX - (lostHealthPerc * boundingX)
+			boundingY = 0.5
+			boundingX = 5
+			--lostHealth = boundingX * healthValue
+			healthValue = entity^.entityData.shipDamage.damageHull
+			shipTotalHealth = entity^.entityData.shipType.classMaxDamage.damageHull
+			lostHealth = shipTotalHealth - healthValue
+			lostHealthPerc = fromIntegral lostHealth / fromIntegral shipTotalHealth
+			healthPercentage = fromIntegral healthValue / fromIntegral shipTotalHealth
+			--Shield shiz
+			shieldBarWidth = boundingX - (lostShieldPerc * boundingX)
+			shieldValue = entity^.entityData.shipDamage.damageShield
+			shipTotalShield = entity^.entityData.shipType.classMaxDamage.damageShield
+			lostShield = shipTotalShield - shieldValue
+			lostShieldPerc = fromIntegral lostShield / fromIntegral shipTotalShield
+			shieldPercentage = fromIntegral shieldValue / fromIntegral shipTotalShield
+			-- Colour for the shields
+			shieldBlue = makeColor8 0 0 99 60
+
+healthColor :: Float -> Color 
+healthColor health = case health of -- if health > 0.33 then (makeColor8 255 0 0 60)
+	health | health < 0.2 -> (makeColor8 255 0 0 60)
+	health | health < 0.5 -> (makeColor8 255 255 0 60)
+	health | health <= 1 -> (makeColor8 41 181 16 60)
+	health -> (makeColor8 0 0 255 100)

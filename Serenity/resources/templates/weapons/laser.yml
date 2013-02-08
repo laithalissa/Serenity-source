@@ -1,8 +1,9 @@
+weaponName: big ass laser
 fileName: laser.bmp
 range: 20
 reloadTime: 1
 accuracy: 85.8
-effects:
+damage:
   shield: 3
   hull: 2
   penetration: 0

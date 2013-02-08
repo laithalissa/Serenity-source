@@ -104,19 +104,20 @@ loadImages files = liftA Map.fromList $ sequence $ map fileF files
 		image <- loadBMP fileName
 		return (name, image)
 
+-- ship class --
 loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, Picture)
 loadShipClass images mapping = do
-		YStr shipName <- mte (msg "shipName") $ lookup' shipClassName mapping
-		YStr fileName <- mte (msg "fileName") $ lookup' shipClassFileName mapping
+		YStr shipName <- lookup'' shipClassName mapping
+		YStr fileName <- lookup'' shipClassFileName mapping
 		image <- mte (msg "image") $ Map.lookup (unpack fileName) images
-		YStr centerOfRotation <- mte (msg "centerOfRotation") $ lookup' shipClassCenterOfRotation mapping
-		YSeq weaponSlotNodes <- mte (msg "weaponSlotNodes") $ lookup' shipClassWeaponSlots mapping
-		YSeq systemSlotNodes <- mte (msg "systemSlotNodes") $ lookup' shipClassSystemSlots mapping
+		YStr centerOfRotation <- lookup'' shipClassCenterOfRotation mapping
+		YSeq weaponSlotNodes <- lookup'' shipClassWeaponSlots mapping
+		YSeq systemSlotNodes <- lookup'' shipClassSystemSlots mapping
 		weaponSlots <- sequence $ map loadWeaponSlot weaponSlotNodes 
 		systemSlots <- sequence $ map loadSystemSlot systemSlotNodes
 		return $ (ShipClass (unpack shipName) (read $ unpack centerOfRotation) weaponSlots systemSlots, image)
 			where
-			msg m = printf "error loading ShipClass: %s" m
+			lookup'' = lookup' "ShipClass"
 		
 loadShipClass _ _ = Left "invalid ship class fields"	
 
@@ -137,8 +138,39 @@ loadSystemSlot mapping = mte "failed to load system slot" $ do
 loadSystemSlot _ = Left "failed to load system slot"
 
 
-lookup' :: String -> YamlLight -> Maybe YamlLight
-lookup' key (YMap mapping) = Map.lookup (YStr $ pack key) mapping
+-- weapon --
+
+fieldWeaponName = "weaponName"
+fieldWeaponFileName = "fileName"
+fieldWeaponRange = "range"
+fieldWeaponReloadTime = "reloadTime"
+fieldWeaonAccuracy = "accuracy"
+fieldWeaponDamage = "damage"
+fieldWeaponUseCost = "useCost"
+
+fieldWeaponDamageShield = "shield"
+fieldWeaponDamageHull = "hull"
+fieldWeaponDamagePenetration = "penetration"
+
+fieldWeaponUseCostFuel = "fuel"
+fieldWeaponUseCostMetal = "metal"
+fieldWeaponUseCostAntiMatter = "antiMatter"
+
+loadWeapon :: YamlLight -> Either String Weapon
+loadWeapon mapping = do
+	YStr weaponName <- lookup'' fieldWeaponName mapping
+	YStr fileName <- lookup'' fieldWeaponFileName mapping
+	YStr range <- lookup'' fieldWeaponRange mapping
+	YStr accuracy <- lookup'' fieldWeaponAccuracy mapping
+	damageNode <- lookup'' fieldWeaponDamage mapping
+	useCost <- lookup'' fieldWeaponUseCost mapping
+		where
+		lookup'' = lookup' "Weapon"
+
+lookup' :: String -> String -> YamlLight -> Either String YamlLight
+lookup' msg key (YMap mapping) = case (Map.lookup (YStr $ pack key) mapping) of
+	Just result -> Right result
+	Nothing -> Left $ printf "error loading %s: %s" msg key
 
 mte :: a -> Maybe b -> Either a b
 mte a (Just b) = Right b

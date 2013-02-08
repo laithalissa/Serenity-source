@@ -16,6 +16,7 @@ import Text.Printf(printf)
 import Control.Arrow
 import Control.Category
 import Control.Lens
+import Data.ByteString.Char8(pack)
 import Data.Yaml.YamlLight
 import Graphics.Gloss.Data.Picture
 import Paths_Serenity(getDataFileName)
@@ -105,12 +106,12 @@ loadImages files = liftA Map.fromList $ sequence $ map fileF files
 
 loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, Picture)
 loadShipClass images node@(YMap mapping) = do
-		YStr shipName <- mte (msg "shipName") $ Map.lookup (YStr shipClassName) mapping
-		YStr fileName <- mte (msg "fileName") $ Map.lookup (YStr shipClassFileName) mapping
-		image <- mte (msg "image") $ Map.lookup (YStr fileName) images
-		YStr centerOfRotation <- mte (msg "centerOfRotation") $ Map.lookup (YStr shipClassCenterOfRotation) mapping
-		YSeq weaponSlotNodes <- mte (msg "weaponSlotNodes") $ Map.lookup (YStr shipClassWeaponSlots) mapping
-		YSeq systemSlotNodes <- mte (msg "systemSlotNodes") $ Map.lookup (YStr shipClassSystemSlots) mapping
+		YStr shipName <- mte (msg "shipName") $ lookup' shipClassName mapping
+		YStr fileName <- mte (msg "fileName") $ lookup' shipClassFileName mapping
+		image <- mte (msg "image") $ lookup' fileName images
+		YStr centerOfRotation <- mte (msg "centerOfRotation") $ lookup' shipClassCenterOfRotation mapping
+		YSeq weaponSlotNodes <- mte (msg "weaponSlotNodes") $ lookup' shipClassWeaponSlots mapping
+		YSeq systemSlotNodes <- mte (msg "systemSlotNodes") $ lookup' shipClassSystemSlots mapping
 		weaponSlots <- sequence $ map loadWeaponSlot weaponSlotNodes 
 		systemSlots <- sequence $ map loadSystemSlot systemSlotNodes
 		return $ ShipClass shipName (read centerOfRotation) weaponSlots systemSlots
@@ -136,6 +137,8 @@ loadSystemSlot YMap mapping = mte "failed to load system slot" $ do
 loadSystemSlot _ = Left "failed to load system slot"
 
 
+lookup' :: String -> YamlLight -> Maybe YamlLight
+lookup' key (YMap mapping) = Map.lookup (YStr $ pack key) mapping
 
 mte :: a -> Maybe b -> Either a b
 mte a (Just b) = Right b

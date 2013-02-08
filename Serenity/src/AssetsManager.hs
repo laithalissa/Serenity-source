@@ -83,10 +83,12 @@ initAssets addonsDir = do
 		loadShipClasses imageMapping files = f''
 			where 
 				f'' :: IO (Either String [(ShipClass, Picture)])
-				f'' = sequence f'
+				f'' = do
+					inside <- f'
+					return $ sequence inside
 
 				f' :: IO [Either String (ShipClass, Picture)]
-				f' = sequence . map f files
+				f' = sequence $ map f files
 
 				f :: FilePath -> IO (Either String (ShipClass, Picture))
 				f = liftA (loadShipClass imageMapping) . parseYamlFile

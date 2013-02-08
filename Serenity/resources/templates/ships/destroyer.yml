@@ -4,12 +4,12 @@ weaponSlots:
   -
     location: (1, 2)
     direction: (10, -5)
-    type: SIDE
+    type: Side
     
   -
     location: (10, 12)
     direction: (9, 12)
-    type: SPECIAL
+    type: Special
 
 systemSlots:
   -

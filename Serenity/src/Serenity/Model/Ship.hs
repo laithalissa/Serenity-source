@@ -94,7 +94,7 @@ data WeaponType =
 	  Side 
 	| Special 
 	| Turret 
-	deriving(Show, Eq)
+	deriving(Read, Show, Eq)
 
 data WeaponEffect = WeaponEffect
 	{	_effectShield      :: Int    -- ^ Effect on a shielded ship to shield
@@ -114,16 +114,14 @@ data ShipClass = ShipClass
 	deriving (Show, Eq)
 
 data WeaponSlot = WeaponSlot
-	{	_weaponSlotName 	:: String
-	,	_weaponSlotLocation	:: Location
+	{	_weaponSlotLocation	:: Location
 	,	_weaponSlotDirection	:: Direction
 	,	_weaponSlotType 	:: WeaponType
 	}
 	deriving (Show, Eq)
 
 data SystemSlot = SystemSlot
-	{	_systemSlotName 	:: String
-	,	_systemSlotLocation 	:: Location
+	{	_systemSlotLocation 	:: Location
 	,	_systemSlotDirection	:: Direction
 	}
 	deriving (Show, Eq)

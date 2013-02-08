@@ -26,6 +26,8 @@ import Serenity.Model.Ship
 	(	WeaponSlot(..)
 	,	SystemSlot(..)
 	,	ShipClass(..)
+	,	Weapon(..)
+	,	System(..)
 	)
 
 
@@ -74,19 +76,30 @@ initAssets addonsDir = do
 	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
 	imageMapping <- loadImages textureFiles
 	shipClasses <- loadShipClasses imageMapping shipClassFiles
-	return $ Left $ show $ shipClasses
+	return $ Left $ show $ fmap (map fst) shipClasses
 	
 		where
-		loadShipClasses :: Map String Picture -> [FilePath] -> IO [Either String ShipClass]
-		loadShipClasses imageMapping = sequence . map f
-			where f = liftA (loadShipClass imageMapping) . parseYamlFile
+		loadShipClasses :: Map String Picture -> [FilePath] -> IO (Either String [(ShipClass, Picture)])
+		loadShipClasses imageMapping files = f''
+			where 
+				f'' :: IO (Either String [(ShipClass, Picture)])
+				f'' = sequence f'
+
+				f' :: IO [Either String (ShipClass, Picture)]
+				f' = sequence . map f files
+
+				f :: FilePath -> IO (Either String (ShipClass, Picture))
+				f = liftA (loadShipClass imageMapping) . parseYamlFile
 
 
-loadImages :: [FilePath] -> IO (Map String Picture)
+loadImages :: [FilePath] -> IO (Map FilePath Picture)
 loadImages files = sequence $ Map.fromList $ map fileF files
 	where
-	fileF :: FilePath -> (FilePath, Picture)
-	fileF fileName = (snd $ splitFileName fileName, loadBMP fileName)
+	fileF :: FilePath -> IO (FilePath, Picture)
+	fileF fileName = do
+		let name = snd $ splitFileName fileName
+		image <- loadBMP fileName
+		return (name, image)
 
 loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, Picture)
 loadShipClass images node@(YMap mapping) = do

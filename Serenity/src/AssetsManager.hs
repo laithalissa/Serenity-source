@@ -108,13 +108,13 @@ loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, 
 loadShipClass images mapping = do
 		YStr shipName <- mte (msg "shipName") $ lookup' shipClassName mapping
 		YStr fileName <- mte (msg "fileName") $ lookup' shipClassFileName mapping
-		image <- mte (msg "image") $ lookup' fileName images
+		image <- mte (msg "image") $ Map.lookup (unpack fileName) images
 		YStr centerOfRotation <- mte (msg "centerOfRotation") $ lookup' shipClassCenterOfRotation mapping
 		YSeq weaponSlotNodes <- mte (msg "weaponSlotNodes") $ lookup' shipClassWeaponSlots mapping
 		YSeq systemSlotNodes <- mte (msg "systemSlotNodes") $ lookup' shipClassSystemSlots mapping
 		weaponSlots <- sequence $ map loadWeaponSlot weaponSlotNodes 
 		systemSlots <- sequence $ map loadSystemSlot systemSlotNodes
-		return $ ShipClass (unpack shipName) (read $ unpack centerOfRotation) weaponSlots systemSlots
+		return $ (ShipClass (unpack shipName) (read $ unpack centerOfRotation) weaponSlots systemSlots, image)
 			where
 			msg m = printf "error loading ShipClass: %s" m
 		

@@ -94,6 +94,11 @@ initAssets addonsDir = do
 				f :: FilePath -> IO (Either String (ShipClass, Picture))
 				f = liftA (loadShipClass imageMapping) . parseYamlFile
 
+		loadWeapons :: Map String Picture -> [FilePath] -> IO (Either String [(Weapon, Picture)])
+			where
+				f :: FilePath -> IO (Either String (Weapon, Picture))
+
+
 
 loadImages :: [FilePath] -> IO (Map FilePath Picture)
 loadImages files = liftA Map.fromList $ sequence $ map fileF files

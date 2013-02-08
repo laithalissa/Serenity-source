@@ -78,7 +78,6 @@ initAssets addonsDir = do
 	imageMapping <- loadImages textureFiles
 	shipClasses <- loadShipClasses imageMapping shipClassFiles
 	return $ Left $ show $ fmap (map fst) shipClasses
-	
 		where
 		loadShipClasses :: Map String Picture -> [FilePath] -> IO (Either String [(ShipClass, Picture)])
 		loadShipClasses imageMapping files = f''

@@ -63,10 +63,9 @@ shipClassSystemSlotDirection = "direction"
 
 
 data Assets = Assets
-	{	_assetsImages :: Map String Picture
-	,	_assetsShipClasses :: Map String ShipClass
-	,	_assetsWeapons :: Map String Weapon
-	,	_assetsSystems :: Map String System
+	{	_assetsShipClasses :: Map String (ShipClass, Picture)
+	,	_assetsWeapons :: Map String (Weapon, Picture)
+	,	_assetsSystems :: Map String (System, Picture)
 	}
 	deriving (Show, Eq)
 makeLenses ''Assets
@@ -77,25 +76,14 @@ initAssets addonsDir = do
 	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
 	imageMapping <- loadImages textureFiles
 	shipClasses <- loadShipClasses imageMapping shipClassFiles
-	return $ Left $ show $ fmap (map fst) shipClasses
+	weapons <- loadWeapons imageMapping weaponFiles
+	return $ Left $ show $ fmap (map fst) weapons
 		where
-		loadShipClasses :: Map String Picture -> [FilePath] -> IO (Either String [(ShipClass, Picture)])
-		loadShipClasses imageMapping files = f''
-			where 
-				f'' :: IO (Either String [(ShipClass, Picture)])
-				f'' = do
-					inside <- f'
-					return $ sequence inside
+		load' f imageMapping files = load imageMapping f files
+		loadShipClasses = load' loadShipClass
+		loadWeapons = load' loadWeapon
 
-				f' :: IO [Either String (ShipClass, Picture)]
-				f' = sequence $ map f files
 
-				f :: FilePath -> IO (Either String (ShipClass, Picture))
-				f = liftA (loadShipClass imageMapping) . parseYamlFile
-
-		loadWeapons :: Map String Picture -> [FilePath] -> IO (Either String [(Weapon, Picture)])
-			where
-				f :: FilePath -> IO (Either String (Weapon, Picture))
 
 
 
@@ -160,10 +148,11 @@ fieldWeaponUseCostFuel = "fuel"
 fieldWeaponUseCostMetal = "metal"
 fieldWeaponUseCostAntiMatter = "antiMatter"
 
-loadWeapon :: YamlLight -> Either String Weapon
-loadWeapon mapping = do
+loadWeapon :: Map FilePath Picture -> YamlLight -> Either String (Weapon, Picture)
+loadWeapon imageMapping mapping = do
 	YStr weaponName <- lookup'' fieldWeaponName mapping
 	YStr fileName <- lookup'' fieldWeaponFileName mapping
+	image <- Map.lookup (unpack fileName) imageMapping
 	YStr range <- lookup'' fieldWeaponRange mapping
 	YStr reloadTime <- lookup'' fieldWeaponReloadTime mapping
 	YStr accuracy <- lookup'' fieldWeaponAccuracy mapping
@@ -171,16 +160,16 @@ loadWeapon mapping = do
 	useCostNode <- lookup'' fieldWeaponUseCost mapping
 	damage <- loadWeaponDamage damageNode
 	useCost <- loadWeaponCost useCostNode
-	return $ Weapon
+	let weapon = Weapon
 		{	_weaponRange=(unpack' range)
 		,	_weaponEffect=damage
 		,	_weaponReloadTime=(unpack' reload)
 		,	_weaponAccuracy=(unpack' accuracy)
 		,	_weaponFiringCost=useCost
 		}
+	return $ (weapon, image)
 		where
 		lookup'' = lookup' "Weapon"
-
 
 loadWeaponDamage :: YamlLight -> Either String WeaponEffect
 loadWeaponDamage mapping = do
@@ -201,6 +190,19 @@ loadWeaponCost mapping = do
 		lookup'' = lookup' "WeaponUseCost"
 
 -- helpers --
+
+type Loader a = (Map FilePath Picture -> YamlLight -> Either String (a, Picture))
+
+load :: Map String Picture -> Loader a -> [FilePath] -> IO (Either String [(a, Picture)])
+load imageMapping loader files = do
+	inside <- ioList
+	return $ sequence inside
+		where 
+		ioList :: IO [Either String (a, Picture)]
+		ioList = sequence $ map f files
+
+		f :: FilePath -> IO (Either String (a, Picture))
+		f = liftA (loader imageMapping) . parseYamlFile
 
 unpack' :: ByteString -> a
 unpack' = read . unpack

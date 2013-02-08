@@ -7,13 +7,14 @@ module AssetsManager where
 import Control.Applicative(liftA)
 import Data.Map(Map)
 import qualified Data.Map as Map
-import Data.Prelude hiding(id, (.))
+import Prelude hiding(id, (.))
 import Data.Set(Set)
 import qualified Data.Set as Set
 import Text.Printf(printf)
 
 -- library modules
 import Control.Arrow
+import Control.Category
 import Control.Lens
 import Data.Yaml.YamlLight
 import Graphics.Gloss.Data.Picture
@@ -22,6 +23,10 @@ import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, takeE
 
 -- serenity modules
 import Serenity.Model.Ship
+	(	WeaponSlot(..)
+	,	SystemSlot(..)
+	,	ShipClass(..)
+	)
 
 
 
@@ -33,9 +38,11 @@ texturesDirName = ("textures", ".bmp")
 
 -- ship class fields --
 shipClassFields = Set.fromList
-	[	shipClassFilename
+	[	shipClassName
+	,	shipClassFileName
 	,	shipClassCenterOfRotation
 	,	shipClassWeaponSlots
+	,	shipClassSystemSlots
 	]
 
 shipClassFileName = "fileName"

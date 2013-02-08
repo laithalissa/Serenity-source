@@ -121,19 +121,19 @@ loadShipClass images mapping = do
 loadShipClass _ _ = Left "invalid ship class fields"	
 
 loadWeaponSlot :: YamlLight -> Either String WeaponSlot
-loadWeaponSlot YMap mapping = mte "failed to load weapon slots" $ do
-	YStr location <- Map.lookup shipClassWeaponSlotLocation mapping
-	YStr direction <- Map.lookup shipClassWeaponSlotDirection mapping
-	YStr slotType <- Map.lookup shipClassWeaponSlotType mapping
-	return WeaponSlot (read location) (read direction) (read slotType)
+loadWeaponSlot mapping = mte "failed to load weapon slots" $ do
+	YStr location <- lookup' shipClassWeaponSlotLocation mapping
+	YStr direction <- lookup' shipClassWeaponSlotDirection mapping
+	YStr slotType <- lookup' shipClassWeaponSlotType mapping
+	return $ WeaponSlot (read $ unpack location) (read $ unpack direction) (read $ unpack slotType)
 loadWeaponSlot _ = Left "failed to load weapon slots"
 
 
 loadSystemSlot :: YamlLight -> Either String SystemSlot
-loadSystemSlot (YMap mapping) = mte "failed to load system slot" $ do
-	YStr location <- Map.lookup shipClassSystemSlotLocation mapping
-	YStr direction <- Map.lookup shipClassSystemSlotDirection mapping
-	return SystemSlot (read location) (read direction)
+loadSystemSlot mapping = mte "failed to load system slot" $ do
+	YStr location <- lookup' shipClassSystemSlotLocation mapping
+	YStr direction <- lookup' shipClassSystemSlotDirection mapping
+	return $ SystemSlot (read $ unpack location) (read $ unpack direction)
 loadSystemSlot _ = Left "failed to load system slot"
 
 

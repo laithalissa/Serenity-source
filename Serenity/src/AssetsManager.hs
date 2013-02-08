@@ -95,7 +95,7 @@ initAssets addonsDir = do
 
 
 loadImages :: [FilePath] -> IO (Map FilePath Picture)
-loadImages files = sequence $ Map.fromList $ map fileF files
+loadImages files = liftA Map.fromList $ sequence $ map fileF files
 	where
 	fileF :: FilePath -> IO (FilePath, Picture)
 	fileF fileName = do
@@ -105,12 +105,12 @@ loadImages files = sequence $ Map.fromList $ map fileF files
 
 loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, Picture)
 loadShipClass images node@(YMap mapping) = do
-		YStr shipName <- mte (msg "shipName") $ Map.lookup shipClassName mapping
-		YStr fileName <- mte (msg "fileName") $ Map.lookup shipClassFileName mapping
-		image <- mte (msg "image") $ Map.lookup fileName images
-		YStr centerOfRotation <- mte (msg "centerOfRotation") $ Map.lookup shipClassCenterOfRotation mapping
-		YSeq weaponSlotNodes <- mte (msg "weaponSlotNodes") $ Map.lookup shipClassWeaponSlots mapping
-		YSeq systemSlotNodes <- mte (msg "systemSlotNodes") $ Map.lookup shipClassSystemSlots mapping
+		YStr shipName <- mte (msg "shipName") $ Map.lookup (YStr shipClassName) mapping
+		YStr fileName <- mte (msg "fileName") $ Map.lookup (YStr shipClassFileName) mapping
+		image <- mte (msg "image") $ Map.lookup (YStr fileName) images
+		YStr centerOfRotation <- mte (msg "centerOfRotation") $ Map.lookup (YStr shipClassCenterOfRotation) mapping
+		YSeq weaponSlotNodes <- mte (msg "weaponSlotNodes") $ Map.lookup (YStr shipClassWeaponSlots) mapping
+		YSeq systemSlotNodes <- mte (msg "systemSlotNodes") $ Map.lookup (YStr shipClassSystemSlots) mapping
 		weaponSlots <- sequence $ map loadWeaponSlot weaponSlotNodes 
 		systemSlots <- sequence $ map loadSystemSlot systemSlotNodes
 		return $ ShipClass shipName (read centerOfRotation) weaponSlots systemSlots

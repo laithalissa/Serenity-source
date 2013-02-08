@@ -16,7 +16,7 @@ import Text.Printf(printf)
 import Control.Arrow
 import Control.Category
 import Control.Lens
-import Data.ByteString.Char8(pack)
+import Data.ByteString.Char8(pack, unpack)
 import Data.Yaml.YamlLight
 import Graphics.Gloss.Data.Picture
 import Paths_Serenity(getDataFileName)
@@ -105,7 +105,7 @@ loadImages files = liftA Map.fromList $ sequence $ map fileF files
 		return (name, image)
 
 loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, Picture)
-loadShipClass images node@(YMap mapping) = do
+loadShipClass images mapping = do
 		YStr shipName <- mte (msg "shipName") $ lookup' shipClassName mapping
 		YStr fileName <- mte (msg "fileName") $ lookup' shipClassFileName mapping
 		image <- mte (msg "image") $ lookup' fileName images
@@ -114,7 +114,7 @@ loadShipClass images node@(YMap mapping) = do
 		YSeq systemSlotNodes <- mte (msg "systemSlotNodes") $ lookup' shipClassSystemSlots mapping
 		weaponSlots <- sequence $ map loadWeaponSlot weaponSlotNodes 
 		systemSlots <- sequence $ map loadSystemSlot systemSlotNodes
-		return $ ShipClass shipName (read centerOfRotation) weaponSlots systemSlots
+		return $ ShipClass (unpack shipName) (read $ unpack centerOfRotation) weaponSlots systemSlots
 			where
 			msg m = printf "error loading ShipClass: %s" m
 		
@@ -130,7 +130,7 @@ loadWeaponSlot _ = Left "failed to load weapon slots"
 
 
 loadSystemSlot :: YamlLight -> Either String SystemSlot
-loadSystemSlot YMap mapping = mte "failed to load system slot" $ do
+loadSystemSlot (YMap mapping) = mte "failed to load system slot" $ do
 	YStr location <- Map.lookup shipClassSystemSlotLocation mapping
 	YStr direction <- Map.lookup shipClassSystemSlotDirection mapping
 	return SystemSlot (read location) (read direction)

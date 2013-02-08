@@ -10,6 +10,7 @@ import qualified Data.Map as Map
 import Data.Prelude hiding(id, (.))
 import Data.Set(Set)
 import qualified Data.Set as Set
+import Text.Printf(printf)
 
 -- library modules
 import Control.Arrow
@@ -38,6 +39,7 @@ shipClassFields = Set.fromList
 	]
 
 shipClassFileName = "fileName"
+shipClassName = "shipName"
 shipClassCenterOfRotation = "centerOfRotation"
 shipClassWeaponSlots = "weaponSlots"
 shipClassSystemSlots = "systemSlots"
@@ -68,8 +70,9 @@ initAssets addonsDir = do
 	return $ Left $ show $ shipClasses
 	
 		where
-		loadShipClasses :: [FilePath] -> IO [Either String ShipClass]
-		loadShipClasses = sequence . map (liftA loadShipClass . parseYamlFile)
+		loadShipClasses :: Map String Picture -> [FilePath] -> IO [Either String ShipClass]
+		loadShipClasses imageMapping = sequence . map f
+			where f = liftA (loadShipClass imageMapping) . parseYamlFile
 
 
 loadImages :: [FilePath] -> IO (Map String Picture)
@@ -79,34 +82,23 @@ loadImages files = sequence $ Map.fromList $ map fileF files
 	fileF fileName = (snd $ splitFileName fileName, loadBMP fileName)
 
 loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, Picture)
-loadShipClass = proc (imageMapping, node) -> do
-	nodeLookup <- unMap 
-	shipClassMappingMaybe <- (handleFailure "ShipClass-need root yaml mapping" . unMap) -< node
-	shipClassMapping
-
-
-nodeLookupMap :: String -> YamlLight -> Either String YamlLight
-nodeLookupMap = proc (key, node) -> do
-	possibleMapping <- unMap -< node
-	
-
 loadShipClass images node@(YMap mapping) = do
-	handleFailure "ship-class: failed to load fields" $ do
-		YStr fileName <- Map.lookup shipClassFileName mapping
-		image <- Map.lookup fileName images
-		YStr centerOfRotation <- Map.lookup shipClassCenterOfRotation mapping
-		YSeq weaponSlotNodes <- Map.lookup shipClassWeaponSlots mapping
-		YSeq systemSlotNodes <- Map.lookup shipClassSystemSlots mapping
-		return (image, read centerOfRotation, weaponSlotNodes, systemSlotNodes)
-	let weaponSlots = sequence $ map loadWeaponSlot weaponSlotNodes 
-
-
-
-
-loadShipClass _ Left "invalid ship class fields"	
+		YStr shipName <- mte (msg "shipName") $ Map.lookup shipClassName mapping
+		YStr fileName <- mte (msg "fileName") $ Map.lookup shipClassFileName mapping
+		image <- mte (msg "image") $ Map.lookup fileName images
+		YStr centerOfRotation <- mte (msg "centerOfRotation") $ Map.lookup shipClassCenterOfRotation mapping
+		YSeq weaponSlotNodes <- mte (msg "weaponSlotNodes") $ Map.lookup shipClassWeaponSlots mapping
+		YSeq systemSlotNodes <- mte (msg "systemSlotNodes") $ Map.lookup shipClassSystemSlots mapping
+		weaponSlots <- sequence $ map loadWeaponSlot weaponSlotNodes 
+		systemSlots <- sequence $ map loadSystemSlot systemSlotNodes
+		return $ ShipClass shipName (read centerOfRotation) weaponSlots systemSlots
+			where
+			msg m = printf "error loading ShipClass: %s" m
+		
+loadShipClass _ _ = Left "invalid ship class fields"	
 
 loadWeaponSlot :: YamlLight -> Either String WeaponSlot
-loadWeaponSlot YMap mapping = handleFailure "failed to load weapon slots" $ do
+loadWeaponSlot YMap mapping = mte "failed to load weapon slots" $ do
 	YStr location <- Map.lookup shipClassWeaponSlotLocation mapping
 	YStr direction <- Map.lookup shipClassWeaponSlotDirection mapping
 	YStr slotType <- Map.lookup shipClassWeaponSlotType mapping
@@ -115,7 +107,7 @@ loadWeaponSlot _ = Left "failed to load weapon slots"
 
 
 loadSystemSlot :: YamlLight -> Either String SystemSlot
-loadSystemSlot YMap mapping = handleFailure "failed to load system slot" $ do
+loadSystemSlot YMap mapping = mte "failed to load system slot" $ do
 	YStr location <- Map.lookup shipClassSystemSlotLocation mapping
 	YStr direction <- Map.lookup shipClassSystemSlotDirection mapping
 	return SystemSlot (read location) (read direction)
@@ -123,9 +115,9 @@ loadSystemSlot _ = Left "failed to load system slot"
 
 
 
-handleFailure :: a -> Maybe b -> Either a b
-handleFailure a (Just b) = Right b
-handleFailure a Nothing = Left a
+mte :: a -> Maybe b -> Either a b
+mte a (Just b) = Right b
+mte a Nothing = Left a
 
 
 

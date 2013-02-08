@@ -161,11 +161,45 @@ loadWeapon mapping = do
 	YStr weaponName <- lookup'' fieldWeaponName mapping
 	YStr fileName <- lookup'' fieldWeaponFileName mapping
 	YStr range <- lookup'' fieldWeaponRange mapping
+	YStr reloadTime <- lookup'' fieldWeaponReloadTime mapping
 	YStr accuracy <- lookup'' fieldWeaponAccuracy mapping
 	damageNode <- lookup'' fieldWeaponDamage mapping
-	useCost <- lookup'' fieldWeaponUseCost mapping
+	useCostNode <- lookup'' fieldWeaponUseCost mapping
+	damage <- loadWeaponDamage damageNode
+	useCost <- loadWeaponCost useCostNode
+	return $ Weapon
+		{	_weaponRange=(unpack' range)
+		,	_weaponEffect=damage
+		,	_weaponReloadTime=(unpack' reload)
+		,	_weaponAccuracy=(unpack' accuracy)
+		,	_weaponFiringCost=useCost
+		}
 		where
 		lookup'' = lookup' "Weapon"
+
+
+loadWeaponDamage :: YamlLight -> Either String WeaponEffect
+loadWeaponDamage mapping = do
+	YStr shield <- lookup'' fieldWeaponDamageShield mapping
+	YStr hull <- lookup'' fieldWeaponDamageHull mapping
+	YStr penetration <- lookup'' fieldWeaponDamagePenetration mapping
+	return $ WeaponEffect (unpack' shield) (unpack' hull) (unpack' penetration)
+		where
+		lookup'' = lookup' "WeaponDamage"
+
+loadWeaponCost :: YamlLight -> Either String Resources
+loadWeaponCost mapping = do
+	YStr fuel <- lookup'' fieldWeaponUseCostFuel mapping
+	YStr metal <- lookup'' fieldWeaponUseCostMetal mapping
+	YStr antiMatter <- lookup'' fieldWeaponUseCostAntimatter mapping
+	return $ Resources (unpack' fuel) (unpack' metal) (unpack' antiMatter)
+		where
+		lookup'' = lookup' "WeaponUseCost"
+
+-- helpers --
+
+unpack' :: ByteString -> a
+unpack' = read . unpack
 
 lookup' :: String -> String -> YamlLight -> Either String YamlLight
 lookup' msg key (YMap mapping) = case (Map.lookup (YStr $ pack key) mapping) of

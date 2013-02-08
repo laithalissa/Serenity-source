@@ -67,11 +67,11 @@ demoGame = Game
 			}
 
 		healthMaxExample = Damage
-			{	_damageHull = 200
-			,	_damageShield = 300
+			{	_damageHull = 100
+			,	_damageShield = 100
 			}
 
 		healthExample = Damage
-			{	_damageHull = 50
+			{	_damageHull = 0
 			,	_damageShield = 20
 			}

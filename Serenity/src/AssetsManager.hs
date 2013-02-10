@@ -104,26 +104,26 @@ assemble f description file = do
 	return $ f yamlRoot
 
 shipClassMaker :: Yaml -> (ShipClass, FilePath)
-shipClassMaker (YamlMap mapping) = (ShipClass name' cor' weapons' systems', imageName')
+shipClassMaker node = (ShipClass name' cor' weapons' systems', imageName')
 	where
-		name' = yamlLookupString "shipName" mapping
-		imageName' = yamlLookupString "fileName" mapping
-		cor' = read $ yamlLookupString "centerOfRotation" mapping
-		weapons' = map weaponSlotMaker $ yamlList $ yamlLookup "weaponSlots" mapping
-		systems' = map systemSlotMaker $  yamlList $ yamlLookup "systemSlots" mapping
+		name' = yamlLookupString "shipName" node
+		imageName' = yamlLookupString "fileName" node
+		cor' = read $ yamlLookupString "centerOfRotation" node
+		weapons' = map weaponSlotMaker $ yamlList $ yamlLookup "weaponSlots" node
+		systems' = map systemSlotMaker $  yamlList $ yamlLookup "systemSlots" node
 
 weaponSlotMaker :: Yaml -> WeaponSlot
-weaponSlotMaker (YamlMap mapping) = WeaponSlot location' direction' type'
+weaponSlotMaker node = WeaponSlot location' direction' type'
 	where
-		location' = read $ yamlLookupString "location" mapping
-		direction' = read $ yamlLookupString "direction" mapping
-		type' = read $ yamlLookupString "type" mapping
+		location' = read $ yamlLookupString "location" node
+		direction' = read $ yamlLookupString "direction" node
+		type' = read $ yamlLookupString "type" node
 
 systemSlotMaker :: Yaml -> SystemSlot
-systemSlotMaker (YamlMap mapping) = SystemSlot location' direction'
+systemSlotMaker node = SystemSlot location' direction'
 	where
-		location' = read $ yamlLookupString "location" mapping
-		direction' = read $ yamlLookupString "direction" mapping
+		location' = read $ yamlLookupString "location" node
+		direction' = read $ yamlLookupString "direction" node
 
 data Assets = NoAssets | Assets
 	{	_assetsShipClasses :: Map String (ShipClass, Picture)

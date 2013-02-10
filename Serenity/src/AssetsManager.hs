@@ -35,6 +35,39 @@ import Serenity.Model.Ship
 	)
 
 
+type ShipFile = String
+type SystemFile = String
+type TextureFile = String
+type WeaponFile = String
+
+shipClassesDirName = ("ships", ".yml")
+systemsDirName = ("systems", ".yml")
+weaponsDirName = ("weapons", ".yml")
+texturesDirName = ("textures", ".bmp")
+
+-- | gets all the relevent asset files from the directory passed
+getFileNames :: FilePath -> IO ([ShipFile], [WeaponFile], [SystemFile], [TextureFile])
+getFileNames dir = do
+	shipFiles <- getDirectoryFiles shipClassesDirName
+	weaponFiles <- getDirectoryFiles weaponsDirName
+	systemFiles <- getDirectoryFiles systemsDirName
+	textureFiles <- getDirectoryFiles texturesDirName
+	return (shipFiles, weaponFiles, systemFiles, textureFiles)
+
+		where
+		getDirectoryFiles :: (FilePath, String) -> IO [FilePath]
+		getDirectoryFiles = proc (child, extension) -> do
+			folder <- (uncurry subdir) -< (dir, child)
+			contents <- getDirectoryContents -< folder
+			returnA -< liftA (map (subdir dir . subdir child) . clean extension) contents
+
+		clean :: String -> [FilePath] -> [FilePath]
+		clean extension = filter ((==) extension . takeExtensions) 
+
+		subdir :: FilePath -> FilePath -> FilePath
+		subdir parent child = parent ++ (pathSeparator : child)
+	
+
 -- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
 data Yaml = 
 	  YamlMap { yamlMap :: (Map String Yaml) }
@@ -46,17 +79,18 @@ data Yaml =
 yamlLookup :: String -> Yaml -> Yaml
 yamlLookup key (YamlMap mapping) = fromJust $ Map.lookup key mapping
 
-yamlLookupString String -> Yaml -> String
+yamlLookupString :: String -> Yaml -> String
 yamlLookupString key node = yamlString $ yamlLookup key node
 
 initAssets :: FilePath -> IO Assets
 initAssets addonsDir = do
 	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
-	shipClass <- assemble makeShipClass (shipClassFiles !! 0)
+	shipClass <- assemble shipClassMaker (shipClassFiles !! 0)
 	print shipClass
 	return NoAssets
 
-conversion :: YamlLite -> Yaml
+
+conversion :: YamlLight -> Yaml
 conversion YNil = YamlNull
 conversion (YStr bs) = unpack bs
 conversion (YSeq xs) = YamlList (map conversion xs)
@@ -70,16 +104,16 @@ assemble f description file = do
 	return $ f yamlRoot
 
 shipClassMaker :: Yaml -> (ShipClass, FilePath)
-shipClassMaker (YamlMap mapping) = (ShipClass name' cor' weapons' systems', imageName)
+shipClassMaker (YamlMap mapping) = (ShipClass name' cor' weapons' systems', imageName')
 	where
 		name' = yamlLookupString "shipName" mapping
 		imageName' = yamlLookupString "fileName" mapping
-		cof' = read $ yamlLookupString "centerOfRotation" mapping
+		cor' = read $ yamlLookupString "centerOfRotation" mapping
 		weapons' = map weaponSlotMaker $ yamlList $ yamlLookup "weaponSlots" mapping
 		systems' = map systemSlotMaker $  yamlList $ yamlLookup "systemSlots" mapping
 
 weaponSlotMaker :: Yaml -> WeaponSlot
-weaponSlotmaker (YamlMap mapping) = WeaponSlot location' direction' type'
+weaponSlotMaker (YamlMap mapping) = WeaponSlot location' direction' type'
 	where
 		location' = read $ yamlLookupString "location" mapping
 		direction' = read $ yamlLookupString "direction" mapping
@@ -109,41 +143,10 @@ loadImages files = liftA Map.fromList $ sequence $ map fileF files
 		image <- loadBMP fileName
 		return (name, image)
 
-type ShipFile = String
-type SystemFile = String
-type TextureFile = String
-type WeaponFile = String
 
-shipClassesDirName = ("ships", ".yml")
-systemsDirName = ("systems", ".yml")
-weaponsDirName = ("weapons", ".yml")
-texturesDirName = ("textures", ".bmp")
-
--- | gets all the relevent asset files from the directory passed
-getFileNames :: FilePath -> IO ([ShipFile], [WeaponFile], [SystemFile], [TextureFile])
-getFileNames dir = do
-	shipFiles <- getDirectoryFiles shipClassesDirName
-	weaponFiles <- getDirectoryFiles weaponsDirName
-	systemFiles <- getDirectoryFiles systemsDirName
-	textureFiles <- getDirectoryFiles texturesDirName
-	return (shipFiles, weaponFiles, systemFiles, textureFiles)
-
-		where
-		getDirectoryFiles :: (FilePath, String) -> IO [FilePath]
-		getDirectoryFiles = proc (child, extension) -> do
-			folder <- (uncurry subdir) -< (dir, child)
-			contents <- getDirectoryContents -< folder
-			returnA -< liftA (map (subdir dir . subdir child) . clean extension) contents
-
-		clean :: String -> [FilePath] -> [FilePath]
-		clean extension = filter ((==) extension . takeExtensions) 
 	
-	
-subdir :: FilePath -> FilePath -> FilePath
-subdir parent child = parent ++ (pathSeparator : child)
 
-unpack' :: (Read a) => ByteString -> a
-unpack' = read . unpack
+
 
 -- old --
 

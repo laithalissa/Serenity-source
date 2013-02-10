@@ -95,10 +95,10 @@ conversion YNil = YamlNull
 conversion (YStr bs) = YamlString $ unpack bs
 conversion (YSeq xs) = YamlList (map conversion xs)
 conversion (YMap mapping) = YamlMap $ Map.fromList $ map f (Map.toList mapping)
-	where f (YStr k) val = (unpack k, conversion val)
+	where f ((YStr k), val) = (unpack k, conversion val)
 
 assemble :: (Yaml -> a) -> FilePath -> IO a
-assemble f description file = do
+assemble f file = do
 	node <- parseYamlFile file
 	let yamlRoot = conversion node
 	return $ f yamlRoot

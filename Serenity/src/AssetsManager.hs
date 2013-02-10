@@ -101,7 +101,7 @@ loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, 
 loadShipClass images mapping = do
 		YStr shipName <- lookup'' shipClassName mapping
 		YStr fileName <- lookup'' shipClassFileName mapping
-		image <- mte (msg "image") $ Map.lookup (unpack fileName) images
+		image <- lookup'' fileName images
 		YStr centerOfRotation <- lookup'' shipClassCenterOfRotation mapping
 		YSeq weaponSlotNodes <- lookup'' shipClassWeaponSlots mapping
 		YSeq systemSlotNodes <- lookup'' shipClassSystemSlots mapping

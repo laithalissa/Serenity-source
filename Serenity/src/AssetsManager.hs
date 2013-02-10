@@ -49,6 +49,13 @@ yamlLookup key (YamlMap mapping) = fromJust $ Map.lookup key mapping
 yamlLookupString String -> Yaml -> String
 yamlLookupString key node = yamlString $ yamlLookup key node
 
+initAssets :: FilePath -> IO Assets
+initAssets addonsDir = do
+	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
+	shipClass <- assemble makeShipClass (shipClassFiles !! 0)
+	print shipClass
+	return NoAssets
+
 conversion :: YamlLite -> Yaml
 conversion YNil = YamlNull
 conversion (YStr bs) = unpack bs
@@ -56,13 +63,11 @@ conversion (YSeq xs) = YamlList (map conversion xs)
 conversion (YMap mapping) = Map.fromList $ map f (Map.toList mapping)
 	where f (YStr k) val = (k, conversion val)
 
-
 assemble :: (Yaml -> a) -> FilePath -> IO a
 assemble f description file = do
 	node <- parseYamlFile file
 	let yamlRoot = conversion node
 	return $ f yamlRoot
-
 
 shipClassMaker :: Yaml -> (ShipClass, FilePath)
 shipClassMaker (YamlMap mapping) = (ShipClass name' cor' weapons' systems', imageName)
@@ -95,51 +100,6 @@ data Assets = NoAssets | Assets
 makeLenses ''Assets
 
 
-initAssets :: FilePath -> IO Assets
-initAssets addonsDir = do
-	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
-	shipClass <- assemble loadShipClass shipClassDescription (shipClassFiles !! 0)
-	print shipClass
-	return NoAssets
-
-loadShipClass :: ParseTree -> (ShipClass, FilePath)
-loadShipClass tree = (ShipClass name' cor' weaponSlots' systemSlots', fileName')
-	where
-	name' = readString tree "shipName"
-	fileName' = readString tree "fileName"
-	cor' = readType tree "centerOfRotation"
-	weaponSlots' = map loadWeaponSlot $ lookupT tree "weaponSlots"
-	systemSlots' = map loadSystemSlot $ lookupT tree "systemSlots"
-	
-
-loadWeaponSlot :: ParseTree -> WeaponSlot
-loadWeaponSlot tree = WeaponSlot location' direction' type'
-	where
-	location' = readType tree "location"
-	direction' = readType tree "direction"
-	type' = readType tree "type"
-
-loadSystemSlot :: ParseTree -> SystemSlot
-loadSystemSlot tree = SystemSlot location' direction'
-	where
-	location' = readType tree "location"
-	direction' = readType tree "direction"
-
-readType :: (Read a) => ParseTree -> String -> a
-readType tree name = read $ readString tree name
-
-readString :: ParseTree -> String -> String
-readString tree name = parseValue $ (lookupT tree name) !! 0
-
-lookupT :: ParseTree -> String -> [ParseTree]
-lookupT tree name = if results == [] then error msg else results
-	where 
-		msg = printf "failed to lookup key '%s' in\n'%s'\n" name (show tree)
-		results = filter f (parseFields tree)
-		f (ParseNamespace n fs) = name == n
-		f (ParseField n v) = name == n
-		f x = False
-	
 loadImages :: [FilePath] -> IO (Map FilePath Picture)
 loadImages files = liftA Map.fromList $ sequence $ map fileF files
 	where

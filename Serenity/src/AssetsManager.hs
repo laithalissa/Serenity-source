@@ -35,83 +35,56 @@ import Serenity.Model.Ship
 	)
 
 
--- description of yaml structure
+-- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
+data Yaml = 
+	  YamlMap { yamlMap :: (Map String Yaml) }
+	| YamlList { yamlList :: [Yaml] }
+	| YamlString { yamlString :: String }
+	| YamlNull 
+	deriving (Show, Eq)
 
-data Description = 
-	  DescriptionRoot { isList :: Bool, descriptionFields :: [Description] }
-	| DescriptionNamespace { descriptionName :: String, isList :: Bool, descriptionFields :: [Description] }
-	| DescriptionField { descriptionName :: String }
-	deriving(Show, Eq)
+yamlLookup :: String -> Yaml -> Yaml
+yamlLookup key (YamlMap mapping) = fromJust $ Map.lookup key mapping
 
-makeSimpleNamespace :: String -> Bool -> [String] -> Description
-makeSimpleNamespace name isList fieldNames = makeNamespace name isList fieldNames []
+yamlLookupString String -> Yaml -> String
+yamlLookupString key node = yamlString $ yamlLookup key node
 
-makeNamespace :: String -> Bool -> [String] -> [Description] -> Description
-makeNamespace name = _makeDescriptionAbstract (DescriptionNamespace name)
+conversion :: YamlLite -> Yaml
+conversion YNil = YamlNull
+conversion (YStr bs) = unpack bs
+conversion (YSeq xs) = YamlList (map conversion xs)
+conversion (YMap mapping) = Map.fromList $ map f (Map.toList mapping)
+	where f (YStr k) val = (k, conversion val)
 
-makeDescription :: [String] -> [Description] -> Description
-makeDescription = _makeDescriptionAbstract DescriptionRoot False
 
-_makeDescriptionAbstract :: (Bool -> [Description] -> Description) -> Bool -> [String] -> [Description] -> Description
-_makeDescriptionAbstract f isList fieldNames nestedFields = f isList $ (map DescriptionField fieldNames) ++ nestedFields
-
-descriptionRootToNamespace :: String -> Description -> Description
-descriptionRootToNamespace name (DescriptionRoot isList fields) = DescriptionNamespace name isList fields	
-
--- parserTree
-
-data ParseTree =
-	  ParseRoot { parseFields :: [ParseTree] }
-	| ParseNamespace { parseName :: String, parseFields :: [ParseTree] }
-	| ParseField { parseName :: String, parseValue :: String }
-	deriving (Eq)
-
-instance Show ParseTree where
-	show (ParseRoot fields) = foldl1 (++) $ map (unlines . map ("    "++) . lines . show) fields
-	show (ParseNamespace name fields) = (++) (name ++ ":\n")  $ foldl1 (++) $ map (unlines . map ("    "++) . lines . show) fields
-	show (ParseField name val) = printf "%s: %s\n" name val
-
-assemble :: (ParseTree -> a) -> Description -> FilePath -> IO a
+assemble :: (Yaml -> a) -> FilePath -> IO a
 assemble f description file = do
 	node <- parseYamlFile file
-	let tree = (assembleNode node description) !! 0
-	return $ f tree
-		where
-		assembleNode :: YamlLight -> Description -> [ParseTree]
-		assembleNode (YStr value) (DescriptionField name) = [ParseField name (unpack value)]
-		assembleNode (YMap mapping) (DescriptionRoot False fields) = [ParseRoot  fields']
-			where
-			fields' = concat $ map fieldsF fields
-			fieldsF field = assembleNode node field
-				where
-				node = fromJust $ Map.lookup (YStr $ pack $ descriptionName field) mapping
-
-		assembleNode (YMap mapping) (DescriptionNamespace name False fields) = [ParseNamespace name fields']
-			where
-			fields' = concat $ map fieldsF fields
-			fieldsF field = assembleNode node field
-				where
-				node = fromJust $ Map.lookup (YStr $ pack $ descriptionName field) mapping
-
-		assembleNode (YSeq nodeList) desc@(DescriptionNamespace name True fields) = [ParseNamespace name fields']
-			where
-			fields' = concat $ map (\n -> assembleNode n desc{isList=False}) nodeList
-
-		assembleNode node description = trace (printf "node='%s', description='%s'" (show node) (show description)) (error "failed :(")
-			
-			
+	let yamlRoot = conversion node
+	return $ f yamlRoot
 
 
-shipClassDescription :: Description 
-shipClassDescription = makeDescription 
-	[	"shipName"
-	,	"fileName"
-	,	"centerOfRotation"
-	]
-	[	makeSimpleNamespace "weaponSlots" True ["location", "direction", "type"]
-	,	makeSimpleNamespace "systemSlots" True ["location", "direction"]
-	]
+shipClassMaker :: Yaml -> (ShipClass, FilePath)
+shipClassMaker (YamlMap mapping) = (ShipClass name' cor' weapons' systems', imageName)
+	where
+		name' = yamlLookupString "shipName" mapping
+		imageName' = yamlLookupString "fileName" mapping
+		cof' = read $ yamlLookupString "centerOfRotation" mapping
+		weapons' = map weaponSlotMaker $ yamlList $ yamlLookup "weaponSlots" mapping
+		systems' = map systemSlotMaker $  yamlList $ yamlLookup "systemSlots" mapping
 
+weaponSlotMaker :: Yaml -> WeaponSlot
+weaponSlotmaker (YamlMap mapping) = WeaponSlot location' direction' type'
+	where
+		location' = read $ yamlLookupString "location" mapping
+		direction' = read $ yamlLookupString "direction" mapping
+		type' = read $ yamlLookupString "type" mapping
+
+systemSlotMaker :: Yaml -> SystemSlot
+systemSlotMaker (YamlMap mapping) = SystemSlot location' direction'
+	where
+		location' = read $ yamlLookupString "location" mapping
+		direction' = read $ yamlLookupString "direction" mapping
 
 data Assets = NoAssets | Assets
 	{	_assetsShipClasses :: Map String (ShipClass, Picture)

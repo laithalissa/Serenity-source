@@ -92,10 +92,10 @@ initAssets addonsDir = do
 
 conversion :: YamlLight -> Yaml
 conversion YNil = YamlNull
-conversion (YStr bs) = unpack bs
+conversion (YStr bs) = YamlString $ unpack bs
 conversion (YSeq xs) = YamlList (map conversion xs)
-conversion (YMap mapping) = Map.fromList $ map f (Map.toList mapping)
-	where f (YStr k) val = (k, conversion val)
+conversion (YMap mapping) = YamlMap $ Map.fromList $ map f (Map.toList mapping)
+	where f (YStr k) val = (unpack k, conversion val)
 
 assemble :: (Yaml -> a) -> FilePath -> IO a
 assemble f description file = do

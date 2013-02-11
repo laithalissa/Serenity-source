@@ -60,15 +60,23 @@ demoGame = Game
 			,	_shipConfiguration = configuration
 			,	_shipLocation = location
 			,	_shipDirection = (0,1)
-			,	_shipDamage = Damage 0 0
+			,	_shipDamage = healthExample
 			,	_shipOrder = order
 			,	_shipGoal = GoalNone
 			,	_shipPlan = []
 			,	_shipBeamTargets = []
 			}
+
 			where
 			configuration = ShipConfiguration
 				{	_shipConfigurationShipClass="Destroyer"
 				,	_shipConfigurationWeapons=[]
 				,	_shipConfigurationSystems=[]
 				}
+
+
+			healthExample = Damage
+			{	_damageHull = 0
+			,	_damageShield = 20
+			}
+

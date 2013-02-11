@@ -1,0 +1,42 @@
+
+module Serenity.Game.Client.MenuStates.MainMenuState where
+
+import StateSwitcher
+
+
+initialize = 
+	MainMenu
+	{	options=[	"Start Game"
+			,	"Games List"
+			,	"Exit"
+			]
+	,	currentOption=0
+	}	
+
+data MainMenu = 
+	MainMenu
+	{	options :: [String]
+	,	currentOption :: Int
+	} deriving(Show, Eq)
+
+<<<<<<< HEAD
+data MainMenuView = 
+	MainMenuView
+	{	viewID = "menu-main"
+	,	subviews = [Buttons]
+	,	zIndex = 0
+	,	background = Black
+	,	depict = Nothing
+	,	eventHandler = Nothing
+	}
+=======
+
+>>>>>>> 5cb110b0ed38027b06ccdc2fc522ce0a3e6f14b8
+
+instance AppState MainMenu where
+	stateUpdate delta mainMenu = Just (wrap mainMenu, Update)
+	stateRender mainMenu = pictures 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5cb110b0ed38027b06ccdc2fc522ce0a3e6f14b8

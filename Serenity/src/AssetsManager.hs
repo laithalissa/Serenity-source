@@ -28,7 +28,7 @@ import Control.Lens
 import Data.ByteString.Char8(ByteString, pack, unpack)
 import Data.Yaml.YamlLight
 import Graphics.Gloss.Data.Picture
-import Graphics.Gloss.Color
+import Graphics.Gloss.Data.Color
 import Paths_Serenity(getDataFileName)
 import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions)
 
@@ -136,7 +136,7 @@ initAssets addonsDir = do
 					result <- assemble maker file
 					return $ f result
 
-getPictureSized :: String -> Float -> Float -> AssetsManager -> Picture
+getPictureSized :: String -> Float -> Float -> Assets -> Picture
 getPictureSized name nWidth nHeight assets = sizeTo nWidth nHeight (getPicture name assets)
 
 sizeTo :: Float -> Float -> Picture -> Picture
@@ -149,7 +149,7 @@ sizeTo nWidth nHeight image@(Bitmap width height _ _)   = scale s s image
 	where
 	s = (max nWidth nHeight) / (fromIntegral $ max width height)
 
-getPicture :: String -> AssetsManager -> Picture
+getPicture :: String -> Assets -> Picture
 getPicture name assets = case (Map.lookup name $ assets^.assetsTextures) of
 	Just asset -> asset
 	Nothing -> color red $ text ("Couldn't load asset " ++ name)

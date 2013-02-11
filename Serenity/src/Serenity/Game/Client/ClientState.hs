@@ -50,7 +50,7 @@ data ClientState = ClientState
 	,	_clientUIState :: UIState ClientState -- ^ State of the GUI, e.g. view hierarchy
 	,	_clientKeyboardState :: KeyboardState -- ^ What keys are down and in what order they went down
 	,	_clientCommands :: [Command]          -- ^ List of commands to send to the server
-	,	_clientAssets :: AssetsManager
+	,	_clientAssets :: Assets
 	,	_clientOwnerID :: OwnerID
 	}
 
@@ -64,7 +64,7 @@ makeLenses ''ClientState
 
 -- | Create the initial client state
 initClientState
-	:: AssetsManager 	-- ^ Assets
+	:: Assets	 	-- ^ Assets
 	-> OwnerID     		-- ^ Player's id
 	-> ClientState
 initClientState assets ownerID = ClientState

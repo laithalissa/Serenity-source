@@ -3,6 +3,7 @@
 
 module AssetsManager
 (	Assets(..)
+,	initAddons
 ,	initAssets
 ,	getPicture
 ,	sizeTo
@@ -87,16 +88,31 @@ loadImages files = liftA Map.fromList $ sequence $ map fileF files
 		image <- loadBMP fileName
 		return (name, image)
 
+
+data Addons = Addons
+	{	_addonsShipClasses :: Map String ShipClass
+	,	_addonsWeapons :: Map String Weapon
+	,	_addonsSystems :: Map String System
+	} deriving(Show, Eq)
+makeLenses ''Addons
+
+
 data Assets = Assets
-	{	_assetsShipClasses :: Map String (ShipClass, Picture)
-	,	_assetsWeapons :: Map String (Weapon, Picture)
-	,	_assetsSystems :: Map String (System, Picture)
+	{	_assetsShipClasses :: Map String Picture
+	,	_assetsWeapons :: Map String Picture
+	,	_assetsSystems :: Map String Picture
 	,	_assetsTextures :: Map String Picture -- ^ legacy
 	}
 	deriving (Show, Eq)
 makeLenses ''Assets
 
-
+data Bundle = Bundle
+	{	_bundleShipClasses :: Map String (ShipClass, Picture)
+	,	_bundleWeapons :: Map String (Weapon, Picture)
+	,	_bundleSystems :: Map String (System, Picture)
+	,	_bundleTextures :: Map String Picture
+	}
+	deriving (Show, Eq)
 
 -- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
 data Yaml = 
@@ -113,28 +129,11 @@ yamlLookupString :: String -> Yaml -> String
 yamlLookupString key node = yamlString $ yamlLookup key node
 ---------- exported functions ----------
 
+initAddons :: FilePath -> IO Addons
+initAddons addonsDir = extractBundle addonsDir fst (\sc w s _ -> Addons sc w s)
+
 initAssets :: FilePath -> IO Assets
-initAssets addonsDir = do
-	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
-	imageMap <- loadImages textureFiles
-	let load' = load imageMap
-	shipClasses <- load' shipClassMaker shipClassFiles
-	weapons <- load' weaponMaker weaponFiles
-	systems <- load' systemMaker systemFiles
-	textures <- return $ Map.fromList $ map (\(k,v)->(dropExtensions k,v)) $ Map.toList imageMap
-	return $ Assets shipClasses weapons systems textures
-		where
-		load :: Map FilePath Picture -> (Yaml -> (a, String, FilePath)) -> [FilePath] -> IO ( Map String (a, Picture) )
-		load imageMapping maker files = do
-			result <- sequence $ map f' files
-			return $ Map.fromList result
-			where 
-				--f :: (b, String, FilePath) -> (String, (b, Picture))
-				f (thing, name, fileName) = (name, (thing, fromJust $ Map.lookup fileName imageMapping))
-				--f' :: FilePath -> IO (String, (b, Picture))
-				f' file = do
-					result <- assemble maker file
-					return $ f result
+initAssets addonsDir = extractBundle addonsDir snd Assets
 
 getPictureSized :: String -> Float -> Float -> Assets -> Picture
 getPictureSized name nWidth nHeight assets = sizeTo nWidth nHeight (getPicture name assets)
@@ -156,6 +155,36 @@ getPicture name assets = case (Map.lookup name $ assets^.assetsTextures) of
 
 ---------- end of helper functions ----------
 
+initBundle :: FilePath -> IO Bundle
+initBundle addonsDir = do
+	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
+	imageMap <- loadImages textureFiles
+	let load' = load imageMap
+	shipClasses <- load' shipClassMaker shipClassFiles
+	weapons <- load' weaponMaker weaponFiles
+	systems <- load' systemMaker systemFiles
+	textures <- return $ Map.fromList $ map (\(k,v)->(dropExtensions k,v)) $ Map.toList imageMap
+	return $ Bundle shipClasses weapons systems textures
+	
+	where
+	load :: Map FilePath Picture -> (Yaml -> (a, String, FilePath)) -> [FilePath] -> IO ( Map String (a, Picture) )
+	load imageMapping maker files = do
+		result <- sequence $ map f' files
+		return $ Map.fromList result
+		where 
+		f (thing, name, fileName) = (name, (thing, fromJust $ Map.lookup fileName imageMapping))
+		f' file = do
+			result <- assemble maker file
+			return $ f result
+
+extractBundle addonsDir f builder = do
+	bundle <- initBundle addonsDir
+	let shipClasses = map f $ bundle^.bundleShipClasses
+	let weapons = map f $ bundle^.bundleWeapons
+	let systems = map f $ bundle^.bundleSystems
+	let textures = bundle^.bundleTextures
+	return builder shipClasses weapons systems textures
+
 conversion :: YamlLight -> Yaml
 conversion YNil = YamlNull
 conversion (YStr bs) = YamlString $ unpack bs
@@ -171,13 +200,20 @@ assemble f file = do
 
 ---------- Ship Class ----------
 shipClassMaker :: Yaml -> (ShipClass, String, FilePath)
-shipClassMaker node = (ShipClass cor' weapons' systems', name', imageName')
+shipClassMaker node = (ShipClass cor' strength' weapons' systems', name', imageName')
 	where
 		name' = yamlLookupString "shipName" node
 		imageName' = yamlLookupString "fileName" node
 		cor' = read $ yamlLookupString "centerOfRotation" node
+		strength' = damageStrengthMaker $ yamlLookup "damageStrength" node
 		weapons' = map weaponSlotMaker $ yamlList $ yamlLookup "weaponSlots" node
 		systems' = map systemSlotMaker $  yamlList $ yamlLookup "systemSlots" node
+
+damageStrengthMaker :: Yaml -> Damage
+damageStrengthMaker node = (Damage hull' shields')
+	where
+	hull' = read $ yamlLookupString "hull" node
+	shields' = read $ yamlLookupString "shields" node
 
 weaponSlotMaker :: Yaml -> WeaponSlot
 weaponSlotMaker node = WeaponSlot location' direction' type'

@@ -65,9 +65,10 @@ makeLenses ''ClientState
 -- | Create the initial client state
 initClientState
 	:: Assets	 	-- ^ Assets
+	:: Addons		-- ^ addons
 	-> OwnerID     		-- ^ Player's id
 	-> ClientState
-initClientState assets ownerID = ClientState
+initClientState assets addons ownerID = ClientState
 	{	_clientGame = game
 	,	_clientUIState = initUIState game
 	,	_clientKeyboardState = emptyKeyboardState
@@ -76,7 +77,7 @@ initClientState assets ownerID = ClientState
 	,	_clientOwnerID = ownerID
 	}
 	where
-		game = demoGame
+		game = demoGame addons
 
 initUIState :: Game -> UIState ClientState
 initUIState game = UIState

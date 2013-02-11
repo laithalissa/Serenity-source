@@ -32,12 +32,13 @@ client serverHost serverPort ownerId = do
 	print "Connected!"
 
 	assets <- initAssets "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
+	addons <- initAddons "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
 
 	playIO
 		(InWindow "Project Serenity" windowSize (0, 0))
 		black
 		30
-		(initClientState assets ownerId)
+		(initClientState assets addons ownerId)
 		(return . render)
 		(handleEvent outbox)
 		(handleStep inbox)

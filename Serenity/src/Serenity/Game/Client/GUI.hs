@@ -17,7 +17,7 @@ import Graphics.Gloss.Data.Color
 
 import Control.Lens
 import qualified Data.Map as Map
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, fromJust)
 import GHC.Float
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
@@ -83,7 +83,8 @@ render game uiState assets = Pictures
 			boxHeight = 0.5
 			boundingBoxWidth = 5
 			-- Ship health values
-			totalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
+			totalHealth = (fromJust $ Map.lookup (entity^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassDamageStrength^.damageHull
+			----totalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
 			lostHealth = entity^.entityData.shipDamage.damageHull
 			currentHealth = totalHealth - lostHealth
 			healthAsPercentage = fromIntegral currentHealth / fromIntegral totalHealth
@@ -91,7 +92,8 @@ render game uiState assets = Pictures
 			-- Shop shield values
 			shieldBarWidth = boundingBoxWidth - (lostShieldPercentage * boundingBoxWidth)
 			lostShield = entity^.entityData.shipDamage.damageShield
-			shipTotalShield = entity^.entityData.shipType.shipTypeMaxDamage.damageShield
+			shipTotalShield = (fromJust $ Map.lookup (entity^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassDamageStrength^.damageShield
+			----shipTotalShield = entity^.entityData.shipType.shipTypeMaxDamage.damageShield
 			currentShield = shipTotalShield - lostShield
 			lostShieldPercentage = fromIntegral lostShield / fromIntegral shipTotalShield
 			shieldPercentage = fromIntegral currentShield / fromIntegral shipTotalShield

@@ -107,6 +107,7 @@ data WeaponEffect = WeaponEffect
 
 data ShipClass = ShipClass
 	{	_shipClassCenterOfRotation	:: Location
+	,	_shipClassDamageStrength	:: Damage
 	,	_shipClassWeaponSlots		:: [WeaponSlot]
 	,	_shipClassSystemSlots		:: [SystemSlot]
 	}

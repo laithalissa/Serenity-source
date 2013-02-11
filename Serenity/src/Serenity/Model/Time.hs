@@ -102,9 +102,10 @@ instance Evolvable (Entity Ship) where
 evolveShipDamage :: UpdateWire (Entity Ship, Game)
 evolveShipDamage = proc (entity, game) -> do
 	case entity^.entityData.shipDamage.damageHull of
-		100 -> id -< [DeleteEntity (entity^.entityID)]
+		totalHealth -> id -< [DeleteEntity (entity^.entityID)]
 		dmg -> id -< damageTargets entity game
 		where
+		totalHealth = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassDamageStrength^.damageHull
 		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipBeamTargets)
 		damageTarget game target = case M.lookup target (game^.gameShips) of
 			Just entity -> [UpdateShipDamage (entity^.entityID) (entity^.entityData.shipDamage & damageHull +~ 1)]

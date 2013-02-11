@@ -144,8 +144,7 @@ makeLenses ''WeaponSlot
 makeLenses ''SystemSlot
 
 
-applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
-applyWeaponDamage gen effect ship = ship
+-- applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
 -- applyWeaponDamage gen effect ship
 -- 	| shielded || penetrated = shipDamage.damageHull   %~ updateHull $ ship
 -- 	| otherwise              = shipDamage.damageShield %~ updateShield $ ship

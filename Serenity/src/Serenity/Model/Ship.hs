@@ -29,6 +29,7 @@ initShip conf location direction = Ship
 	,	_shipLocation=location
 	,	_shipDirection=direction
 	,	_shipDamage=Damage 0 0
+	,	_shipOrder=OrderNone
 	,	_shipGoal=GoalNone
 	,	_shipPlan=[]
 	,	_shipBeamTargets=[]

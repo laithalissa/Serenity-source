@@ -51,7 +51,8 @@ initGame fleets addons sector = game'
 	shipsSpawnPoint = concat $ map f fleetsSpawnPoint
 		where
 		f (oId,Fleet scs,x,y) = map (\sc-> (oId,sc,x,y)) scs
-	game' = foldl game f shipsSpawnPoint
+	game' :: Game
+	game' = foldl f game shipsSpawnPoint
 		where
 		f g (oId,sc,x,y) = addShip oId (initShip sc (x,y) (0,0)) g
 		
@@ -67,7 +68,7 @@ initGame fleets addons sector = game'
 		}
 
 demoGame :: Addons -> Game
-demoGame addons = game
+demoGame addons = game'
 	where 
 	game = initGame fleets addons sectorOne
 	fleets = Map.fromList 
@@ -76,6 +77,12 @@ demoGame addons = game
 		,	(2, demoFleet)
 		,	(3, demoFleet)
 		]
+	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game
+		where
+		f :: Entity Ship -> Entity Ship
+		f e = entityData.shipOrder .~ (OrderAttack $ (getEntity ((e^.ownerID + 1) `mod` 4))^.entityID) $ e
+		getEntity :: OwnerID -> Entity Ship
+		getEntity oId = foldl1 (\x y -> if x^.ownerID == oId then x else y) $ Map.elems (game^.gameShips)
 -- demoGame addons = (initGame addons sectorOne){_gameShips=Map.fromList entities}
 -- 	where
 -- 	entities =

@@ -71,6 +71,25 @@ getFileNames dir = do
 		subdir parent child = parent ++ (pathSeparator : child)
 	
 
+loadImages :: [FilePath] -> IO (Map FilePath Picture)
+loadImages files = liftA Map.fromList $ sequence $ map fileF files
+	where
+	fileF :: FilePath -> IO (FilePath, Picture)
+	fileF fileName = do
+		let name = snd $ splitFileName fileName
+		image <- loadBMP fileName
+		return (name, image)
+
+data Assets = NoAssets | Assets
+	{	_assetsShipClasses :: Map String (ShipClass, Picture)
+	,	_assetsWeapons :: Map String (Weapon, Picture)
+	,	_assetsSystems :: Map String (System, Picture)
+	}
+	deriving (Show, Eq)
+makeLenses ''Assets
+
+
+
 -- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
 data Yaml = 
 	  YamlMap { yamlMap :: (Map String Yaml) }
@@ -90,9 +109,9 @@ initAssets addonsDir = do
 	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
 	imageMap <- loadImages textureFiles
 	let load' = load imageMap
-	shipClasses <- load' shipClassMaker
-	weapons <- load' weaponMaker
-	systems <- load' systemMaker
+	shipClasses <- load' shipClassMaker shipClassFiles
+	weapons <- load' weaponMaker weaponFiles
+	systems <- load' systemMaker systemFiles
 	print shipClasses
 	print weapons
 	print systems
@@ -101,8 +120,12 @@ initAssets addonsDir = do
 	
 		where
 		load :: Map FilePath Picture -> (Yaml -> a) -> [FilePath] -> IO ( Map String (a, Picture) )
-		load imageMapping maker files = liftA Map.fromList $ sequence $ map (liftA f . assemble maker) files
-			where f (thing, name, fileName) = (thing, name, fromJust $ Map.lookup fileName imageMapping)
+		load imageMapping maker files = liftA Map.fromList $ sequence $ map f' files
+			where 
+				f :: (a, String, FilePath) -> (String, (a, Picture))
+				f (thing, name, fileName) = (name, (thing, fromJust $ Map.lookup fileName imageMapping))
+				f' :: FilePath -> IO (String, (a, Picture))
+				f' file = liftA f $ assemble maker file
 
 conversion :: YamlLight -> Yaml
 conversion YNil = YamlNull
@@ -196,193 +219,3 @@ systemMaker node = (System shield' hull' engine', name', fileName')
 		engine' = read $ yamlLookupString "speed" node
 
 
-
----------- End ----------
-
-
-
-data Assets = NoAssets | Assets
-	{	_assetsShipClasses :: Map String (ShipClass, Picture)
-	,	_assetsWeapons :: Map String (Weapon, Picture)
-	,	_assetsSystems :: Map String (System, Picture)
-	}
-	deriving (Show, Eq)
-makeLenses ''Assets
-
-
-loadImages :: [FilePath] -> IO (Map FilePath Picture)
-loadImages files = liftA Map.fromList $ sequence $ map fileF files
-	where
-	fileF :: FilePath -> IO (FilePath, Picture)
-	fileF fileName = do
-		let name = snd $ splitFileName fileName
-		image <- loadBMP fileName
-		return (name, image)
-
-
-	
-
-
-
--- old --
-
--- -- addons subdirectories and extension --
-
-
--- -- ship class fields --
--- shipClassFields = Set.fromList
--- 	[	shipClassName
--- 	,	shipClassFileName
--- 	,	shipClassCenterOfRotation
--- 	,	shipClassWeaponSlots
--- 	,	shipClassSystemSlots
--- 	]
-
--- shipClassFileName = "fileName"
--- shipClassName = "shipName"
--- shipClassCenterOfRotation = "centerOfRotation"
--- shipClassWeaponSlots = "weaponSlots"
--- shipClassSystemSlots = "systemSlots"
-
--- shipClassWeaponSlotLocation = "location"
--- shipClassWeaponSlotDirection = "direction"
--- shipClassWeaponSlotType = "type"
-
--- shipClassSystemSlotLocation = "location"
--- shipClassSystemSlotDirection = "direction"
-
-
-
-
-
-
-
-
--- -- ship class --
--- loadShipClass :: Map FilePath Picture -> YamlLight -> Either String (ShipClass, Picture)
--- loadShipClass images mapping = do
--- 		YStr shipName <- lookup'' shipClassName mapping
--- 		YStr fileName <- lookup'' shipClassFileName mapping
--- 		image <- lookup'' fileName images
--- 		YStr centerOfRotation <- lookup'' shipClassCenterOfRotation mapping
--- 		YSeq weaponSlotNodes <- lookup'' shipClassWeaponSlots mapping
--- 		YSeq systemSlotNodes <- lookup'' shipClassSystemSlots mapping
--- 		weaponSlots <- sequence $ map loadWeaponSlot weaponSlotNodes 
--- 		systemSlots <- sequence $ map loadSystemSlot systemSlotNodes
--- 		return $ (ShipClass (unpack shipName) (read $ unpack centerOfRotation) weaponSlots systemSlots, image)
--- 			where
--- 			lookup'' = lookup' "ShipClass"
-		
--- loadShipClass _ _ = Left "invalid ship class fields"	
-
--- loadWeaponSlot :: YamlLight -> Either String WeaponSlot
--- loadWeaponSlot mapping = mte "failed to load weapon slots" $ do
--- 	YStr location <- lookup' shipClassWeaponSlotLocation mapping
--- 	YStr direction <- lookup' shipClassWeaponSlotDirection mapping
--- 	YStr slotType <- lookup' shipClassWeaponSlotType mapping
--- 	return $ WeaponSlot (read $ unpack location) (read $ unpack direction) (read $ unpack slotType)
--- loadWeaponSlot _ = Left "failed to load weapon slots"
-
-
--- loadSystemSlot :: YamlLight -> Either String SystemSlot
--- loadSystemSlot mapping = mte "failed to load system slot" $ do
--- 	YStr location <- lookup' shipClassSystemSlotLocation mapping
--- 	YStr direction <- lookup' shipClassSystemSlotDirection mapping
--- 	return $ SystemSlot (read $ unpack location) (read $ unpack direction)
--- loadSystemSlot _ = Left "failed to load system slot"
-
-
--- -- weapon --
-
--- fieldWeaponName = "weaponName"
--- fieldWeaponFileName = "fileName"
--- fieldWeaponRange = "range"
--- fieldWeaponReloadTime = "reloadTime"
--- fieldWeaonAccuracy = "accuracy"
--- fieldWeaponDamage = "damage"
--- fieldWeaponUseCost = "useCost"
-
--- fieldWeaponDamageShield = "shield"
--- fieldWeaponDamageHull = "hull"
--- fieldWeaponDamagePenetration = "penetration"
-
--- fieldWeaponUseCostFuel = "fuel"
--- fieldWeaponUseCostMetal = "metal"
--- fieldWeaponUseCostAntiMatter = "antiMatter"
-
--- loadWeapon :: Map FilePath Picture -> YamlLight -> Either String (Weapon, Picture)
--- loadWeapon imageMapping mapping = do
--- 	YStr weaponName <- lookup'' fieldWeaponName mapping
--- 	YStr fileName <- lookup'' fieldWeaponFileName mapping
--- 	image <- Map.lookup (unpack fileName) imageMapping
--- 	YStr range <- lookup'' fieldWeaponRange mapping
--- 	YStr reloadTime <- lookup'' fieldWeaponReloadTime mapping
--- 	YStr accuracy <- lookup'' fieldWeaponAccuracy mapping
--- 	damageNode <- lookup'' fieldWeaponDamage mapping
--- 	useCostNode <- lookup'' fieldWeaponUseCost mapping
--- 	damage <- loadWeaponDamage damageNode
--- 	useCost <- loadWeaponCost useCostNode
--- 	let weapon = Weapon
--- 		{	_weaponRange=(unpack' range)
--- 		,	_weaponEffect=damage
--- 		,	_weaponReloadTime=(unpack' reload)
--- 		,	_weaponAccuracy=(unpack' accuracy)
--- 		,	_weaponFiringCost=useCost
--- 		}
--- 	return $ (weapon, image)
--- 		where
--- 		lookup'' = lookup' "Weapon"
-
--- loadWeaponDamage :: YamlLight -> Either String WeaponEffect
--- loadWeaponDamage mapping = do
--- 	YStr shield <- lookup'' fieldWeaponDamageShield mapping
--- 	YStr hull <- lookup'' fieldWeaponDamageHull mapping
--- 	YStr penetration <- lookup'' fieldWeaponDamagePenetration mapping
--- 	return $ WeaponEffect (unpack' shield) (unpack' hull) (unpack' penetration)
--- 		where
--- 		lookup'' = lookup' "WeaponDamage"
-
--- loadWeaponCost :: YamlLight -> Either String Resources
--- loadWeaponCost mapping = do
--- 	YStr fuel <- lookup'' fieldWeaponUseCostFuel mapping
--- 	YStr metal <- lookup'' fieldWeaponUseCostMetal mapping
--- 	YStr antiMatter <- lookup'' fieldWeaponUseCostAntimatter mapping
--- 	return $ Resources (unpack' fuel) (unpack' metal) (unpack' antiMatter)
--- 		where
--- 		lookup'' = lookup' "WeaponUseCost"
-
--- -- helpers --
-
--- type Loader a = (Map FilePath Picture -> YamlLight -> Either String (a, Picture))
-
--- load :: Map String Picture -> Loader a -> [FilePath] -> IO (Either String [(a, Picture)])
--- load imageMapping loader files = do
--- 	inside <- ioList
--- 	return $ sequence inside
--- 		where 
--- 		ioList :: IO [Either String (a, Picture)]
--- 		ioList = sequence $ map f files
-
--- 		f :: FilePath -> IO (Either String (a, Picture))
--- 		f = liftA (loader imageMapping) . parseYamlFile
-
--- unpack' :: ByteString -> a
--- unpack' = read . unpack
-
--- lookup' :: String -> String -> YamlLight -> Either String YamlLight
--- lookup' msg key (YMap mapping) = case (Map.lookup (YStr $ pack key) mapping) of
--- 	Just result -> Right result
--- 	Nothing -> Left $ printf "error loading %s: %s" msg key
-
--- mte :: a -> Maybe b -> Either a b
--- mte a (Just b) = Right b
--- mte a Nothing = Left a
-
-
-
-
-
--- 	-- path <- getDataFileName "templates/ships/destroyer.yml"
--- 	-- return $ Left $ show $ path
--- 	-- node <- parseYamlFile "templates/ships/destroyer.yml"
--- 	-- return $ Left $ show node

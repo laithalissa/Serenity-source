@@ -80,7 +80,7 @@ loadImages files = liftA Map.fromList $ sequence $ map fileF files
 		image <- loadBMP fileName
 		return (name, image)
 
-data Assets = NoAssets | Assets
+data Assets = Assets
 	{	_assetsShipClasses :: Map String (ShipClass, Picture)
 	,	_assetsWeapons :: Map String (Weapon, Picture)
 	,	_assetsSystems :: Map String (System, Picture)
@@ -112,12 +112,7 @@ initAssets addonsDir = do
 	shipClasses <- load' shipClassMaker shipClassFiles
 	weapons <- load' weaponMaker weaponFiles
 	systems <- load' systemMaker systemFiles
-	print shipClasses
-	print weapons
-	print systems
-	return NoAssets
-
-	
+	return $ Assets shipClasses weapons systems
 		where
 		load :: Map FilePath Picture -> (Yaml -> (a, String, FilePath)) -> [FilePath] -> IO ( Map String (a, Picture) )
 		load imageMapping maker files = do

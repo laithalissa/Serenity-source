@@ -3,7 +3,7 @@ module Serenity.Game.Client.Main (
 )
 where
 
-import qualified Serenity.Game.Client.Assets as Assets
+import AssetsManager
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.Controller
 import Serenity.Game.Client.KeyboardState
@@ -31,7 +31,8 @@ client serverHost serverPort ownerId = do
 
 	print "Connected!"
 
-	assets <- Assets.initialize
+	assets <- initAssets "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
+
 	playIO
 		(InWindow "Project Serenity" windowSize (0, 0))
 		black

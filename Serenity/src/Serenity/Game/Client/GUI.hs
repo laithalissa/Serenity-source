@@ -4,7 +4,8 @@ module Serenity.Game.Client.GUI
 )
 where
 
-import Serenity.Game.Client.Assets
+import AssetsManager
+
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.ClientMessage (GUICommand(..))
 
@@ -24,7 +25,7 @@ handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
 --handleMessage (ClientZoom dz) uiState@UIState{ viewport=(loc, z) } = uiState { viewport = (loc, z+dz) }
 handleMessage _ uiState = uiState
 
-render :: Game -> UIState ClientState -> Assets -> Picture
+render :: Game -> UIState ClientState -> AssetsManager -> Picture
 render game uiState assets = Pictures
 	[	background
 	,	(drawWorldToWindow . renderInWorld) game
@@ -55,7 +56,7 @@ render game uiState assets = Pictures
 			planetsMap = game^.gameSector.sectorPlanets
 
 		pictureEntity entity = pictures $ ship:beams where
-			ship = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" 10 10 assets) 
+			ship = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship1" 10 10 assets) 
 			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
 			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
 			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection

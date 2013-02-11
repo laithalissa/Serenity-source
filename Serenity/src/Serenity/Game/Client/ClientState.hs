@@ -2,7 +2,7 @@
 
 module Serenity.Game.Client.ClientState where
 
-import Serenity.Game.Client.Assets (Assets)
+import AssetsManager
 import Serenity.Game.Client.KeyboardState
 import Serenity.Model hiding(Location, Direction)
 import Serenity.Sheen.View
@@ -50,7 +50,7 @@ data ClientState = ClientState
 	,	_clientUIState :: UIState ClientState -- ^ State of the GUI, e.g. view hierarchy
 	,	_clientKeyboardState :: KeyboardState -- ^ What keys are down and in what order they went down
 	,	_clientCommands :: [Command]          -- ^ List of commands to send to the server
-	,	_clientAssets :: Assets
+	,	_clientAssets :: AssetsManager
 	,	_clientOwnerID :: OwnerID
 	}
 
@@ -64,8 +64,8 @@ makeLenses ''ClientState
 
 -- | Create the initial client state
 initClientState
-	:: Assets      -- ^ Assets
-	-> OwnerID     -- ^ Player's id
+	:: AssetsManager 	-- ^ Assets
+	-> OwnerID     		-- ^ Player's id
 	-> ClientState
 initClientState assets ownerID = ClientState
 	{	_clientGame = game

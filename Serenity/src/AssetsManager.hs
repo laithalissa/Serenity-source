@@ -1,7 +1,13 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Arrows #-}
 
-module AssetsManager where
+module AssetsManager
+(	Assets(..)
+,	initAssets
+,	getPicture
+,	sizeTo
+,	getPictureSized
+) where
 
 import Serenity.Debug(trace', traceShow, trace)
 
@@ -22,8 +28,9 @@ import Control.Lens
 import Data.ByteString.Char8(ByteString, pack, unpack)
 import Data.Yaml.YamlLight
 import Graphics.Gloss.Data.Picture
+import Graphics.Gloss.Color
 import Paths_Serenity(getDataFileName)
-import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, takeExtensions)
+import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions)
 
 -- serenity modules
 import Serenity.Model.Sector(Resources(..))
@@ -84,6 +91,7 @@ data Assets = Assets
 	{	_assetsShipClasses :: Map String (ShipClass, Picture)
 	,	_assetsWeapons :: Map String (Weapon, Picture)
 	,	_assetsSystems :: Map String (System, Picture)
+	,	_assetsTextures :: Map String Picture -- ^ legacy
 	}
 	deriving (Show, Eq)
 makeLenses ''Assets
@@ -103,6 +111,7 @@ yamlLookup key (YamlMap mapping) = fromJust $ Map.lookup key mapping
 
 yamlLookupString :: String -> Yaml -> String
 yamlLookupString key node = yamlString $ yamlLookup key node
+---------- exported functions ----------
 
 initAssets :: FilePath -> IO Assets
 initAssets addonsDir = do
@@ -112,7 +121,8 @@ initAssets addonsDir = do
 	shipClasses <- load' shipClassMaker shipClassFiles
 	weapons <- load' weaponMaker weaponFiles
 	systems <- load' systemMaker systemFiles
-	return $ Assets shipClasses weapons systems
+	textures <- return $ Map.fromList $ map (\(k,v)->(dropExtensions k,v)) $ Map.toList imageMap
+	return $ Assets shipClasses weapons systems textures
 		where
 		load :: Map FilePath Picture -> (Yaml -> (a, String, FilePath)) -> [FilePath] -> IO ( Map String (a, Picture) )
 		load imageMapping maker files = do
@@ -125,6 +135,26 @@ initAssets addonsDir = do
 				f' file = do
 					result <- assemble maker file
 					return $ f result
+
+getPictureSized :: String -> Float -> Float -> AssetsManager -> Picture
+getPictureSized name nWidth nHeight assets = sizeTo nWidth nHeight (getPicture name assets)
+
+sizeTo :: Float -> Float -> Picture -> Picture
+sizeTo nWidth nHeight Blank                             = Blank
+sizeTo nWidth nHeight (Translate width height subImage) = translate width height $ sizeTo nWidth nHeight subImage
+sizeTo nWidth nHeight (Scale scaleX scaleY subImage)    = scale scaleX scaleY $ sizeTo (nWidth/scaleX) (nHeight/scaleY) subImage
+sizeTo nWidth nHeight (Rotate rotation subImage)        = rotate rotation $ sizeTo nWidth nHeight subImage
+sizeTo nWidth nHeight (Pictures subImages)              = pictures $ map (sizeTo nWidth nHeight) subImages
+sizeTo nWidth nHeight image@(Bitmap width height _ _)   = scale s s image 
+	where
+	s = (max nWidth nHeight) / (fromIntegral $ max width height)
+
+getPicture :: String -> AssetsManager -> Picture
+getPicture name assets = case (Map.lookup name $ assets^.assetsTextures) of
+	Just asset -> asset
+	Nothing -> color red $ text ("Couldn't load asset " ++ name)
+
+---------- end of helper functions ----------
 
 conversion :: YamlLight -> Yaml
 conversion YNil = YamlNull

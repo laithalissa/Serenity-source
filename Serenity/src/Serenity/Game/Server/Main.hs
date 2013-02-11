@@ -29,7 +29,8 @@ server
 server port clientCount = do
 	print "server started"	
 	print "server loading addons"
-	addons <- initAddons "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
+	addonsDir <- defaultAssetsDirectory
+	addons <- initAddons addonsDir
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"

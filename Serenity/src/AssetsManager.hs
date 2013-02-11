@@ -32,7 +32,7 @@ import Data.Yaml.YamlLight
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Data.Color
 import Paths_Serenity(getDataFileName)
-import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions)
+import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions, getCurrentDirectory)
 
 -- serenity modules
 import Serenity.Model.Sector(Resources(..))
@@ -69,8 +69,8 @@ getFileNames dir = do
 		clean :: String -> [FilePath] -> [FilePath]
 		clean extension = filter ((==) extension . takeExtensions) 
 
-		subdir :: FilePath -> FilePath -> FilePath
-		subdir parent child = parent ++ (pathSeparator : child)
+subdir :: FilePath -> FilePath -> FilePath
+subdir parent child = parent ++ (pathSeparator : child)
 	
 
 loadImages :: [FilePath] -> IO (Map FilePath Picture)
@@ -140,6 +140,10 @@ initAssets addonsDir = do
 	let systems = Map.map snd $ (bundle^.bundleSystems)
 	let textures = (bundle^.bundleTextures)
 	return $ Assets shipClasses weapons systems textures
+
+defaultAssetsDirectory = do
+	dir <- getCurrentDirectory 
+	return $ subdir (subdir dir "resources") "templates"
 
 getPictureSized :: String -> Float -> Float -> Assets -> Picture
 getPictureSized name nWidth nHeight assets = sizeTo nWidth nHeight (getPicture name assets)

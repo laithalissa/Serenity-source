@@ -30,9 +30,9 @@ client serverHost serverPort ownerId = do
 	let outbox = channelOutbox transport
 
 	print "Connected!"
-
-	assets <- initAssets "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
-	addons <- initAddons "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
+	addonsDir <- defaultAssetsDirectory
+	assets <- initAssets addonsDir
+	addons <- initAddons addonsDir
 
 	playIO
 		(InWindow "Project Serenity" windowSize (0, 0))

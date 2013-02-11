@@ -22,32 +22,41 @@ gui = do
 		(\_ -> \a -> return a)
 
 data ApplicationController = ApplicationController
-	{	_appMode   :: ApplicationMode
+	{	_appViewGolbals :: ViewGlobals ApplicationController
+	,	_appMode   :: ApplicationMode
 	,	_appAssets :: Assets.Assets
 	,	_appMenus  :: [String]
 	,	_appCount  :: Int
-	,	_appMenuLabel :: Label
+	,	_appMenuLabel :: Button ApplicationMode
+	,	_appMenuButton :: Button ApplicationMode
 	,	_appGameLabel :: Label
 	}
 
 data ApplicationMode = MainMenu | Game
 
 initApplicationController assets = ApplicationController
-	{	_appMode  = MainMenu
+	{	_appViewGolbals = initGlobals
+	,	_appMode  = MainMenu
 	,	_appAssets = assets
 	,	_appMenus = ["Menu 1", "Menu 2"]
 	,	_appCount = 0
-	,	_appMenuLabel = initLabel "Main Menu" black (Just red)
+	,	_appMenuLabel = initButton (initLabel "Main Menu" black (Just red)) (initLabel "Main Menu" black (Just blue)) []
+	,	_appMenuButton = initButton (initLabel "Main Menu" black (Just red)) (initLabel "Main Menu" black (Just blue)) [(ButtonEvent LeftButton Up (Modifiers Up Up Up), \_ -> Game)]
 	,	_appGameLabel = initLabel "Game" black (Just green)
 	}
 
 makeLenses ''ApplicationController
 
+instance ViewController ApplicationController where
+	getView app = case app^.appMode of 
+		MainMenu -> viewOne app
+		Game     -> viewTwo app
+
 viewOne app = 
-	((initView ((0, 0), (1024, 768))) { _viewEventHandler= Just $ \_ -> appMode .~ Game $ app })
+	(initView ((0, 0), (1024, 768)))
 	<++ 
-	[	label app appMenuLabel ((100,100),(16,110))
-	,	label app appMenuLabel ((100,400),(16,110))
+	[	button app appMenuLabel appMode ((100,100),(16,110))
+	,	button app appMenuButton appMode ((100,400),(16,110))
 	]
 
 viewTwo app = 
@@ -55,8 +64,3 @@ viewTwo app =
 	<++ 
 	[	label app appGameLabel ((100,100),(16,110))
 	]
-
-instance ViewController ApplicationController where
-	getView app = case app^.appMode of 
-		MainMenu -> viewOne app
-		Game     -> viewTwo app

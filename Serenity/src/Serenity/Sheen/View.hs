@@ -1,4 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ImpredicativeTypes #-}
 
 module Serenity.Sheen.View where
 
@@ -24,12 +26,26 @@ data View a = View
 	}
 makeLenses ''View
 
+data ViewGlobals a = ViewGlobals
+	{	_globalMouseOver :: Maybe (Simple Lens a (View a))
+	,	_globalFocus     :: Maybe (Simple Lens a (View a))
+	}
+makeLenses ''ViewGlobals
+
+initGlobals = ViewGlobals
+	{	_globalMouseOver = Nothing
+	,	_globalFocus     = Nothing
+	}
+
 class ViewController a where
+	globals :: Simple Lens a (ViewGlobals a)
 	getView :: a -> View a
-	draw :: a -> Picture
-	draw a = drawView (getView a)
-	handleEvent :: Event -> a -> a
-	handleEvent event a = handleViewEvent (event2UIEvent event) (getView a) a
+
+draw :: ViewController a => a -> Picture
+draw a = drawView (getView a)
+
+handleEvent :: ViewController a => Event -> a -> a
+handleEvent event a = handleViewEvent (event2UIEvent event) (getView a) a
 
 -- | Create new view
 initView

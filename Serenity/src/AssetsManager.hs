@@ -26,11 +26,14 @@ import Paths_Serenity(getDataFileName)
 import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, takeExtensions)
 
 -- serenity modules
+import Serenity.Model.Sector(Resources(..))
+
 import Serenity.Model.Ship
 	(	WeaponSlot(..)
 	,	SystemSlot(..)
 	,	ShipClass(..)
 	,	Weapon(..)
+	,	WeaponEffect(..)
 	,	System(..)
 	)
 
@@ -85,10 +88,21 @@ yamlLookupString key node = yamlString $ yamlLookup key node
 initAssets :: FilePath -> IO Assets
 initAssets addonsDir = do
 	files@(shipClassFiles, weaponFiles, systemFiles, textureFiles) <- getFileNames addonsDir
-	shipClass <- assemble shipClassMaker (shipClassFiles !! 0)
-	print shipClass
+	imageMap <- loadImages textureFiles
+	let load' = load imageMap
+	shipClasses <- load' shipClassMaker
+	weapons <- load' weaponMaker
+	systems <- load' systemMaker
+	print shipClasses
+	print weapons
+	print systems
 	return NoAssets
 
+	
+		where
+		load :: Map FilePath Picture -> (Yaml -> a) -> [FilePath] -> IO ( Map String (a, Picture) )
+		load imageMapping maker files = liftA Map.fromList $ sequence $ map (liftA f . assemble maker) files
+			where f (thing, name, fileName) = (thing, name, fromJust $ Map.lookup fileName imageMapping)
 
 conversion :: YamlLight -> Yaml
 conversion YNil = YamlNull
@@ -103,8 +117,9 @@ assemble f file = do
 	let yamlRoot = conversion node
 	return $ f yamlRoot
 
-shipClassMaker :: Yaml -> (ShipClass, FilePath)
-shipClassMaker node = (ShipClass name' cor' weapons' systems', imageName')
+---------- Ship Class ----------
+shipClassMaker :: Yaml -> (ShipClass, String, FilePath)
+shipClassMaker node = (ShipClass cor' weapons' systems', name', imageName')
 	where
 		name' = yamlLookupString "shipName" node
 		imageName' = yamlLookupString "fileName" node
@@ -124,6 +139,67 @@ systemSlotMaker node = SystemSlot location' direction'
 	where
 		location' = read $ yamlLookupString "location" node
 		direction' = read $ yamlLookupString "direction" node
+
+---------- Weapon ----------
+weaponMaker 
+	:: Yaml -- ^ yaml node 
+	-> ( Weapon -- ^ weapon extracted from node 
+	   , String -- ^ weapon name
+	   , FilePath -- ^ weapon image file
+	   )
+weaponMaker node = (weapon, name, fileName)
+	where
+		weapon = Weapon range' effect' reloadTime' accuracy' cost'
+		name = yamlLookupString "weaponName" node
+		fileName = yamlLookupString "fileName" node
+		range' = read $ yamlLookupString "range" node
+		reloadTime' = read $ yamlLookupString "reloadTime" node
+		accuracy' = read $ yamlLookupString "accuracy" node
+		effect' = weaponDamageMaker $ yamlLookup "damage" node
+		cost' = weaponUseCostMaker $ yamlLookup "useCost" node
+		
+
+weaponDamageMaker 
+	:: Yaml -- ^ yaml node
+	-> WeaponEffect -- ^ weapon damage extracted from node
+weaponDamageMaker node = WeaponEffect shield' hull' penetration'
+	where
+		shield' = read $ yamlLookupString "shield" node
+		hull' = read $ yamlLookupString "hull" node
+		penetration' = read $ yamlLookupString "penetration" node
+
+
+weaponUseCostMaker 
+	:: Yaml -- ^ yaml node
+	-> Resources -- ^ resource cost extracted from node
+weaponUseCostMaker node = Resources fuel' metal' antimatter'
+	where
+		fuel' = read $ yamlLookupString "fuel" node
+		metal' = read $ yamlLookupString "metal" node
+		antimatter' = read $ yamlLookupString "antiMatter" node
+
+
+---------- Systems ----------
+
+systemMaker
+	:: Yaml -- ^ yaml node
+	-> ( System -- ^ ship system extracted from node
+	   , String -- ^ system name
+	   , FilePath -- ^ filename of system image
+	   ) 
+systemMaker node = (System shield' hull' engine', name', fileName')
+	where
+		name' = yamlLookupString "name" node
+		fileName' = yamlLookupString "fileName" node
+		shield' = read $ yamlLookupString "shield" node
+		hull' = read $ yamlLookupString "hull" node
+		engine' = read $ yamlLookupString "speed" node
+
+
+
+---------- End ----------
+
+
 
 data Assets = NoAssets | Assets
 	{	_assetsShipClasses :: Map String (ShipClass, Picture)

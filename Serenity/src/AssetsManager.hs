@@ -120,12 +120,16 @@ initAssets addonsDir = do
 	
 		where
 		load :: Map FilePath Picture -> (Yaml -> (a, String, FilePath)) -> [FilePath] -> IO ( Map String (a, Picture) )
-		load imageMapping maker files = liftA Map.fromList $ sequence $ map f' files
+		load imageMapping maker files = do
+			result <- sequence $ map f' files
+			return $ Map.fromList result
 			where 
-				f :: (a, String, FilePath) -> (String, (a, Picture))
+				--f :: (b, String, FilePath) -> (String, (b, Picture))
 				f (thing, name, fileName) = (name, (thing, fromJust $ Map.lookup fileName imageMapping))
-				f' :: FilePath -> IO (String, (a, Picture))
-				f' file = liftA f $ assemble maker file
+				--f' :: FilePath -> IO (String, (b, Picture))
+				f' file = do
+					result <- assemble maker file
+					return $ f result
 
 conversion :: YamlLight -> Yaml
 conversion YNil = YamlNull

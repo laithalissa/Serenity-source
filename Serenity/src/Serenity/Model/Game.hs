@@ -68,7 +68,7 @@ initGame fleets addons sector = game'
 		}
 
 demoGame :: Addons -> Game
-demoGame addons = game'
+demoGame addons = game' game
 	where 
 	game = initGame fleets addons sectorOne
 	fleets = Map.fromList 

@@ -85,6 +85,13 @@ data ShipConfiguration = ShipConfiguration
 	}
 	deriving (Show, Eq)
 
+demoShipConfiguration :: ShipConfiguration
+demoShipConfiguration = ShipConfiguration
+	{	_shipConfigurationShipClass="Destroyer"
+	,	_shipConfigurationWeapons=[Just "Laser"]
+	,	_shipConfigurationSystems=[Just "ShieldBoost"]
+	}
+
 data Weapon = Weapon
 	{	_weaponRange      :: Int
 	,	_weaponEffect     :: WeaponEffect

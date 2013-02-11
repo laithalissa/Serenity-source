@@ -4,6 +4,7 @@ module Serenity.Model.Game where
 
 import AssetsManager
 import Serenity.Model.Entity
+import Serenity.Model.Fleet
 import Serenity.Model.Sector
 
 import Control.Lens
@@ -38,15 +39,22 @@ addShip ownerId ship game = game'
 		}
 
 initGame :: Map OwnerID Fleet -> Addons -> Sector -> Game
-initGame fleets addons sector = fold game f $ Map.toList fleets
+initGame fleets addons sector = game'
 	where 
-	fleetsList :: [(OwnerId, Fleet)]
+	fleetsList :: [(OwnerID, Fleet)]
 	fleetsList = Map.toList fleets
 	spawnPoints :: [(Double, Double)]
 	spawnPoints = sector^.sectorSpawnPoints
-	fleetsSpawnPoint :: [(OwnerId, Fleet, Dobule, Double)]
+	fleetsSpawnPoint :: [(OwnerID, Fleet, Double, Double)]
 	fleetsSpawnPoint = zipWith (\(oId, f) (x,y) -> (oId, f, x, y)) fleetsList spawnPoints
-
+	shipsSpawnPoint :: [(OwnerID, ShipConfiguration, Double, Double)]
+	shipsSpawnPoint = concat $ map f fleetsSpawnPoint
+		where
+		f (oId,Fleet scs,x,y) = map (\sc-> (oId,sc,x,y)) scs
+	game' = foldl game f shipsSpawnPoint
+		where
+		f g (oId,sc,x,y) = addShip oId (initShip sc (x,y) (0,0)) g
+		
 	game = Game
 		{	_gameTime = 0
 		,	_gameRandom = mkStdGen 1758836
@@ -58,41 +66,51 @@ initGame fleets addons sector = fold game f $ Map.toList fleets
 		,	_gameSystems = _addonsSystems addons
 		}
 
-demoGame addons = (initGame addons sectorOne){_gameShips=Map.fromList entities}
-	where
-	entities =
-		[	createEntity 0 (25,25) OrderNone 0 "Vic"
-		,	createEntity 1 (25,75) OrderNone 1 "Jon"
-		,	createEntity 2 (75,75) (OrderAttack 1) 2 "Squidballs"
-		,	createEntity 3 (75,25) OrderNone 3 "Laith"
+demoGame :: Addons -> Game
+demoGame addons = game
+	where 
+	game = initGame fleets addons sectorOne
+	fleets = Map.fromList 
+		[	(0, demoFleet)
+		,	(1, demoFleet)
+		,	(2, demoFleet)
+		,	(3, demoFleet)
 		]
+-- demoGame addons = (initGame addons sectorOne){_gameShips=Map.fromList entities}
+-- 	where
+-- 	entities =
+-- 		[	createEntity 0 (25,25) OrderNone 0 "Vic"
+-- 		,	createEntity 1 (25,75) OrderNone 1 "Jon"
+-- 		,	createEntity 2 (75,75) (OrderAttack 1) 2 "Squidballs"
+-- 		,	createEntity 3 (75,25) OrderNone 3 "Laith"
+-- 		]
 
-	createEntity eid location order player name =
-		(eid, Entity
-		{	_entityID = eid
-		,	_ownerID = player
-		,	_entityData = createShip location order name
-		})
+-- 	createEntity eid location order player name =
+-- 		(eid, Entity
+-- 		{	_entityID = eid
+-- 		,	_ownerID = player
+-- 		,	_entityData = createShip location order name
+-- 		})
 
-	createShip location order name = Ship
-		{	_shipName = name
-		,	_shipConfiguration = configuration
-		,	_shipLocation = location
-		,	_shipDirection = (0,1)
-		,	_shipDamage = healthExample
-		,	_shipOrder = order
-		,	_shipGoal = GoalNone
-		,	_shipPlan = []
-		,	_shipBeamTargets = []
-		}
-		where
-		configuration = ShipConfiguration
-			{	_shipConfigurationShipClass="Destroyer"
-			,	_shipConfigurationWeapons=[]
-			,	_shipConfigurationSystems=[]
-			}
-		healthExample = Damage
-			{	_damageHull = 0
-			,	_damageShield = 20
-			}
+-- 	createShip location order name = Ship
+-- 		{	_shipName = name
+-- 		,	_shipConfiguration = configuration
+-- 		,	_shipLocation = location
+-- 		,	_shipDirection = (0,1)
+-- 		,	_shipDamage = healthExample
+-- 		,	_shipOrder = order
+-- 		,	_shipGoal = GoalNone
+-- 		,	_shipPlan = []
+-- 		,	_shipBeamTargets = []
+-- 		}
+-- 		where
+-- 		configuration = ShipConfiguration
+-- 			{	_shipConfigurationShipClass="Destroyer"
+-- 			,	_shipConfigurationWeapons=[]
+-- 			,	_shipConfigurationSystems=[]
+-- 			}
+-- 		healthExample = Damage
+-- 			{	_damageHull = 0
+-- 			,	_damageShield = 20
+-- 			}
 

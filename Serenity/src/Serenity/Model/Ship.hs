@@ -24,6 +24,7 @@ data Ship = Ship
 	}
 	deriving (Show, Eq)
 
+
 data Damage = Damage 
 	{	_damageHull   :: Int
 	,	_damageShield :: Int
@@ -51,6 +52,7 @@ data Goal =
 	| GoalGuardLocation Location
 	| GoalCaptured Int
 	deriving (Show, Eq)
+
 
 data ShipAction = 
 	ActionMove 
@@ -103,6 +105,7 @@ data WeaponEffect = WeaponEffect
 	}
 	deriving (Show, Eq)
 
+
 -- ship class --
 
 data ShipClass = ShipClass
@@ -127,18 +130,19 @@ data SystemSlot = SystemSlot
 	deriving (Show, Eq)
 
 
+makeLenses ''Ship
+makeLenses ''Damage
 makeLenses ''Order
 makeLenses ''Goal
 makeLenses ''ShipAction
+makeLenses ''ShipConfiguration
 makeLenses ''Weapon
-makeLenses ''WeaponEffect
 makeLenses ''System
-makeLenses ''Damage
-makeLenses ''Ship
-
+makeLenses ''WeaponEffect
 makeLenses ''ShipClass
 makeLenses ''WeaponSlot
 makeLenses ''SystemSlot
+
 
 applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
 applyWeaponDamage gen effect ship = ship

@@ -65,7 +65,7 @@ makeLenses ''ClientState
 -- | Create the initial client state
 initClientState
 	:: Assets	 	-- ^ Assets
-	:: Addons		-- ^ addons
+	-> Addons		-- ^ addons
 	-> OwnerID     		-- ^ Player's id
 	-> ClientState
 initClientState assets addons ownerID = ClientState

@@ -5,7 +5,6 @@ module Serenity.Game.Client.GUI
 where
 
 import AssetsManager
-
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.ClientMessage (GUICommand(..))
 
@@ -55,8 +54,9 @@ render game uiState assets = Pictures
 			planets = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
 			planetsMap = game^.gameSector.sectorPlanets
 
+		pictureEntity :: Entity Ship -> Picture
 		pictureEntity entity = pictures $ shipAndHealth ++ beams where
-			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
+			beams = concatMap pictureBeam (entity^.entityData^.shipBeamTargets)
 			pictureBeam target = case Map.lookup target (game^.gameShips) of
 				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []

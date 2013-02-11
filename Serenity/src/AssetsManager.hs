@@ -1,15 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Arrows #-}
 
-module AssetsManager
-(	Assets(..)
-,	Addons(..)
-,	initAddons
-,	initAssets
-,	getPicture
-,	sizeTo
-,	getPictureSized
-) where
+module AssetsManager where
+-- (	Assets(..)
+-- ,	Addons(..)
+-- ,	initAddons
+-- ,	initAssets
+-- ,	getPicture
+-- ,	sizeTo
+-- ,	getPictureSized
+-- ) where
 
 import Serenity.Debug(trace', traceShow, trace)
 

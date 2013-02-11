@@ -24,17 +24,39 @@ data Game = Game
 	deriving Show
 makeLenses ''Game
 
-initGame :: Addons -> Sector -> Game
-initGame addons sector = Game
-	{	_gameTime = 0
-	,	_gameRandom = mkStdGen 1758836
-	,	_gameSector = sector
-	,	_gameNextEntityId=0
-	,	_gameShips  = Map.empty
-	,	_gameShipClasses = _addonsShipClasses addons
-	,	_gameWeapons = _addonsWeapons addons
-	,	_gameSystems = _addonsSystems addons
-	}
+addShip :: OwnerID -> Ship -> Game -> Game
+addShip ownerId ship game = game'
+	where
+	game' = gameNextEntityId .~ eId' $ (gameShips .~ ships' $ game)
+	eId' = eId+1
+	eId = game^.gameNextEntityId
+	ships' = Map.insert eId entity' (game^.gameShips)
+	entity' = Entity
+		{	_entityID=eId
+		,	_ownerID=ownerId
+		,	_entityData=ship
+		}
+
+initGame :: Map OwnerID Fleet -> Addons -> Sector -> Game
+initGame fleets addons sector = fold game f $ Map.toList fleets
+	where 
+	fleetsList :: [(OwnerId, Fleet)]
+	fleetsList = Map.toList fleets
+	spawnPoints :: [(Double, Double)]
+	spawnPoints = sector^.sectorSpawnPoints
+	fleetsSpawnPoint :: [(OwnerId, Fleet, Dobule, Double)]
+	fleetsSpawnPoint = zipWith (\(oId, f) (x,y) -> (oId, f, x, y)) fleetsList spawnPoints
+
+	game = Game
+		{	_gameTime = 0
+		,	_gameRandom = mkStdGen 1758836
+		,	_gameSector = sector
+		,	_gameNextEntityId=0
+		,	_gameShips  = Map.empty
+		,	_gameShipClasses = _addonsShipClasses addons
+		,	_gameWeapons = _addonsWeapons addons
+		,	_gameSystems = _addonsSystems addons
+		}
 
 demoGame addons = (initGame addons sectorOne){_gameShips=Map.fromList entities}
 	where

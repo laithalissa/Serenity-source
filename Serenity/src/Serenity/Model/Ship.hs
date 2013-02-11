@@ -12,8 +12,7 @@ type Location = (Double, Double)
 type Direction = (Double, Double)
 
 data Ship = Ship
-	{	_shipName :: String
-	,	_shipConfiguration :: ShipConfiguration
+	{	_shipConfiguration :: ShipConfiguration
 	,	_shipLocation :: Location
 	,	_shipDirection :: Direction
 	,	_shipDamage :: Damage
@@ -24,6 +23,16 @@ data Ship = Ship
 	}
 	deriving (Show, Eq)
 
+initShip :: ShipConfiguration -> Location -> Direction -> Ship
+initShip conf location direction = Ship
+	{	_shipConfiguration=conf
+	,	_shipLocation=location
+	,	_shipDirection=direction
+	,	_shipDamage=Damage 0 0
+	,	_shipGoal=GoalNone
+	,	_shipPlan=[]
+	,	_shipBeamTargets=[]
+	}
 
 data Damage = Damage 
 	{	_damageHull   :: Int

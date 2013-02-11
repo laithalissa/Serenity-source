@@ -2,6 +2,8 @@
 
 module Serenity.Model.Game where
 
+import Serenity.Debug(trace')
+
 import AssetsManager
 import Serenity.Model.Entity
 import Serenity.Model.Fleet
@@ -68,7 +70,7 @@ initGame fleets addons sector = game'
 		}
 
 demoGame :: Addons -> Game
-demoGame addons = game' game
+demoGame addons = trace' $ game' game
 	where 
 	game = initGame fleets addons sectorOne
 	fleets = Map.fromList 

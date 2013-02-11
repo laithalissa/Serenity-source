@@ -113,6 +113,7 @@ data Bundle = Bundle
 	,	_bundleTextures :: Map String Picture
 	}
 	deriving (Show, Eq)
+makeLenses ''Bundle
 
 -- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
 data Yaml = 
@@ -179,10 +180,10 @@ initBundle addonsDir = do
 
 extractBundle addonsDir f builder = do
 	bundle <- initBundle addonsDir
-	let shipClasses = map f $ bundle^.bundleShipClasses
-	let weapons = map f $ bundle^.bundleWeapons
-	let systems = map f $ bundle^.bundleSystems
-	let textures = bundle^.bundleTextures
+	let shipClasses = map f $ (bundle^.bundleShipClasses)
+	let weapons = map f $ (bundle^.bundleWeapons)
+	let systems = map f $ (bundle^.bundleSystems)
+	let textures = (bundle^.bundleTextures)
 	return builder shipClasses weapons systems textures
 
 conversion :: YamlLight -> Yaml

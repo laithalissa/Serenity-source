@@ -119,7 +119,7 @@ initAssets addonsDir = do
 
 	
 		where
-		load :: Map FilePath Picture -> (Yaml -> a) -> [FilePath] -> IO ( Map String (a, Picture) )
+		load :: Map FilePath Picture -> (Yaml -> (a, String, FilePath)) -> [FilePath] -> IO ( Map String (a, Picture) )
 		load imageMapping maker files = liftA Map.fromList $ sequence $ map f' files
 			where 
 				f :: (a, String, FilePath) -> (String, (a, Picture))

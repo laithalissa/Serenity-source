@@ -3,6 +3,7 @@
 
 module AssetsManager
 (	Assets(..)
+,	Addons(..)
 ,	initAddons
 ,	initAssets
 ,	getPicture
@@ -37,13 +38,6 @@ import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropE
 import Serenity.Model.Sector(Resources(..))
 
 import Serenity.Model.Ship
-	(	WeaponSlot(..)
-	,	SystemSlot(..)
-	,	ShipClass(..)
-	,	Weapon(..)
-	,	WeaponEffect(..)
-	,	System(..)
-	)
 
 
 type ShipFile = String
@@ -131,10 +125,21 @@ yamlLookupString key node = yamlString $ yamlLookup key node
 ---------- exported functions ----------
 
 initAddons :: FilePath -> IO Addons
-initAddons addonsDir = extractBundle addonsDir fst (\sc w s _ -> Addons sc w s)
+initAddons addonsDir = 	do
+	bundle <- initBundle addonsDir
+	let shipClasses = Map.map fst $ (bundle^.bundleShipClasses)
+	let weapons = Map.map fst $ (bundle^.bundleWeapons)
+	let systems = Map.map fst $ (bundle^.bundleSystems)
+	return $ Addons shipClasses weapons systems 
 
 initAssets :: FilePath -> IO Assets
-initAssets addonsDir = extractBundle addonsDir snd Assets
+initAssets addonsDir = do
+	bundle <- initBundle addonsDir
+	let shipClasses = Map.map snd $ (bundle^.bundleShipClasses)
+	let weapons = Map.map snd $ (bundle^.bundleWeapons)
+	let systems = Map.map snd $ (bundle^.bundleSystems)
+	let textures = (bundle^.bundleTextures)
+	return $ Assets shipClasses weapons systems textures
 
 getPictureSized :: String -> Float -> Float -> Assets -> Picture
 getPictureSized name nWidth nHeight assets = sizeTo nWidth nHeight (getPicture name assets)
@@ -177,14 +182,6 @@ initBundle addonsDir = do
 		f' file = do
 			result <- assemble maker file
 			return $ f result
-
-extractBundle addonsDir f builder = do
-	bundle <- initBundle addonsDir
-	let shipClasses = map f $ (bundle^.bundleShipClasses)
-	let weapons = map f $ (bundle^.bundleWeapons)
-	let systems = map f $ (bundle^.bundleSystems)
-	let textures = (bundle^.bundleTextures)
-	return builder shipClasses weapons systems textures
 
 conversion :: YamlLight -> Yaml
 conversion YNil = YamlNull

@@ -29,9 +29,9 @@ initGame addons sector = Game
 	,	_gameRandom = mkStdGen 1758836
 	,	_gameSector = sector
 	,	_gameShips  = Map.empty
-	,	_gameShipClasses = addons^.addonsShipClasses
-	,	_gameWeapons = addons^.addonsWeapons
-	,	_gameSystems = addons^.addonsSystems
+	,	_gameShipClasses = _addonsShipClasses addons
+	,	_gameWeapons = _addonsWeapons addons
+	,	_gameSystems = _addonsSystems addons
 	}
 
 defaultGame = Game
@@ -77,7 +77,7 @@ demoGame addons = (initGame addons sectorOne){_gameShips=Map.fromList entities}
 			,	_shipConfigurationWeapons=[]
 			,	_shipConfigurationSystems=[]
 			}
-			healthExample = Damage
+		healthExample = Damage
 			{	_damageHull = 0
 			,	_damageShield = 20
 			}

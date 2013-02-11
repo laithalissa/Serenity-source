@@ -145,6 +145,12 @@ defaultAssetsDirectory = do
 	dir <- getCurrentDirectory 
 	return $ subdir (subdir dir "resources") "templates"
 
+emptyAddons :: Addons
+emptyAddons = Addons Map.empty Map.empty Map.empty
+
+emptyAssets :: Assets
+emptyAssets = Assets Map.empty Map.empty Map.empty Map.empty
+
 getPictureSized :: String -> Float -> Float -> Assets -> Picture
 getPictureSized name nWidth nHeight assets = sizeTo nWidth nHeight (getPicture name assets)
 

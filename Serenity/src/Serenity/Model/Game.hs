@@ -15,6 +15,7 @@ data Game = Game
 	{	_gameTime :: Double
 	,	_gameRandom :: StdGen
 	,	_gameSector :: Sector
+	,	_gameNextEntityId :: Int
 	,	_gameShips  :: Map EntityID (Entity Ship)
 	,	_gameShipClasses :: Map String ShipClass
 	,	_gameWeapons :: Map String Weapon
@@ -28,20 +29,11 @@ initGame addons sector = Game
 	{	_gameTime = 0
 	,	_gameRandom = mkStdGen 1758836
 	,	_gameSector = sector
+	,	_gameNextEntityId=0
 	,	_gameShips  = Map.empty
 	,	_gameShipClasses = _addonsShipClasses addons
 	,	_gameWeapons = _addonsWeapons addons
 	,	_gameSystems = _addonsSystems addons
-	}
-
-defaultGame = Game
-	{	_gameTime = 0
-	,	_gameRandom = mkStdGen 1758836
-	,	_gameSector = sectorOne
-	,	_gameShips  = Map.empty
-	,	_gameShipClasses = Map.empty
-	,	_gameWeapons = Map.empty
-	,	_gameSystems = Map.empty
 	}
 
 demoGame addons = (initGame addons sectorOne){_gameShips=Map.fromList entities}

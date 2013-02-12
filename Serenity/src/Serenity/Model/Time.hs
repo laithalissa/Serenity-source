@@ -9,6 +9,7 @@ module Serenity.Model.Time
 ,	Updateable(..)
 ,	Commandable(..)
 ,	Evolvable(..)
+,	filteredUpdates
 ) where
 
 import Debug.Trace(trace)
@@ -100,6 +101,28 @@ instance Evolvable (Entity Ship) where
 		upP <- evolveShipPlan -< (entity, game)
 		upD <- evolveShipDamage -< (entity, game)
 		id -< (upT ++ upP ++ upD)
+
+
+
+filteredUpdates :: [Update] -> [Update]
+filteredUpdates updates' = resultUpdates
+	where
+	resultUpdates = filter (f updates') updates'
+	f :: [Update] -> Update -> Bool
+	f updates (UpdateEntity entity) = not $ hasDelete' entity updates
+	f updates (AddEntity entity) = not $ hasDelete' entity updates
+	f updates (DeleteEntity eID) = True
+	f updates update = not $ hasDelete (updateEntityID update) updates
+
+	hasDelete' :: Entity Ship -> [Update] -> Bool
+	hasDelete' entity updates = hasDelete (entity^.entityID) updates
+	hasDelete :: EntityID -> [Update] -> Bool
+	hasDelete eID [] = False
+	hasDelete eID (u:us) = case u of
+		(DeleteEntity eID') -> if (eID == eID') then True else hasDelete eID us
+		_ -> hasDelete eID us
+
+
 
 evolveShipDamage :: UpdateWire (Entity Ship, Game)
 evolveShipDamage = proc (entity, game) -> do

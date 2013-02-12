@@ -11,6 +11,8 @@ module Serenity.Model.Time
 ,	Evolvable(..)
 ) where
 
+import Debug.Trace(trace)
+
 import Serenity.AI.Plan
 import Serenity.Maths.Util
 import Serenity.Model.Game
@@ -97,7 +99,7 @@ instance Evolvable (Entity Ship) where
 		upT <- evolveShipTargets -< (entity, game)
 		upP <- evolveShipPlan -< (entity, game)
 		upD <- evolveShipDamage -< (entity, game)
-		id -< upT ++ upP ++ upD
+		id -< (upT ++ upP ++ upD)
 
 evolveShipDamage :: UpdateWire (Entity Ship, Game)
 evolveShipDamage = proc (entity, game) -> do

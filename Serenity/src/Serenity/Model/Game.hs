@@ -70,7 +70,7 @@ initGame fleets addons sector = game'
 		}
 
 demoGame :: Addons -> Game
-demoGame addons = trace' $ game' game
+demoGame addons = game' game
 	where 
 	game = initGame fleets addons sectorOne
 	fleets = Map.fromList 

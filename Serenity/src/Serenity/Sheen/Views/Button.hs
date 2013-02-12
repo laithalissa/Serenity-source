@@ -14,9 +14,9 @@ import Graphics.Gloss.Interface.IO.Game
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-data Button b = Button
-	{	_buttonLabel :: Label
-	,	_buttonLabelPushed :: Label
+data Button a b = Button
+	{	_buttonLabel :: Label a
+	,	_buttonLabelPushed :: Label a
 	,	_buttonMode :: ButtonMode
 	,	_buttonIsPushed :: Bool
 	,	_buttonAction :: Map ButtonEvent (b -> b)
@@ -40,11 +40,11 @@ uiEvent2ButtonEvent _ = Nothing
 makeLenses ''ButtonMode
 makeLenses ''Button
 
-button :: a -> Simple Lens a (Button b) -> Simple Lens a b -> ((Int, Int), (Int, Int)) -> View a
+button :: a -> Simple Lens a (Button a b) -> Simple Lens a b -> ((Int, Int), (Int, Int)) -> View a
 button a button lens bounds = (label a (button.labelToDisplay) bounds)
 	{	_viewEventHandler = Just $ \event -> buttonEventHandler lens (uiEvent2ButtonEvent event) a
 	} where
-		labelToDisplay :: Simple Lens (Button b) Label
+		labelToDisplay :: Simple Lens (Button a b) (Label a)
 		labelToDisplay = if (a^.button.buttonIsPushed) then buttonLabelPushed else buttonLabel
 
 		buttonEventHandler _ Nothing = id

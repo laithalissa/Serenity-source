@@ -10,16 +10,6 @@ import qualified Serenity.Game.Client.Assets as Assets
 import Graphics.Gloss.Interface.IO.Game
 import Control.Lens
 
-gui = do
-	assets <- Assets.initialize
-	playIOZero
-		(InWindow "Project Serenity" (1024, 768) (0, 0))
-		black
-		30
-		(initApplicationController assets)
-		(\a -> return $ draw a)
-		(\event -> \a -> return $ handleEvent event a)
-		(\_ -> \a -> return a)
 
 data ApplicationController = ApplicationController
 	{	_appViewGolbals :: ViewGlobals ApplicationController
@@ -27,25 +17,26 @@ data ApplicationController = ApplicationController
 	,	_appAssets :: Assets.Assets
 	,	_appMenus  :: [String]
 	,	_appCount  :: Int
-	,	_appMenuLabel :: Button ApplicationMode
-	,	_appMenuButton :: Button ApplicationMode
-	,	_appGameLabel :: Label
+	,	_appMenuLabel :: Button ApplicationController ApplicationMode
+	,	_appMenuButton :: Button ApplicationController ApplicationMode
+	,	_appGameLabel :: Label ApplicationController
 	}
 
 data ApplicationMode = MainMenu | Game
 
+makeLenses ''ApplicationController
+
 initApplicationController assets = ApplicationController
 	{	_appViewGolbals = initGlobals
-	,	_appMode  = MainMenu
+	,	_appMode   = MainMenu
 	,	_appAssets = assets
-	,	_appMenus = ["Menu 1", "Menu 2"]
-	,	_appCount = 0
-	,	_appMenuLabel = initButton (initLabel "Main Menu" black (Just red)) (initLabel "Main Menu" black (Just blue)) []
-	,	_appMenuButton = initButton (initLabel "Main Menu" black (Just red)) (initLabel "Main Menu" black (Just blue)) [(ButtonEvent LeftButton Up (Modifiers Up Up Up), \_ -> Game)]
-	,	_appGameLabel = initLabel "Game" black (Just green)
+	,	_appMenus  = ["Menu 1", "Menu 2"]
+	,	_appCount  = 0
+	,	_appMenuLabel  = initButton (initLabel (StringLabel "Main Menu") black (Just red)) (initLabel (StringLabel "Main Menu") black (Just blue)) []
+	,	_appMenuButton = initButton (initLabel (StringLabel "Main Menu") black (Just red)) (initLabel (StringLabel "Main Menu") black (Just blue)) [(ButtonEvent LeftButton Up (Modifiers Up Up Up), \_ -> Game)]
+	,	_appGameLabel  = initLabel (StringLabel "Game") black (Just green)
 	}
 
-makeLenses ''ApplicationController
 
 instance ViewController ApplicationController where
 	getView app = case app^.appMode of 
@@ -64,3 +55,15 @@ viewTwo app =
 	<++ 
 	[	label app appGameLabel ((100,100),(16,110))
 	]
+
+
+gui = do
+	assets <- Assets.initialize
+	playIOZero
+		(InWindow "Project Serenity" (1024, 768) (0, 0))
+		black
+		30
+		(initApplicationController assets)
+		(\a -> return $ draw a)
+		(\event -> \a -> return $ handleEvent event a)
+		(\_ -> \a -> return a)

@@ -56,7 +56,7 @@ initGame fleets addons sector = game'
 	game' :: Game
 	game' = foldl f game shipsSpawnPoint
 		where
-		f g (oId,sc,x,y) = addShip oId (initShip sc (x,y) (0,0)) g
+		f g (oId,sc,x,y) = addShip oId (initShip sc (x,y) (0,1)) g
 		
 	game = Game
 		{	_gameTime = 0

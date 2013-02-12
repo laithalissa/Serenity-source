@@ -7,17 +7,21 @@ where
 import Serenity.Game.Client.Assets
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.ClientMessage (GUICommand(..))
-
 import Serenity.Maths.Util
 import Serenity.Model
 
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Data.Color
-
 import Control.Lens
+import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (catMaybes)
 import GHC.Float
+
+import Control.Monad.State
+
+isSelected :: Simple Lens (Ship, Game) Bool
+isSelected = lens (\_ -> True) (\a _ -> a)
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
 --handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewport=((x, y), z) } = uiState { viewport = ((x+dx, y+dy), z) }
@@ -44,7 +48,7 @@ render game uiState assets = Pictures
 		renderInWorld game = pictures
 			[	pictures $ map pictureSpaceLane $ game^.gameSector.sectorSpaceLanes
 			,	pictures $ map picturePlanet $ Map.elems $ game^.gameSector.sectorPlanets
-			,	pictures $ map pictureEntity $ Map.elems $ game^.gameShips
+			,	pictures $ map (pictureEntity (game^.gameTime)) $ Map.elems $ game^.gameShips
 			]
 
 		picturePlanet planet = translate x y $ getPictureSized (planet^.planetEcotype.ecotypeAssetName) 5 5 assets where
@@ -54,23 +58,27 @@ render game uiState assets = Pictures
 			planets = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
 			planetsMap = game^.gameSector.sectorPlanets
 
-		pictureEntity entity = pictures $ shipAndHealth ++ beams where
+		pictureEntity time entity = pictures $ (shipAndHealth time) ++ beams where
 			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
 			pictureBeam target = case Map.lookup target (game^.gameShips) of
 				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []
 
-			shipAndHealth = map (translate x y) [rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" dim dim assets), 
-														(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox, 
-														healthMeter]), 
-														(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, 
-														shieldMeter])] where
+			selection = if shipIsSelected then [drawSelectionArc 5 (double2Float time)] else []
+			shipAndHealth time = map (translate x y) $
+				selection ++ 
+				[rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" dim dim assets), 
+				(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox, 
+				healthMeter]), 
+				(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, 
+				shieldMeter])] where
 			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
 			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
 			dim = 10
+			shipIsSelected = (entity^.entityData, game)^.isSelected
 			-- Background box for health and shield meters
 			boundingBox = color (makeColor8 200 200 200 40) $ Polygon $ [(0,0), (boundingBoxWidth, 0), (boundingBoxWidth, boxHeight), (0, boxHeight)]
-			healthMeter = color (healthColorCont healthAsPercentage) $ Polygon $ [(0,0), 
+			healthMeter = color (healthColor healthAsPercentage) $ Polygon $ [(0,0), 
 																(healthBarWidth, 0), 
 																(healthBarWidth, boxHeight), 
 																(0, boxHeight)]
@@ -97,8 +105,22 @@ render game uiState assets = Pictures
 			-- Colour for the shields
 			shieldBlue = makeColor8 0 0 99 100
 
-healthColorCont :: Float -> Color 
-healthColorCont health 
+drawSelectionArc :: Float -> Float -> Picture
+drawSelectionArc radius time = color (selectionColour time) $ rotate (time * 10) $ circle where
+		arcLength = 10
+		circle = Pictures $ map (\x -> (ThickArc x (x + arcLength) radius) arcThickness) [0, arcLength*2..(360 - arcLength*2)]
+		selectionColour time = (makeColor8 red (pulsingColour greenBase time) blue alpha)
+		pulsingColour base time = (base + (round (oscillationLimit * (sin $ 2 * time))))
+		red = 100
+		blue = 100
+		-- Minimum amount of green so the pulsing doesn't overflow max (255)
+		greenBase = (255 - (round oscillationLimit))
+		alpha = 75
+		oscillationLimit = 35
+		arcThickness = 0.8
+
+healthColor :: Float -> Color 
+healthColor health 
 	| health <= rBoundary = (makeColor8 255 0 0 alpha)
 	| health <= yBoundary = (makeColor8 255 (greenRatio health) 0 alpha)
 	| otherwise = (makeColor8 (redRatio health) 255 0 alpha)

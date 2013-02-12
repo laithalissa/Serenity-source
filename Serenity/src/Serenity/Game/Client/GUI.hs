@@ -4,7 +4,7 @@ module Serenity.Game.Client.GUI
 )
 where
 
-import Serenity.Game.Client.Assets
+import AssetsManager
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.ClientMessage (GUICommand(..))
 import Serenity.Maths.Util
@@ -15,7 +15,7 @@ import Graphics.Gloss.Data.Color
 import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, fromJust)
 import GHC.Float
 
 import Control.Monad.State
@@ -58,20 +58,21 @@ render game uiState assets = Pictures
 			planets = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
 			planetsMap = game^.gameSector.sectorPlanets
 
+		pictureEntity :: Double -> Entity Ship -> Picture
 		pictureEntity time entity = pictures $ (shipAndHealth time) ++ beams where
 			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
 			pictureBeam target = case Map.lookup target (game^.gameShips) of
 				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []
 
+
 			selection = if shipIsSelected then [drawSelectionArc 5 (double2Float time)] else []
 			shipAndHealth time = map (translate x y) $
-				selection ++ 
-				[rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "ship-commander" dim dim assets), 
-				(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox, 
-				healthMeter]), 
-				(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, 
-				shieldMeter])] where
+				selection ++ [rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "commander-green" dim dim assets), 
+														(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox, 
+														healthMeter]), 
+														(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, 
+														shieldMeter])] where
 			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
 			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
 			dim = 10
@@ -90,7 +91,8 @@ render game uiState assets = Pictures
 			boxHeight = 0.5
 			boundingBoxWidth = 5
 			-- Ship health values
-			totalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
+			totalHealth = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassDamageStrength^.damageHull
+			----totalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
 			lostHealth = entity^.entityData.shipDamage.damageHull
 			currentHealth = totalHealth - lostHealth
 			healthAsPercentage = fromIntegral currentHealth / fromIntegral totalHealth
@@ -98,7 +100,8 @@ render game uiState assets = Pictures
 			-- Shop shield values
 			shieldBarWidth = boundingBoxWidth - (lostShieldPercentage * boundingBoxWidth)
 			lostShield = entity^.entityData.shipDamage.damageShield
-			shipTotalShield = entity^.entityData.shipType.shipTypeMaxDamage.damageShield
+			shipTotalShield = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassDamageStrength^.damageShield
+			----shipTotalShield = entity^.entityData.shipType.shipTypeMaxDamage.damageShield
 			currentShield = shipTotalShield - lostShield
 			lostShieldPercentage = fromIntegral lostShield / fromIntegral shipTotalShield
 			shieldPercentage = fromIntegral currentShield / fromIntegral shipTotalShield

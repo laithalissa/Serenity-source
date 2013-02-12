@@ -5,6 +5,7 @@ where
 
 import Serenity.Game.Server.Main (server)
 import Serenity.Game.Client.Main (client)
+import AssetsManager
 
 import System.Console.ParseArgs
 	(	Args
@@ -75,6 +76,12 @@ topMain = parseArgsIO
 		]
 
 main :: IO ()
+-- main = do
+-- 	assets <- initAssets "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
+-- 	print assets
+-- 	return ()
+
+
 main = do
 	args <- topMain
 	case getRequiredArg args "mode" of

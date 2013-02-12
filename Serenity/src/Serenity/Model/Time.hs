@@ -9,7 +9,10 @@ module Serenity.Model.Time
 ,	Updateable(..)
 ,	Commandable(..)
 ,	Evolvable(..)
+,	filteredUpdates
 ) where
+
+import Debug.Trace(trace)
 
 import Serenity.AI.Plan
 import Serenity.Maths.Util
@@ -97,14 +100,39 @@ instance Evolvable (Entity Ship) where
 		upT <- evolveShipTargets -< (entity, game)
 		upP <- evolveShipPlan -< (entity, game)
 		upD <- evolveShipDamage -< (entity, game)
-		id -< upT ++ upP ++ upD
+		id -< (upT ++ upP ++ upD)
+
+
+
+filteredUpdates :: [Update] -> [Update]
+filteredUpdates updates' = resultUpdates
+	where
+	resultUpdates = filter (f updates') updates'
+	f :: [Update] -> Update -> Bool
+	f updates (UpdateEntity entity) = not $ hasDelete' entity updates
+	f updates (AddEntity entity) = not $ hasDelete' entity updates
+	f updates (DeleteEntity eID) = True
+	f updates update = not $ hasDelete (updateEntityID update) updates
+
+	hasDelete' :: Entity Ship -> [Update] -> Bool
+	hasDelete' entity updates = hasDelete (entity^.entityID) updates
+	hasDelete :: EntityID -> [Update] -> Bool
+	hasDelete eID [] = False
+	hasDelete eID (u:us) = case u of
+		(DeleteEntity eID') -> if (eID == eID') then True else hasDelete eID us
+		_ -> hasDelete eID us
+
+
 
 evolveShipDamage :: UpdateWire (Entity Ship, Game)
 evolveShipDamage = proc (entity, game) -> do
-	case entity^.entityData.shipDamage.damageHull of
-		100 -> id -< [DeleteEntity (entity^.entityID)]
-		dmg -> id -< damageTargets entity game
+	case (health entity game) of
+		0 -> id -< [DeleteEntity (entity^.entityID)]
+		h -> id -< damageTargets entity game
 		where
+		lostHealth entity = entity^.entityData.shipDamage.damageHull
+		totalHealth entity game = (fromJust $ M.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassDamageStrength^.damageHull
+		health entity game = (totalHealth entity game) - (lostHealth entity)
 		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipBeamTargets)
 		damageTarget game target = case M.lookup target (game^.gameShips) of
 			Just entity -> [UpdateShipDamage (entity^.entityID) (entity^.entityData.shipDamage & damageHull +~ 1)]

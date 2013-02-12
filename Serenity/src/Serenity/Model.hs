@@ -1,5 +1,6 @@
 module Serenity.Model
 (	module Serenity.Model.Entity
+,	module Serenity.Model.Fleet
 ,	module Serenity.Model.Game
 ,	module Serenity.Model.Sector
 ,	module Serenity.Model.Time
@@ -7,6 +8,7 @@ module Serenity.Model
 ) where
 
 import Serenity.Model.Entity
+import Serenity.Model.Fleet
 import Serenity.Model.Game
 import Serenity.Model.Sector
 import Serenity.Model.Time

@@ -40,31 +40,21 @@ import Serenity.Model.Sector(Resources(..))
 import Serenity.Model.Ship
 
 
-type ShipFile = String
-type SystemFile = String
-type TextureFile = String
-type WeaponFile = String
+---------- Common ----------
+defaultAssetsDirectory :: IO FilePath
+defaultAssetsDirectory = do
+	dir <- getCurrentDirectory 
+	return $ foldl1 subdir [dir, "resources", "templates"]
 
-shipClassesDirName = ("ships", ".yml")
-systemsDirName = ("systems", ".yml")
-weaponsDirName = ("weapons", ".yml")
-texturesDirName = ("textures", ".bmp")
 
--- | gets all the relevent asset files from the directory passed
-getFileNames :: FilePath -> IO ([ShipFile], [WeaponFile], [SystemFile], [TextureFile])
-getFileNames dir = do
-	shipFiles <- getDirectoryFiles shipClassesDirName
-	weaponFiles <- getDirectoryFiles weaponsDirName
-	systemFiles <- getDirectoryFiles systemsDirName
-	textureFiles <- getDirectoryFiles texturesDirName
-	return (shipFiles, weaponFiles, systemFiles, textureFiles)
-
-		where
-		getDirectoryFiles :: (FilePath, String) -> IO [FilePath]
-		getDirectoryFiles = proc (child, extension) -> do
-			folder <- (uncurry subdir) -< (dir, child)
-			contents <- getDirectoryContents -< folder
-			returnA -< liftA (map (subdir dir . subdir child) . clean extension) contents
+getDirectoryFiles 
+	:: (FilePath, String)  -- ^ directory, and file extension to filter the files against, extension must contain the dot
+	-> IO [FilePath] -- ^ all files in the directory which have the specified file extension
+getDirectoryFiles = proc (folder, extension) -> do
+	contents <- getDirectoryContents -< folder
+	cleanedContents <- (liftA (uncurry . clean)) -< (extension, contents)
+	qualifiedContents <- (liftA $ map (\f->subdir folder f)) -< cleanedContent
+	returnA -< qualifiedContents
 
 		clean :: String -> [FilePath] -> [FilePath]
 		clean extension = filter ((==) extension . takeExtensions) 
@@ -73,6 +63,73 @@ subdir :: FilePath -> FilePath -> FilePath
 subdir parent child = parent ++ (pathSeparator : child)
 	
 
+data YamlForm a = YamlForm
+	{	_yamlFormToYaml :: (a, String, String) -> Yaml -- ^ takes an instance, name, and asset name and produces a yaml node
+	,	_yamlFormFromYaml :: Yaml -> a
+	,	_yamlFormName :: Yaml -> String
+	,	_yamlFormAsset :: Yaml -> String
+	,	_yamlFolder :: String
+	}
+makeLenses ''YamlForm
+
+-- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
+data Yaml = 
+	  YamlMap { yamlMap :: (Map String Yaml) }
+	| YamlList { yamlList :: [Yaml] }
+	| YamlString { yamlString :: String }
+	| YamlNull 
+	deriving (Show, Eq)
+
+yamlLookup :: String -> Yaml -> Yaml
+yamlLookup key (YamlMap mapping) = fromJust $ Map.lookup key mapping
+
+yamlLookupString :: String -> Yaml -> String
+yamlLookupString key node = yamlString $ yamlLookup key node
+
+
+loadYamlForm ::  YamlForm a -> IO [Yaml]
+loadYamlForm yamlForm = do
+	generalDirectory <- defaultAssetsDirectory
+	directory <- subdir generalDirectory (yamlForm^.yamlFolder)
+	fileNames <- getDirectoryFiles (directory, ".yml")
+	loadYamlNode' fileNames
+
+
+conversion :: YamlLight -> Yaml
+conversion YNil = YamlNull
+conversion (YStr bs) = YamlString $ unpack bs
+conversion (YSeq xs) = YamlList (map conversion xs)
+conversion (YMap mapping) = YamlMap $ Map.fromList $ map f (Map.toList mapping)
+	where f ((YStr k), val) = (unpack k, conversion val)
+
+loadYamlNode' :: [FilePath] -> IO [Yaml]
+loadYamlNode' fileNames = sequence $ map loadYamlNode fileNames
+
+loadYamlNode :: FilePath -> IO Yaml
+loadYamlNode fileName = liftA conversion $ parseYamlFile fileName
+
+assemble :: (Yaml -> a) -> FilePath -> IO a
+assemble f file = do
+	node <- parseYamlFile file
+	let yamlRoot = conversion node
+	return $ f yamlRoot
+	
+
+---------- Assets ----------
+
+initImages :: IO (Map String Picture)
+initImages = do
+	generalDirectory <- defaultAssetsDirectory
+	directory <- return $ subdir generalDirectory "textures"
+	fileNames <- getDirectoryFiles (directory, ".bmp")
+	loadImages fileNames
+
+initAddonAssets :: YamlForm a -> IO (Map String Picture)
+initAddonAssets yamlForm = do
+	yamlNode <- loadYamlForm yamlForm
+	
+
+
 loadImages :: [FilePath] -> IO (Map FilePath Picture)
 loadImages files = liftA Map.fromList $ sequence $ map fileF files
 	where
@@ -80,7 +137,30 @@ loadImages files = liftA Map.fromList $ sequence $ map fileF files
 	fileF fileName = do
 		let name = snd $ splitFileName fileName
 		image <- loadBMP fileName
-		return (name, image)
+		return (name, image)	
+
+
+
+---------- Addons ----------
+
+initAddons :: YamlForm a -> IO (Map String a)
+initAddons yamlData = do
+	generalDirectory <- defaultAssetsDirectory
+	directory <- return $ subdir generalDirectory (yamlData^.yamlFolder)
+	fileNames <- getDirectoryFiles (directory, ".yml")
+
+	where
+	load :: (Yaml -> (a, String) -> [FilePath] -> IO (Map String a)
+	load imageMapping maker files = do
+		result <- sequence $ map f' files
+		return $ Map.fromList result
+		where 
+		f (thing, name, fileName) = (name, (thing, fromJust $ Map.lookup fileName imageMapping))
+		f' file = do
+			result <- assemble maker file
+			return $ f result
+
+	
 
 
 data Addons = Addons
@@ -109,19 +189,7 @@ data Bundle = Bundle
 	deriving (Show, Eq)
 makeLenses ''Bundle
 
--- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
-data Yaml = 
-	  YamlMap { yamlMap :: (Map String Yaml) }
-	| YamlList { yamlList :: [Yaml] }
-	| YamlString { yamlString :: String }
-	| YamlNull 
-	deriving (Show, Eq)
 
-yamlLookup :: String -> Yaml -> Yaml
-yamlLookup key (YamlMap mapping) = fromJust $ Map.lookup key mapping
-
-yamlLookupString :: String -> Yaml -> String
-yamlLookupString key node = yamlString $ yamlLookup key node
 ---------- exported functions ----------
 
 initAddons :: FilePath -> IO Addons
@@ -169,7 +237,23 @@ getPicture name assets = case (Map.lookup name $ assets^.assetsTextures) of
 	Just asset -> asset
 	Nothing -> color red $ text ("Couldn't load asset " ++ name)
 
----------- end of helper functions ----------
+---------- helper functions ----------
+
+shipClassesDirName = ("ships", ".yml")
+systemsDirName = ("systems", ".yml")
+weaponsDirName = ("weapons", ".yml")
+texturesDirName = ("textures", ".bmp")
+
+-- | gets all the relevent asset files from the directory passed
+getFi :: FilePath -> IO [FilePath]
+getFileNames dir = do
+	textureFiles <- getDirectoryFiles texturesDirName
+	return (shipFiles, weaponFiles, systemFiles, textureFiles)
+
+		where
+
+
+
 
 initBundle :: FilePath -> IO Bundle
 initBundle addonsDir = do
@@ -193,18 +277,6 @@ initBundle addonsDir = do
 			result <- assemble maker file
 			return $ f result
 
-conversion :: YamlLight -> Yaml
-conversion YNil = YamlNull
-conversion (YStr bs) = YamlString $ unpack bs
-conversion (YSeq xs) = YamlList (map conversion xs)
-conversion (YMap mapping) = YamlMap $ Map.fromList $ map f (Map.toList mapping)
-	where f ((YStr k), val) = (unpack k, conversion val)
-
-assemble :: (Yaml -> a) -> FilePath -> IO a
-assemble f file = do
-	node <- parseYamlFile file
-	let yamlRoot = conversion node
-	return $ f yamlRoot
 
 ---------- Ship Class ----------
 shipClassMaker :: Yaml -> (ShipClass, String, FilePath)

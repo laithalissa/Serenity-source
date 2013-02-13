@@ -26,12 +26,9 @@ makeLenses ''GameBuilder
 data Game = Game
 	{	_gameTime :: Double
 	,	_gameRandom :: StdGen
-	,	_gameSector :: Sector
 	,	_gameNextEntityId :: Int
 	,	_gameShips  :: Map EntityID (Entity Ship)
-	,	_gameShipClasses :: Map String ShipClass
-	,	_gameWeapons :: Map String Weapon
-	,	_gameSystems :: Map String System
+	,	_gameBuidler :: GameBuilder
 	}
 	deriving Show
 makeLenses ''Game

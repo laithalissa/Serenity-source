@@ -8,7 +8,7 @@ module Serenity.Game.Server.Main
 ,	getCommands
 ) where
 
-import AssetsManager
+import Serenity.External.Assets
 import Serenity.Game.Server.ClientData
 import Serenity.Model
 import Serenity.Model.Wire
@@ -29,7 +29,6 @@ server
 server port clientCount = do
 	print "server started"	
 	print "server loading addons"
-	addonsDir <- defaultAssetsDirectory
 	addons <- initAddons addonsDir
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase (fromIntegral port) clientCount

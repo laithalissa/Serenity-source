@@ -21,7 +21,7 @@ import GHC.Float
 import Control.Monad.State
 
 isSelected :: Simple Lens (Ship, Game) Bool
-isSelected = lens (\_ -> True) (\a _ -> a)
+isSelected = lens (\_ -> False) (\a _ -> a)
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
 --handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewport=((x, y), z) } = uiState { viewport = ((x+dx, y+dy), z) }
@@ -65,33 +65,37 @@ render game uiState assets = Pictures
 				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []
 
-
 			selection = if shipIsSelected then [drawSelectionArc 5 (double2Float time)] else []
 			shipAndHealth time = map (translate x y) $
 				selection ++ [rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "commander-green" dim dim assets), 
-														(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox, 
-														healthMeter]), 
-														(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, 
-														shieldMeter])] where
+				(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox, 
+				healthMeter]), 
+				(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, 
+				shieldMeter])] where
 			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
 			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
 			dim = 10
 			shipIsSelected = (entity^.entityData, game)^.isSelected
 			-- Background box for health and shield meters
 			boundingBox = color (makeColor8 200 200 200 40) $ Polygon $ [(0,0), (boundingBoxWidth, 0), (boundingBoxWidth, boxHeight), (0, boxHeight)]
-			healthMeter = color (healthColor healthAsPercentage) $ Polygon $ [(0,0), 
-																(healthBarWidth, 0), 
-																(healthBarWidth, boxHeight), 
-																(0, boxHeight)]
-			shieldMeter = color shieldBlue $ Polygon $ [(0,0), 
-											(shieldBarWidth, 0), 
-											(shieldBarWidth, boxHeight), 
-											(0, boxHeight)]
+			healthMeter = color (healthColor healthAsPercentage) $ Polygon $ 
+				[	(0,0)
+				,	(healthBarWidth, 0)
+				,	(healthBarWidth, boxHeight)
+				,	(0, boxHeight)
+				]
+			shieldMeter = color shieldBlue $ Polygon $ 
+				[	(0,0)
+				,	(shieldBarWidth, 0)
+				,	(shieldBarWidth, boxHeight)
+				,   (0, boxHeight)
+				]
+
 			healthBarWidth = boundingBoxWidth - (lostHealthAsPercentage * boundingBoxWidth)
 			boxHeight = 0.5
 			boundingBoxWidth = 5
 			-- Ship health values
-			totalHealth = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassDamageStrength^.damageHull
+			totalHealth = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassMaxDamage^.damageHull
 			----totalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
 			lostHealth = entity^.entityData.shipDamage.damageHull
 			currentHealth = totalHealth - lostHealth
@@ -100,7 +104,7 @@ render game uiState assets = Pictures
 			-- Shop shield values
 			shieldBarWidth = boundingBoxWidth - (lostShieldPercentage * boundingBoxWidth)
 			lostShield = entity^.entityData.shipDamage.damageShield
-			shipTotalShield = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassDamageStrength^.damageShield
+			shipTotalShield = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassMaxDamage^.damageShield
 			----shipTotalShield = entity^.entityData.shipType.shipTypeMaxDamage.damageShield
 			currentShield = shipTotalShield - lostShield
 			lostShieldPercentage = fromIntegral lostShield / fromIntegral shipTotalShield

@@ -81,8 +81,8 @@ type Plan = [ShipAction]
 
 data ShipConfiguration = ShipConfiguration
 	{	_shipConfigurationShipClass :: String
-	,	_shipConfigurationWeapons :: [Maybe String]
-	,	_shipConfigurationSystems :: [Maybe String]
+	,	_shipConfigurationWeapons   :: [Maybe String]
+	,	_shipConfigurationSystems   :: [Maybe String]
 	}
 	deriving (Show, Eq)
 
@@ -103,9 +103,9 @@ data Weapon = Weapon
 	deriving (Show, Eq)
 
 data System = System
-	{	_systemShield	:: Int -- ^ additional shield capacity
-	,	_systemHull	:: Int -- ^ additional hull capacity
-	,	_systemEngine 	:: Int -- ^ additional engine(speed)
+	{	_systemShield :: Int -- ^ additional shield capacity
+	,	_systemHull   :: Int -- ^ additional hull capacity
+	,	_systemEngine :: Int -- ^ additional engine(speed)
 	}
 	deriving(Show, Eq)
 
@@ -126,23 +126,23 @@ data WeaponEffect = WeaponEffect
 -- ship class --
 
 data ShipClass = ShipClass
-	{	_shipClassCenterOfRotation	:: Location
-	,	_shipClassDamageStrength	:: Damage
-	,	_shipClassWeaponSlots		:: [WeaponSlot]
-	,	_shipClassSystemSlots		:: [SystemSlot]
+	{	_shipClassCenterOfRotation  :: Location
+	,	_shipClassMaxDamage         :: Damage
+	,	_shipClassWeaponSlots       :: [WeaponSlot]
+	,	_shipClassSystemSlots       :: [SystemSlot]
 	}
 	deriving (Show, Eq)
 
 data WeaponSlot = WeaponSlot
-	{	_weaponSlotLocation	:: Location
-	,	_weaponSlotDirection	:: Direction
-	,	_weaponSlotType 	:: WeaponType
+	{	_weaponSlotLocation  :: Location
+	,	_weaponSlotDirection :: Direction
+	,	_weaponSlotType      :: WeaponType
 	}
 	deriving (Show, Eq)
 
 data SystemSlot = SystemSlot
-	{	_systemSlotLocation 	:: Location
-	,	_systemSlotDirection	:: Direction
+	{	_systemSlotLocation  :: Location
+	,	_systemSlotDirection :: Direction
 	}
 	deriving (Show, Eq)
 

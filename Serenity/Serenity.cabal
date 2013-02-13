@@ -4,7 +4,8 @@ license-file:  LICENSE
 build-type:    Simple
 cabal-version: >= 1.9.2
 data-dir:      resources
-data-files: *.bmp
+data-files:    templates/ships/*.yml, templates/systems/*.yml, templates/textures/*.bmp, templates/weapons/*.yml
+
 executable serenity
     main-is:        Main.hs
     build-depends:   

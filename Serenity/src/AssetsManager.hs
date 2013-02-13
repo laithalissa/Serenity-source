@@ -31,7 +31,7 @@ import Data.ByteString.Char8(ByteString, pack, unpack)
 import Data.Yaml.YamlLight
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Data.Color
-import Paths_Serenity(getDataFileName)
+import Paths_Serenity
 import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions, getCurrentDirectory)
 
 -- serenity modules
@@ -142,8 +142,8 @@ initAssets addonsDir = do
 	return $ Assets shipClasses weapons systems textures
 
 defaultAssetsDirectory = do
-	dir <- getCurrentDirectory 
-	return $ subdir (subdir dir "resources") "templates"
+	dataDir <- getDataDir
+	return $ subdir dataDir "templates"
 
 emptyAddons :: Addons
 emptyAddons = Addons Map.empty Map.empty Map.empty

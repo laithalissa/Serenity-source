@@ -5,23 +5,27 @@ import Serenity.External.Addons
 
 ---------- Ship Class ----------
 
-
-
-shipClassMaker :: Yaml -> (ShipClass, String, FilePath)
-shipClassMaker node = (ShipClass cor' strength' weapons' systems', name', imageName')
+shipClassYamlForm :: YamlForm ShipClass
+shipClassYamlForm = YamlForm toYaml' fromYaml' getName' getAssetName' "ships"
 	where
-		name' = yamlLookupString "shipName" node
-		imageName' = yamlLookupString "fileName" node
+	toYaml' (a, name, asset) = YamlNull
+	fromYaml' node = (ShipClass cor' strength' weapons' systems', name', imageName')
+		where
 		cor' = read $ yamlLookupString "centerOfRotation" node
 		strength' = damageStrengthMaker $ yamlLookup "damageStrength" node
 		weapons' = map weaponSlotMaker $ yamlList $ yamlLookup "weaponSlots" node
-		systems' = map systemSlotMaker $  yamlList $ yamlLookup "systemSlots" node
+		systems' = map systemSlotMaker $  yamlList $ yamlLookup "systemSlots" node	
+
+	getName' node = yamlLookupString "shipName" node
+	getAssetName' node = yamlLookupString "fileName" node
+
 
 damageStrengthMaker :: Yaml -> Damage
 damageStrengthMaker node = (Damage hull' shields')
 	where
 	hull' = read $ yamlLookupString "hull" node
 	shields' = read $ yamlLookupString "shields" node
+
 
 weaponSlotMaker :: Yaml -> WeaponSlot
 weaponSlotMaker node = WeaponSlot location' direction' type'
@@ -30,6 +34,7 @@ weaponSlotMaker node = WeaponSlot location' direction' type'
 		direction' = read $ yamlLookupString "direction" node
 		type' = read $ yamlLookupString "type" node
 
+
 systemSlotMaker :: Yaml -> SystemSlot
 systemSlotMaker node = SystemSlot location' direction'
 	where
@@ -37,23 +42,21 @@ systemSlotMaker node = SystemSlot location' direction'
 		direction' = read $ yamlLookupString "direction" node
 
 ---------- Weapon ----------
-weaponMaker 
-	:: Yaml -- ^ yaml node 
-	-> ( Weapon -- ^ weapon extracted from node 
-	   , String -- ^ weapon name
-	   , FilePath -- ^ weapon image file
-	   )
-weaponMaker node = (weapon, name, fileName)
+
+weaponYamlForm :: YamlForm Weapon
+weaponYamlForm = YamlForm toYaml' fromYaml' getName' getAssetName' "weapons"
 	where
-		weapon = Weapon range' effect' reloadTime' accuracy' cost'
-		name = yamlLookupString "weaponName" node
-		fileName = yamlLookupString "fileName" node
+	toYaml' a = YamlNull
+	fromYaml' node = Weapon range' effect' reloadTime' accuracy' cost'
+		where
 		range' = read $ yamlLookupString "range" node
 		reloadTime' = read $ yamlLookupString "reloadTime" node
 		accuracy' = read $ yamlLookupString "accuracy" node
 		effect' = weaponDamageMaker $ yamlLookup "damage" node
 		cost' = weaponUseCostMaker $ yamlLookup "useCost" node
-		
+	getName' node = yamlLookupString "weaponName" node
+	getAssetName' node = yamlLookupString "fileName" node
+
 
 weaponDamageMaker 
 	:: Yaml -- ^ yaml node
@@ -77,18 +80,15 @@ weaponUseCostMaker node = Resources fuel' metal' antimatter'
 
 ---------- Systems ----------
 
-systemMaker
-	:: Yaml -- ^ yaml node
-	-> ( System -- ^ ship system extracted from node
-	   , String -- ^ system name
-	   , FilePath -- ^ filename of system image
-	   ) 
-systemMaker node = (System shield' hull' engine', name', fileName')
+systemYamlForm :: YamlForm System
+systemYamlForm = YamlForm toYaml' fromYaml' getName' getAssetName' "systems"
 	where
-		name' = yamlLookupString "name" node
-		fileName' = yamlLookupString "fileName" node
+	toYaml' a = YamlNull
+	fromYaml' node = System shield' hull' engine'
+		where
 		shield' = read $ yamlLookupString "shield" node
 		hull' = read $ yamlLookupString "hull" node
 		engine' = read $ yamlLookupString "speed" node
-
+	getName' node = yamlLookupString "name" node
+	getAssetName' = yamlLookupString "fileName" node
 

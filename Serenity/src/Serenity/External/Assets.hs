@@ -7,19 +7,26 @@ module Serenity.External.Assets
 
 import Serenity.External.Common 
 
-initImages :: IO (Map String Picture)
+data Assets = Assets
+	{	_assetsPictures :: Map String Picture
+	}
+	deriving (Show, Eq)
+makeLenses ''Assets
+
+initImages :: IO Assets
 initImages = do
 	directory <- assetsDirectory' ["textures"]
 	fileNames <- getDirectoryFiles (directory, ".bmp")
-	loadImages fileNames
+	images <- loadImages fileNames
+	return $ Assets images
 
-initAddonAssets :: YamlForm a -> IO (Map String Picture)
+initAddonAssets :: YamlForm a -> IO Assets
 initAddonAssets yamlForm = do
 	yamlNodes <- loadYamlForm yamlForm
 	imageMap <- initImages 
 	let yamlAssetNames = map (yamlForm^.yamlFormAsset) yamlNodes
 	let yamlAssetPictures = map (\n-> fromJust $ Map.lookup n imageMap) yamlAssetNames
-	return $ Map.fromList $ zip yamlAssetNames yamlAssetPicture
+	return $ Assets $ Map.fromList $ zip yamlAssetNames yamlAssetPicture
 
 loadImages :: [FilePath] -> IO (Map FilePath Picture)
 loadImages files = liftA Map.fromList $ sequence $ map fileF files

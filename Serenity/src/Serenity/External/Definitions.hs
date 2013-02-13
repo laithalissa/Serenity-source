@@ -3,8 +3,6 @@ module Serenity.External.Definitions where
 
 import Serenity.External.Addons
 
-definitions :: (YamlForm ShipClass, YamlForm Weapon, YamlForm System)
-definitions = (shipClassYamlForm, weaponYamlForm, systemYamlForm)
 
 ---------- Ship Class ----------
 

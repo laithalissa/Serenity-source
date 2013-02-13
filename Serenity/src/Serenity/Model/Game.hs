@@ -4,7 +4,6 @@ module Serenity.Model.Game where
 
 import Serenity.Debug(trace')
 
-import AssetsManager
 import Serenity.Model.Entity
 import Serenity.Model.Fleet
 import Serenity.Model.Sector

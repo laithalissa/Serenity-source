@@ -30,14 +30,14 @@ client serverHost serverPort ownerId = do
 	let outbox = channelOutbox transport
 
 	print "Connected!"
-	assets <- initAssets addonsDir
-	addons <- initAddons addonsDir
+	assets <- initImages
+	gameBuilder <- makeGameBuilder
 
 	playIO
 		(InWindow "Project Serenity" windowSize (0, 0))
 		black
 		30
-		(initClientState assets addons ownerId)
+		(initClientState assets gameBuilder ownerId)
 		(return . render)
 		(handleEvent outbox)
 		(handleStep inbox)

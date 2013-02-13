@@ -2,7 +2,7 @@
 
 module Serenity.Game.Client.ClientState where
 
-import AssetsManager
+import Serenity.External
 import Serenity.Game.Client.KeyboardState
 import Serenity.Model hiding(Location, Direction)
 import Serenity.Sheen.View
@@ -65,10 +65,10 @@ makeLenses ''ClientState
 -- | Create the initial client state
 initClientState
 	:: Assets	 	-- ^ Assets
-	-> Addons		-- ^ addons
+	-> GameBuilder		-- ^ addons
 	-> OwnerID     		-- ^ Player's id
 	-> ClientState
-initClientState assets addons ownerID = ClientState
+initClientState assets gameBuidler ownerID = ClientState
 	{	_clientGame = game
 	,	_clientUIState = initUIState game
 	,	_clientKeyboardState = emptyKeyboardState
@@ -77,7 +77,7 @@ initClientState assets addons ownerID = ClientState
 	,	_clientOwnerID = ownerID
 	}
 	where
-		game = demoGame addons
+		game = demoGame gameBuilder
 
 initUIState :: Game -> UIState ClientState
 initUIState game = UIState

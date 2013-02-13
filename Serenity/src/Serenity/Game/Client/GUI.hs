@@ -21,7 +21,7 @@ import GHC.Float
 import Control.Monad.State
 
 isSelected :: Simple Lens (Ship, Game) Bool
-isSelected = lens (\_ -> False) (\a _ -> a)
+isSelected = lens (\_ -> True) (\a _ -> a)
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
 --handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewport=((x, y), z) } = uiState { viewport = ((x+dx, y+dy), z) }

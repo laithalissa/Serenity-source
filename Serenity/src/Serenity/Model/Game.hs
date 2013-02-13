@@ -14,6 +14,15 @@ import System.Random
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+data GameBuilder = GameBuilder
+	{	_gbShipClasses 	:: Map String ShipClass
+	,	_gbWeapons 	:: Map String Weapon
+	,	_gbSystems	:: Map String System
+	,	_
+	}
+	deriving(Show, Eq)
+makeLenses ''GameBuilder
+
 data Game = Game
 	{	_gameTime :: Double
 	,	_gameRandom :: StdGen

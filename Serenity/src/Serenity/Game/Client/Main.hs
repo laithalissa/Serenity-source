@@ -3,7 +3,7 @@ module Serenity.Game.Client.Main (
 )
 where
 
-import AssetsManager
+import Serenity.External
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.Controller
 import Serenity.Game.Client.KeyboardState
@@ -30,7 +30,6 @@ client serverHost serverPort ownerId = do
 	let outbox = channelOutbox transport
 
 	print "Connected!"
-	addonsDir <- defaultAssetsDirectory
 	assets <- initAssets addonsDir
 	addons <- initAddons addonsDir
 

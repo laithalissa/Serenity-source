@@ -15,10 +15,11 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 data GameBuilder = GameBuilder
-	{	_gbShipClasses 	:: Map String ShipClass
+	{	_gbSector	:: Sector
+	,	_gbShipClasses 	:: Map String ShipClass
 	,	_gbWeapons 	:: Map String Weapon
 	,	_gbSystems	:: Map String System
-	,	_
+	,	_gbPlayerFleets	:: Map OwnerID Fleet
 	}
 	deriving(Show, Eq)
 makeLenses ''GameBuilder
@@ -49,8 +50,8 @@ addShip ownerId ship game = game'
 		,	_entityData=ship
 		}
 
-initGame :: Map OwnerID Fleet -> Addons -> Sector -> Game
-initGame fleets addons sector = game'
+initGame :: GameBuilder -> Game
+initGame gameBuilder = game'
 	where 
 	fleetsList :: [(OwnerID, Fleet)]
 	fleetsList = Map.toList fleets

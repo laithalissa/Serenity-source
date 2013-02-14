@@ -72,16 +72,12 @@ initGame gameBuilder = game'
 		,	_gameBuilder = gameBuilder
 		}
 
+
+
 demoGame :: GameBuilder -> Game
 demoGame gameBuilder = game' game
 	where 
 	game = initGame gameBuilder
-	fleets = Map.fromList 
-		[	(0, demoFleet)
-		,	(1, demoFleet)
-		,	(2, demoFleet)
-		,	(3, demoFleet)
-		]
 	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game
 		where
 		f :: Entity Ship -> Entity Ship

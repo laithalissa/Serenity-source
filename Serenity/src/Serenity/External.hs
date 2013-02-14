@@ -22,4 +22,14 @@ makeGameBuilder sector fleets = do
 	shipClasses <- initAddons shipClassYamlForm
 	weapons <- initAddons weaponYamlForm
 	systems <- initAddons systemYamlForm
-	return $ GameBuidler sector shipClasses weapons systems fleets
+	return $ GameBuilder sector shipClasses weapons systems fleets
+
+makeDemoGameBuilder :: IO GameBuilder
+makeDemoGameBuilder = makeGameBuilder sectorOne fleet'
+	where
+	fleets = Map.fromList 
+	[	(0, demoFleet)
+	,	(1, demoFleet)
+	,	(2, demoFleet)
+	,	(3, demoFleet)
+	]

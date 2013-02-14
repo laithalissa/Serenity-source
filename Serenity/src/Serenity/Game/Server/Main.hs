@@ -28,7 +28,7 @@ server
 	-> IO ()
 server port clientCount = do
 	print "server started"	
-	gameBuidler <- makeGameBuilder
+	gameBuidler <- makeDemoGameBuilder
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"

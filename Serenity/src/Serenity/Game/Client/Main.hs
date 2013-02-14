@@ -31,7 +31,7 @@ client serverHost serverPort ownerId = do
 
 	print "Connected!"
 	assets <- initAssets
-	gameBuilder <- makeGameBuilder
+	gameBuilder <- makeDemoGameBuilder
 
 	playIO
 		(InWindow "Project Serenity" windowSize (0, 0))

@@ -28,8 +28,8 @@ makeDemoGameBuilder :: IO GameBuilder
 makeDemoGameBuilder = makeGameBuilder sectorOne fleet'
 	where
 	fleets = Map.fromList 
-	[	(0, demoFleet)
-	,	(1, demoFleet)
-	,	(2, demoFleet)
-	,	(3, demoFleet)
-	]
+		[	(0, demoFleet)
+		,	(1, demoFleet)
+		,	(2, demoFleet)
+		,	(3, demoFleet)
+		]

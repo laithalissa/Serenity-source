@@ -5,6 +5,7 @@ module Serenity.External
 ,	module Serenity.External.Common
 ,	module Serenity.External.Definitions
 ,	makeGameBuilder
+,	makeDemoGameBuilder
 ) where
 
 import Data.Map(Map)
@@ -27,7 +28,7 @@ makeGameBuilder sector fleets = do
 makeDemoGameBuilder :: IO GameBuilder
 makeDemoGameBuilder = makeGameBuilder sectorOne fleet'
 	where
-	fleets = Map.fromList 
+	fleet' = Map.fromList 
 		[	(0, demoFleet)
 		,	(1, demoFleet)
 		,	(2, demoFleet)

@@ -68,7 +68,7 @@ initClientState
 	-> GameBuilder		-- ^ addons
 	-> OwnerID     		-- ^ Player's id
 	-> ClientState
-initClientState assets gameBuidler ownerID = ClientState
+initClientState assets gameBuilder ownerID = ClientState
 	{	_clientGame = game
 	,	_clientUIState = initUIState game
 	,	_clientKeyboardState = emptyKeyboardState
@@ -85,7 +85,7 @@ initUIState game = UIState
 	,	_viewport = ((width/2, height/2), zoom)
 	}
 	where
-		(width, height) = game^.gameSector.sectorSize
+		(width, height) = game^.gameBuilder^.gbSector.sectorSize
 		zoom = 1
 
 mainView :: View ClientState

@@ -1,10 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Serenity.External.Assets 
-(	module Serenity.External.Common 
-,	initAssets
-,	initAddonAssets
-) where
+module Serenity.External.Assets where
 
 import Control.Applicative(liftA)
 import Control.Lens
@@ -63,6 +59,27 @@ sizeTo nWidth nHeight (Pictures subImages)              = pictures $ map (sizeTo
 sizeTo nWidth nHeight image@(Bitmap width height _ _)   = scale s s image 
 	where
 	s = (max nWidth nHeight) / (fromIntegral $ max width height)
+sizeTo nWidth nHeight picture 				= picture
+
+{--
+
+Blank	
+Polygon Path	
+Line Path	
+Circle Float	
+ThickCircle Float Float	
+Arc Float Float Float	
+ThickArc Float Float Float Float	
+Text String	
+Bitmap Int Int BitmapData Bool	
+Color Color Picture	
+Translate Float Float Picture	
+Rotate Float Picture	
+Scale Float Float Picture	
+Pictures [Picture]
+
+--}
+
 
 getPicture :: String -> Assets -> Picture
 							 

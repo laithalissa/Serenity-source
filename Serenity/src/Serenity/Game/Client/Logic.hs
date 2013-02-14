@@ -16,7 +16,7 @@ handleClick click clientState = map f (playersShips clientState) where
 	order = OrderMove ( 
 		mapLocationFromView click 
 		(clientState^.clientUIState.viewport) 
-		(clientState^.clientGame.gameSector.sectorSize)
+		(clientState^.clientGame.gameBuilder.gbSector.sectorSize)
 		) Nothing
 
 playersShips :: ClientState -> [Entity Ship]

@@ -4,7 +4,7 @@ module Serenity.Game.Client.GUI
 )
 where
 
-import AssetsManager
+import Serenity.External
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.ClientMessage (GUICommand(..))
 import Serenity.Maths.Util
@@ -41,13 +41,13 @@ render game uiState assets = Pictures
 
 		(ww, wh) = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
 		((vpx, vpy), vpz) = uiState^.viewport
-		(gw, gh) =  game^.gameSector.sectorSize
+		(gw, gh) =  game^.gameBuilder^.gbSector.sectorSize
 		normScale = ((min ww wh) / (max gw gh))
 		s = vpz * normScale
 
 		renderInWorld game = pictures
-			[	pictures $ map pictureSpaceLane $ game^.gameSector.sectorSpaceLanes
-			,	pictures $ map picturePlanet $ Map.elems $ game^.gameSector.sectorPlanets
+			[	pictures $ map pictureSpaceLane $ game^.gameBuilder^.gbSector.sectorSpaceLanes
+			,	pictures $ map picturePlanet $ Map.elems $ game^.gameBuilder^.gbSector.sectorPlanets
 			,	pictures $ map (pictureEntity (game^.gameTime)) $ Map.elems $ game^.gameShips
 			]
 
@@ -56,7 +56,7 @@ render game uiState assets = Pictures
 
 		pictureSpaceLane (p1, p2) = color (dark green) $ line $ map (\p -> pDouble2Float $ p^.planetLocation) planets where
 			planets = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
-			planetsMap = game^.gameSector.sectorPlanets
+			planetsMap = game^.gameBuilder^.gbSector.sectorPlanets
 
 		pictureEntity :: Double -> Entity Ship -> Picture
 		pictureEntity time entity = pictures $ (shipAndHealth time) ++ beams where
@@ -95,7 +95,7 @@ render game uiState assets = Pictures
 			boxHeight = 0.5
 			boundingBoxWidth = 5
 			-- Ship health values
-			totalHealth = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassMaxDamage^.damageHull
+			totalHealth = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageHull
 			----totalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
 			lostHealth = entity^.entityData.shipDamage.damageHull
 			currentHealth = totalHealth - lostHealth
@@ -104,7 +104,7 @@ render game uiState assets = Pictures
 			-- Shop shield values
 			shieldBarWidth = boundingBoxWidth - (lostShieldPercentage * boundingBoxWidth)
 			lostShield = entity^.entityData.shipDamage.damageShield
-			shipTotalShield = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassMaxDamage^.damageShield
+			shipTotalShield = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageShield
 			----shipTotalShield = entity^.entityData.shipType.shipTypeMaxDamage.damageShield
 			currentShield = shipTotalShield - lostShield
 			lostShieldPercentage = fromIntegral lostShield / fromIntegral shipTotalShield

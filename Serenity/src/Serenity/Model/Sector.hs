@@ -19,7 +19,7 @@ data Sector = Sector
 	,	_sectorPlanets      :: Map PlanetID Planet
 	,	_sectorSpaceLanes   :: [SpaceLane]	
 	}
-	deriving Show
+	deriving (Show, Eq)
 
 data Planet = Planet
 	{	_planetID        :: PlanetID
@@ -28,7 +28,7 @@ data Planet = Planet
 	,	_planetLocation  :: (Double, Double)
 	,	_planetResources :: Resources
 	}
-	deriving Show
+	deriving (Show, Eq)
 
 data Ecotype = 
 	  Blue

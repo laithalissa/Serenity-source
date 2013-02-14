@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DataKinds, TypeOperators #-}
 {-# LANGUAGE FlexibleContexts, NoMonomorphismRestriction #-}
@@ -95,3 +94,27 @@ demoGame gameBuilder = game' game
 --shipClass' entity game = gameBuilder.gbShipClasses.(at $ entity^.entityData.shipConfiguration.shipConfigurationShipClass)
 
 --shipCurrentHull :: Game -> EntityID -> Int
+
+---------- Lens Helpers ----------
+
+gameMap' :: Simple Lens Game Sector
+gameMap' = gameBuilder.gbSector
+
+shipClass' :: Entity Ship -> Game -> ShipClass
+shipClass' entity game = 
+	let
+		shipClassName = entity^.entityData.shipConfiguration.shipConfigurationShipClass
+	in
+		fromJust $ Map.lookup shipClassName (game^.gameBuilder.gbShipClasses)
+
+shipMaxHealth' :: Entity Ship -> Game -> Int
+shipMaxHealth' entity game = (shipClass' entity game)^.shipClassMaxDamage.damageHull
+
+shipCurrentDamage' :: Entity Ship -> Int
+shipCurrentDamage' entity = entity^.entityData.shipDamage.damageHull
+
+shipHealth' :: Entity Ship -> Game -> Int
+shipHealth' entity game = (shipMaxHealth' entity game) - (shipCurrentDamage' entity)
+
+gameEntity' :: EntityID -> Game -> Entity Ship
+gameEntity' eID game = fromJust $ Map.lookup eID (game^.gameShips)

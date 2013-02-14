@@ -1,5 +1,4 @@
 
-
 module Serenity.Model
 (	module Serenity.Model.Entity
 ,	module Serenity.Model.Fleet

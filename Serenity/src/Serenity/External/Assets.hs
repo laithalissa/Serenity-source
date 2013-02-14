@@ -2,7 +2,7 @@
 
 module Serenity.External.Assets 
 (	module Serenity.External.Common 
-,	initImages
+,	initAssets
 ,	initAddonAssets
 ) where
 

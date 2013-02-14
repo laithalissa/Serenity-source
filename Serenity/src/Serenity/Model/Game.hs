@@ -90,25 +90,7 @@ demoGame gameBuilder = game' game
 		getEntity oId = foldl1 (\x y -> if x^.ownerID == oId then x else y) $ Map.elems (game^.gameShips)
 
 
----------- Lens Helpers ----------
 
-gameMap' = gameBuilder.gbSector
-
-shipClass' :: Entity Ship -> Game -> ShipClass
-shipClass' entity game = 
-	let
-		shipClassName = entity^.entityData.shipConfiguration.shipConfigurationShipClass
-	in
-		fromJust $ Map.lookup shipClassName (game^.gameBuilder.gbShipClasses)
-
-shipMaxHealth' :: Entity Ship -> Game -> Int
-shipMaxHealth' entity game = (shipClass' entity game)^.shipClassMaxDamage.damageHull
-
-shipCurrentDamage' :: Entity Ship -> Int
-shipCurrentDamage' entity = entity^.entityData.shipDamage.damageHull
-
-shipHealth' :: Entity Ship -> Game -> Int
-shipHealth' entity game = (shipMaxHealth' entity game) - (shipCurrentDamage' entity)
 
 --shipClass' entity game = gameBuilder.gbShipClasses.(at $ entity^.entityData.shipConfiguration.shipConfigurationShipClass)
 

@@ -35,7 +35,7 @@ executable serenity
         QuickCheck,
         yaml-light == 0.1.4
     hs-source-dirs: src
-    ghc-options:    -W -threaded -rtsopts
+    ghc-options:    -W -threaded -rtsopts -XTemplateHaskell
 
 Test-Suite test-serenity
     type:           exitcode-stdio-1.0
@@ -71,4 +71,4 @@ Test-Suite test-serenity
         random == 1.0.1.1,
         yaml-light == 0.1.4
     hs-source-dirs: tests, src
-    ghc-options:    -W -threaded -rtsopts
+    ghc-options:    -W -threaded -rtsopts -XTemplateHaskell

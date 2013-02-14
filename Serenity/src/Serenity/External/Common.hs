@@ -22,8 +22,8 @@ import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropE
 
 defaultAssetsDirectory :: IO FilePath
 defaultAssetsDirectory = do
-	dir <- getCurrentDirectory 
-	return $ foldl1 subdir [dir, "resources", "templates"]
+	dataDir <- getDataDir
+	return $ foldl1 subdir [dataDir, "templates"]
 
 assetsDirectory' :: [FilePath] -> IO FilePath
 assetsDirectory' dirs = do

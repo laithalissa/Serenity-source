@@ -8,7 +8,6 @@ import Serenity.Sheen
 import Serenity.Game.UI.Application
 import Serenity.Game.UI.Menu
 import Serenity.Game.UI.Splash
-import qualified Serenity.Game.Client.Assets as Assets
 
 import Control.Lens
 
@@ -21,7 +20,7 @@ data ApplicationController = ApplicationController
 
 makeLenses ''ApplicationController
 
-initApplicationController assets = ApplicationController
+initApplicationController = ApplicationController
 	{	_appViewGlobals = initGlobals
 	,	_appMode        = Splash
 	,	_appSplashData  = initSplashData appSplashData
@@ -39,12 +38,11 @@ instance ViewController ApplicationController where
 		Game   -> app
 
 gui = do
-	assets <- Assets.initialize
 	playIOZero
 		(InWindow "Project Serenity" (1024, 768) (0, 0))
 		black
 		30
-		(initApplicationController assets)
+		(initApplicationController)
 		(\a -> return $ draw a)
 		(\event -> \a -> return $ handleEvent event a)
 		(\dt -> \a -> return $ updateTime dt a)

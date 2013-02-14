@@ -2,7 +2,7 @@
 module Serenity.External.Definitions where
 
 import Serenity.External.Addons
-
+import Serenity.Model
 
 ---------- Ship Class ----------
 
@@ -10,7 +10,7 @@ shipClassYamlForm :: YamlForm ShipClass
 shipClassYamlForm = YamlForm toYaml' fromYaml' getName' getAssetName' "ships"
 	where
 	toYaml' (a, name, asset) = YamlNull
-	fromYaml' node = (ShipClass cor' strength' weapons' systems', name', imageName')
+	fromYaml' node = (ShipClass cor' strength' weapons' systems')
 		where
 		cor' = read $ yamlLookupString "centerOfRotation" node
 		strength' = damageStrengthMaker $ yamlLookup "damageStrength" node
@@ -91,5 +91,5 @@ systemYamlForm = YamlForm toYaml' fromYaml' getName' getAssetName' "systems"
 		hull' = read $ yamlLookupString "hull" node
 		engine' = read $ yamlLookupString "speed" node
 	getName' node = yamlLookupString "name" node
-	getAssetName' = yamlLookupString "fileName" node
+	getAssetName' node = yamlLookupString "fileName" node
 

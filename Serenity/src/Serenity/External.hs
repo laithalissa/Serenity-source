@@ -4,6 +4,7 @@ module Serenity.External
 ,	module Serenity.External.Assets
 ,	module Serenity.External.Common
 ,	module Serenity.External.Definitions
+,	makeGameBuilder
 ) where
 
 import Serenity.External.Addons
@@ -11,7 +12,7 @@ import Serenity.External.Assets
 import Serenity.External.Common
 import Serenity.External.Definitions
 
-makeGameBuidler :: Sector -> Map OwnerID Fleet -> IO GameBuilder
+makeGameBuilder :: Sector -> Map OwnerID Fleet -> IO GameBuilder
 makeGameBuilder sector fleets = do
 	shipClasses <- initAddons shipClassYamlForm
 	weapons <- initAddons weaponsYamlForm

@@ -50,9 +50,9 @@ initGame :: GameBuilder -> Game
 initGame gameBuilder = game'
 	where 
 	fleetsList :: [(OwnerID, Fleet)]
-	fleetsList = Map.toList fleets
+	fleetsList = Map.toList (gameBuilder^gbPlayerFleets)
 	spawnPoints :: [(Double, Double)]
-	spawnPoints = sector^.sectorSpawnPoints
+	spawnPoints = gameBuilder^.gbSector^.sectorSpawnPoints
 	fleetsSpawnPoint :: [(OwnerID, Fleet, Double, Double)]
 	fleetsSpawnPoint = zipWith (\(oId, f) (x,y) -> (oId, f, x, y)) fleetsList spawnPoints
 	shipsSpawnPoint :: [(OwnerID, ShipConfiguration, Double, Double)]
@@ -67,12 +67,9 @@ initGame gameBuilder = game'
 	game = Game
 		{	_gameTime = 0
 		,	_gameRandom = mkStdGen 1758836
-		,	_gameSector = sector
 		,	_gameNextEntityId=0
 		,	_gameShips  = Map.empty
-		,	_gameShipClasses = _addonsShipClasses addons
-		,	_gameWeapons = _addonsWeapons addons
-		,	_gameSystems = _addonsSystems addons
+		,	_gameBuilder = gameBuilder
 		}
 
 demoGame :: Addons -> Game

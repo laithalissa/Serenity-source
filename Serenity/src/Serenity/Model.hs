@@ -7,7 +7,20 @@ module Serenity.Model
 ,	module Serenity.Model.Sector
 ,	module Serenity.Model.Time
 ,	module Serenity.Model.Message
+,	gameMap'
+,	shipClass'
+,	shipMaxHealth'
+,	shipCurrentDamage'
+,	shipHealth'
+,	gameEntity'
+,	
 ) where
+
+import Data.Maybe(fromJust)
+import Data.Map(Map)
+import qualified Data.Map as Map
+
+import Control.Lens
 
 import Serenity.Model.Entity
 import Serenity.Model.Fleet
@@ -19,6 +32,7 @@ import Serenity.Model.Message
 
 ---------- Lens Helpers ----------
 
+gameMap' :: Simple Lens Game Sector
 gameMap' = gameBuilder.gbSector
 
 shipClass' :: Entity Ship -> Game -> ShipClass

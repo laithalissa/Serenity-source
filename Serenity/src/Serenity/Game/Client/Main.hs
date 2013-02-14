@@ -31,6 +31,7 @@ client serverHost serverPort ownerId = do
 
 	print "Connected!"
 	assets <- initAssets
+	error (show assets)
 	gameBuilder <- makeDemoGameBuilder
 
 	playIO

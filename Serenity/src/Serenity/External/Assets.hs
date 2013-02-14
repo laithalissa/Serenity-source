@@ -42,7 +42,7 @@ loadImages files = liftA Map.fromList $ sequence $ map fileF files
 	where
 	fileF :: FilePath -> IO (FilePath, Picture)
 	fileF fileName = do
-		let name = snd $ splitFileName fileName
+		let name = dropExtensions $ snd $ splitFileName fileName
 		image <- loadBMP fileName
 		return (name, image)
 

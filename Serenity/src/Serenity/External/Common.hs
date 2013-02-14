@@ -19,6 +19,7 @@ import Data.ByteString.Char8(ByteString, pack, unpack)
 import Data.Yaml.YamlLight
 import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions, getCurrentDirectory)
 
+import Paths_Serenity
 
 defaultAssetsDirectory :: IO FilePath
 defaultAssetsDirectory = do

@@ -95,12 +95,10 @@ render game uiState assets = Pictures
 			boxHeight = 0.5
 			boundingBoxWidth = 5
 			-- Ship health values
-			totalHealth = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageHull
 			----totalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
-			lostHealth = entity^.entityData.shipDamage.damageHull
-			currentHealth = totalHealth - lostHealth
-			healthAsPercentage = fromIntegral currentHealth / fromIntegral totalHealth
-			lostHealthAsPercentage = fromIntegral lostHealth / fromIntegral totalHealth
+			currentHealth = shipHealth' entity game
+			healthAsPercentage = fromIntegral (shipHealth' entity game) / fromIntegral (shipMaxHealth' entity game)
+			lostHealthAsPercentage = fromIntegral (shipCurrentDamage' entity) / fromIntegral (shipMaxHealth' entity game)
 			-- Shop shield values
 			shieldBarWidth = boundingBoxWidth - (lostShieldPercentage * boundingBoxWidth)
 			lostShield = entity^.entityData.shipDamage.damageShield

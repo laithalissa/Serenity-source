@@ -160,6 +160,10 @@ makeLenses ''ShipClass
 makeLenses ''WeaponSlot
 makeLenses ''SystemSlot
 
+---------- Lens Helpers ----------
+
+
+
 
 -- applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
 -- applyWeaponDamage gen effect ship

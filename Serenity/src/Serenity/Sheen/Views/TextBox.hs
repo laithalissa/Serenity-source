@@ -7,14 +7,13 @@ import Serenity.Sheen.View
 
 import Graphics.Gloss.Interface.IO.Game
 import Control.Lens
-import GHC.Float
 
 data TextBox = TextBox
 	{	_tbValue :: String
 	,	_tbFocus :: Bool
 	,	_tbColor :: Color
 	,	_tbBackground :: Maybe Color
-	,	_tbScale :: Double
+	,	_tbScale :: Float
 	}
 makeLenses ''TextBox
 
@@ -24,7 +23,7 @@ textBox a tb store bounds = (initView bounds)
 	,	_viewBackground = backg
 	} where
 		value = a^.tb.tbValue
-		scale = double2Float $ 0.1 * a^.tb.tbScale
+		scale = 0.1 * a^.tb.tbScale
 		color = a^.tb.tbColor
 		backg = a^.tb.tbBackground
 

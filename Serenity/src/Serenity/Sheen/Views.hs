@@ -1,8 +1,11 @@
 module Serenity.Sheen.Views 
-(	module Serenity.Sheen.Views.Label
+(	module Graphics.Gloss.Interface.IO.Game
+,	module Serenity.Sheen.Views.Label
 ,	module Serenity.Sheen.Views.TextBox
 ,	module Serenity.Sheen.Views.Button
 )where
+
+import Graphics.Gloss.Interface.IO.Game
 
 import Serenity.Sheen.Views.Label
 import Serenity.Sheen.Views.TextBox

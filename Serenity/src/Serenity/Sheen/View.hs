@@ -40,6 +40,8 @@ initGlobals = ViewGlobals
 class ViewController a where
 	globals :: Simple Lens a (ViewGlobals a)
 	getView :: a -> View a
+	updateTime :: Float -> a -> a
+	updateTime _ = id
 
 draw :: ViewController a => a -> Picture
 draw a = drawView (getView a)
@@ -53,7 +55,7 @@ initView
 	-> View world
 
 initView ((xmin, ymin), (xsize, ysize)) = View
-	{	_viewFrame = makeExtent (xmin+xsize) xmin (ymin+ysize) ymin 
+	{	_viewFrame = makeExtent (ymin+ysize) ymin (xmin+xsize) xmin
 	,	_viewSubviews = []
 	,	_viewZIndex = 0
 	,	_viewBackground = Nothing

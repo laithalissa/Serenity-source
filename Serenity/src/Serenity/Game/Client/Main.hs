@@ -30,7 +30,7 @@ client serverHost serverPort ownerId = do
 	let outbox = channelOutbox transport
 
 	print "Connected!"
-	assets <- initImages
+	assets <- initAssets
 	gameBuilder <- makeGameBuilder
 
 	playIO

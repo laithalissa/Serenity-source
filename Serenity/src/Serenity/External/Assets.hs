@@ -25,8 +25,8 @@ data Assets = Assets
 	deriving (Show, Eq)
 $( makeLenses ''Assets )
 
-initImages :: IO Assets
-initImages = do
+initAssets :: IO Assets
+initAssets = do
 	directory <- assetsDirectory' ["textures"]
 	fileNames <- getDirectoryFiles (directory, ".bmp")
 	images <- loadImages fileNames
@@ -35,7 +35,8 @@ initImages = do
 initAddonAssets :: YamlForm a -> IO Assets
 initAddonAssets yamlForm = do
 	yamlNodes <- loadYamlForm yamlForm
-	imageMap <- initImages 
+	assets <- initAssets
+	let imageMap = assets^.assetsPictures
 	let yamlAssetNames = map (yamlForm^.yamlFormAsset) yamlNodes
 	let yamlAssetPictures = map (\n-> fromJust $ Map.lookup n imageMap) yamlAssetNames
 	return $ Assets $ Map.fromList $ zip yamlAssetNames yamlAssetPictures

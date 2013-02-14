@@ -34,13 +34,11 @@ assetsDirectory' dirs = do
 getDirectoryFiles 
 	:: (FilePath, String)  -- ^ directory, and file extension to filter the files against, extension must contain the dot
 	-> IO [FilePath] -- ^ all files in the directory which have the specified file extension
-getDirectoryFiles = proc (folder, extension) -> do
-	contents <- getDirectoryContents -< folder
-	cleanedContents <- (liftA (uncurry . clean)) -< (extension, contents)
-	mapF <- (\folder child -> subdir folder child) -< folder
-	qualifiedContents <- (liftA $ uncurry map) -< (mapF, cleanedContents)
-	--qualifiedContents <- (liftA $ map (\f->subdir folder f)) -< cleanedContent
-	returnA -< qualifiedContents
+getDirectoryFiles (folder, extension) = do
+	contents <- getDirectoryContents folder
+	let cleanedContents = clean extension contents
+	let qualifiedContents = map (\child->subdir folder child) cleanedContents
+	return qualifiedContents
 		where
 		clean :: String -> [FilePath] -> [FilePath]
 		clean extension = filter ((==) extension . takeExtensions) 
@@ -49,17 +47,6 @@ getDirectoryFiles = proc (folder, extension) -> do
 subdir :: FilePath -> FilePath -> FilePath
 subdir parent child = parent ++ (pathSeparator : child)
 	
-
-data YamlForm a = YamlForm
-	{	_yamlFormToYaml :: (a, String, String) -> Yaml -- ^ takes an instance, name, and asset name and produces a yaml node
-	,	_yamlFormFromYaml :: Yaml -> a
-	,	_yamlFormName :: Yaml -> String
-	,	_yamlFormAsset :: Yaml -> String
-	,	_yamlFolder :: String
-	}
-	deriving(Show, Eq)
-$( makeLenses [''YamlForm] )
-
 -- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
 data Yaml = 
 	  YamlMap { yamlMap :: (Map String Yaml) }
@@ -73,6 +60,17 @@ yamlLookup key (YamlMap mapping) = fromJust $ Map.lookup key mapping
 
 yamlLookupString :: String -> Yaml -> String
 yamlLookupString key node = yamlString $ yamlLookup key node
+
+
+data YamlForm a = YamlForm
+	{	_yamlFormToYaml :: (a, String, String) -> Yaml -- ^ takes an instance, name, and asset name and produces a yaml node
+	,	_yamlFormFromYaml :: Yaml -> a
+	,	_yamlFormName :: Yaml -> String
+	,	_yamlFormAsset :: Yaml -> String
+	,	_yamlFolder :: String
+	}
+
+$( makeLenses ''YamlForm )
 
 loadYamlForm ::  YamlForm a -> IO [Yaml]
 loadYamlForm yamlForm = do

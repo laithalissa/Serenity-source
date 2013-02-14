@@ -17,7 +17,7 @@ import Control.Category
 import Control.Lens
 import Data.ByteString.Char8(ByteString, pack, unpack)
 import Data.Yaml.YamlLight
-import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions, getCurrentDirectoryv)
+import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions, getCurrentDirectory)
 
 
 defaultAssetsDirectory :: IO FilePath
@@ -37,9 +37,11 @@ getDirectoryFiles
 getDirectoryFiles = proc (folder, extension) -> do
 	contents <- getDirectoryContents -< folder
 	cleanedContents <- (liftA (uncurry . clean)) -< (extension, contents)
-	qualifiedContents <- (liftA $ map (\f->subdir folder f)) -< cleanedContent
+	mapF <- (\folder child -> subdir folder child) -< folder
+	qualifiedContents <- (liftA $ uncurry map) -< (mapF, cleanedContents)
+	--qualifiedContents <- (liftA $ map (\f->subdir folder f)) -< cleanedContent
 	returnA -< qualifiedContents
-
+		where
 		clean :: String -> [FilePath] -> [FilePath]
 		clean extension = filter ((==) extension . takeExtensions) 
 

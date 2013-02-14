@@ -66,6 +66,12 @@ topMainArgs = parseArgsIO
 		]
 
 main :: IO ()
+-- main = do
+-- 	assets <- initAssets "/Users/joseph/Projects/WorkingArea/Serenity/Serenity-source/Serenity/resources/templates"
+-- 	print assets
+-- 	return ()
+
+
 main = do
 	args <- topMainArgs
 	case getRequiredArg args "mode" of

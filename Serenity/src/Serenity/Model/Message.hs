@@ -15,13 +15,13 @@ import Serenity.Model.Sector
 import Data.Binary
 import Data.DeriveTH
 
-type ClientId = Int
+type ClientID = Int
 type Time = Int
 
 -- | A message that can be sent over the network.
 data Message = 
 	  UpdateMessage Update Time            -- ^ Updates are messages containing GameState information to be sent from the server to the clients.
-	| CommandMessage Command ClientId Time -- ^ Commands are intention notifications sent from a specific client to the server.
+	| CommandMessage Command ClientID Time -- ^ Commands are intention notifications sent from a specific client to the server.
 	| Empty                                -- ^ An empty message (for networking and testing purposes).
 	deriving (Show, Eq)
 
@@ -35,39 +35,47 @@ data Update =
 	{	updateEntity :: Entity Ship
 	}
 	| DeleteEntity
-	{	updateEntity :: Entity Ship
+	{	updateEntityID :: EntityID
 	}
 	| UpdateEntityLocation
-	{	updateEntityID :: Int
+	{	updateEntityID :: EntityID
 	,	updateEntityLocation :: (Float, Float)
 	}
 	| UpdateEntityDirection
-	{	updateEntityID :: Int
+	{	updateEntityID :: EntityID
 	,	updateEntityDirection :: (Float, Float)
 	}
 	| UpdateEntityLocationDirection
-	{	updateEntityID :: Int
+	{	updateEntityID :: EntityID
 	,	updateEntityLocation :: (Float, Float)
 	,	updateEntityDirection :: (Float, Float)
 	}
 	| UpdateShipOrder
-	{	updateEntityID :: Int
+	{	updateEntityID :: EntityID
 	,	updateShipOrder :: Order
 	}
 	| UpdateShipPlan
-	{	updateEntityID :: Int
+	{	updateEntityID :: EntityID
 	,	updateShipPlan :: Plan
 	}
 	| UpdateShipGoal
-	{	updateEntityID :: Int
+	{	updateEntityID :: EntityID
 	,	updateShipGoal :: Goal
+	}
+	|	UpdateShipBeamTargets
+	{	updateEntityID :: EntityID
+	,	updateShipBeamTargets :: [EntityID]
+	}
+	| UpdateShipDamage
+	{	updateEntityID :: EntityID
+	,	updateShipDamage :: Damage
 	}
 	deriving (Show, Eq)
 
 -- | Commands are sent from the clients to the server and contain order information and other notifications of intention.
 data Command = 
 	GiveOrder
-	{	commandEntityID :: Int
+	{	commandEntityID :: EntityID
 	,	order :: Order
 	}
 	deriving (Show, Eq)
@@ -77,10 +85,13 @@ data Command =
 -- $(derive makeBinary ''ShipOrderState)
 derive makeBinary ''Damage
 derive makeBinary ''Entity
-derive makeBinary ''ShipType
 derive makeBinary ''ShipConfiguration
-derive makeBinary ''SystemUpgrade
+derive makeBinary ''System
 derive makeBinary ''Weapon
+derive makeBinary ''ShipClass
+derive makeBinary ''WeaponSlot
+derive makeBinary ''SystemSlot
+derive makeBinary ''WeaponType
 derive makeBinary ''Resources
 derive makeBinary ''WeaponEffect
 derive makeBinary ''Ship

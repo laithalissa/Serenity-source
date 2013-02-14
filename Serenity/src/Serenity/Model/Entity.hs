@@ -21,6 +21,8 @@ import Control.Lens
 type EntityID = Int
 type OwnerID = Int
 
+
+
 data Entity a = 
 	Entity
 	{	_entityID :: EntityID

@@ -75,7 +75,7 @@ $( makeLenses ''YamlForm )
 loadYamlForm ::  YamlForm a -> IO [Yaml]
 loadYamlForm yamlForm = do
 	generalDirectory <- defaultAssetsDirectory
-	directory <- subdir generalDirectory (yamlForm^.yamlFolder)
+	let directory = subdir generalDirectory (yamlForm^.yamlFolder)
 	fileNames <- getDirectoryFiles (directory, ".yml")
 	loadYamlNode' fileNames
 

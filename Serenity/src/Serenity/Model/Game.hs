@@ -72,10 +72,10 @@ initGame gameBuilder = game'
 		,	_gameBuilder = gameBuilder
 		}
 
-demoGame :: Addons -> Game
-demoGame addons = game' game
+demoGame :: GameBuilder -> Game
+demoGame gameBuilder = game' game
 	where 
-	game = initGame fleets addons sectorOne
+	game = initGame gameBuilder
 	fleets = Map.fromList 
 		[	(0, demoFleet)
 		,	(1, demoFleet)

@@ -28,10 +28,10 @@ data Game = Game
 	,	_gameRandom :: StdGen
 	,	_gameNextEntityId :: Int
 	,	_gameShips  :: Map EntityID (Entity Ship)
-	,	_gameBuidler :: GameBuilder
+	,	_gameBuilder :: GameBuilder
 	}
 	deriving Show
-makeLenses ''Game
+$( makeLenses ''Game )
 
 addShip :: OwnerID -> Ship -> Game -> Game
 addShip ownerId ship game = game'

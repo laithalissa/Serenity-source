@@ -50,7 +50,7 @@ initGame :: GameBuilder -> Game
 initGame gameBuilder = game'
 	where 
 	fleetsList :: [(OwnerID, Fleet)]
-	fleetsList = Map.toList (gameBuilder^gbPlayerFleets)
+	fleetsList = Map.toList (gameBuilder^.gbPlayerFleets)
 	spawnPoints :: [(Double, Double)]
 	spawnPoints = gameBuilder^.gbSector^.sectorSpawnPoints
 	fleetsSpawnPoint :: [(OwnerID, Fleet, Double, Double)]

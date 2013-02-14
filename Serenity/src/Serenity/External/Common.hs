@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE Arrows #-}
+{-# LANGUAGE Arrows, TypeFamilies #-}
 
 module Serenity.External.Common where
 
@@ -57,7 +57,8 @@ data YamlForm a = YamlForm
 	,	_yamlFormAsset :: Yaml -> String
 	,	_yamlFolder :: String
 	}
-makeLenses ''YamlForm
+	deriving(Show, Eq)
+$( makeLenses [''YamlForm] )
 
 -- simplified version of YamlLight, changes: no bytestring, keys to maps are strings
 data Yaml = 
@@ -100,3 +101,7 @@ assemble f file = do
 	let yamlRoot = conversion node
 	return $ f yamlRoot
 	
+
+
+
+-- lenses

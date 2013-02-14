@@ -5,7 +5,6 @@ where
 
 import Serenity.Game.Server.Main (server)
 import Serenity.Game.Client.Main (client)
-import AssetsManager
 
 import System.Console.ParseArgs
 	(	Args

@@ -8,7 +8,7 @@ module Serenity.Game.Server.Main
 ,	getCommands
 ) where
 
-import Serenity.External.Assets
+import Serenity.External
 import Serenity.Game.Server.ClientData
 import Serenity.Model
 import Serenity.Model.Wire

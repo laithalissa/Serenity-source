@@ -131,7 +131,7 @@ evolveShipDamage = proc (entity, game) -> do
 		h -> id -< damageTargets entity game
 		where
 		lostHealth entity = entity^.entityData.shipDamage.damageHull
-		totalHealth entity game = (fromJust $ M.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassMaxDamage^.damageHull
+		totalHealth entity game = (fromJust $ M.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageHull
 		health entity game = (totalHealth entity game) - (lostHealth entity)
 		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipBeamTargets)
 		damageTarget game target = case M.lookup target (game^.gameShips) of

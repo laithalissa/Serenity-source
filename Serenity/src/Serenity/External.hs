@@ -1,5 +1,5 @@
 
-module External
+module Serenity.External
 (	module Serenity.External.Addons
 ,	module Serenity.External.Assets
 ,	module Serenity.External.Common

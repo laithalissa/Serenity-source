@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 
 module Serenity.External.Assets 
 (	module Serenity.External.Common 
@@ -5,13 +6,24 @@ module Serenity.External.Assets
 ,	initAddonAssets
 ) where
 
+import Control.Applicative(liftA)
+import Control.Lens
+import Data.Map(Map)
+import qualified Data.Map as Map
+import Data.Maybe(fromJust)
+
+import System.EasyFile(getDirectoryContents, pathSeparator, splitFileName, dropExtensions, takeExtensions, getCurrentDirectory)
+import Graphics.Gloss.Data.Picture
+import Graphics.Gloss.Data.Color
+
 import Serenity.External.Common 
+
 
 data Assets = Assets
 	{	_assetsPictures :: Map String Picture
 	}
 	deriving (Show, Eq)
-makeLenses ''Assets
+$( makeLenses ''Assets )
 
 initImages :: IO Assets
 initImages = do
@@ -26,7 +38,7 @@ initAddonAssets yamlForm = do
 	imageMap <- initImages 
 	let yamlAssetNames = map (yamlForm^.yamlFormAsset) yamlNodes
 	let yamlAssetPictures = map (\n-> fromJust $ Map.lookup n imageMap) yamlAssetNames
-	return $ Assets $ Map.fromList $ zip yamlAssetNames yamlAssetPicture
+	return $ Assets $ Map.fromList $ zip yamlAssetNames yamlAssetPictures
 
 loadImages :: [FilePath] -> IO (Map FilePath Picture)
 loadImages files = liftA Map.fromList $ sequence $ map fileF files
@@ -52,6 +64,7 @@ sizeTo nWidth nHeight image@(Bitmap width height _ _)   = scale s s image
 	s = (max nWidth nHeight) / (fromIntegral $ max width height)
 
 getPicture :: String -> Assets -> Picture
-getPicture name assets = case (Map.lookup name $ assets^.assetsTextures) of
+							 
+getPicture name assets = case (Map.lookup name $ assets^.assetsPictures) of
 	Just asset -> asset
 	Nothing -> color red $ text ("Couldn't load asset " ++ name)

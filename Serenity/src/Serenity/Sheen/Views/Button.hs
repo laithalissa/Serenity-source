@@ -24,6 +24,8 @@ data Button a b = Button
 
 data ButtonMode = Momentary | Toggle
 
+data ButtonEvent = ButtonEvent MouseButton KeyState Modifiers deriving (Show, Eq, Ord)
+
 initButton label inLabel action = Button
 	{	_buttonLabel = label
 	,	_buttonLabelPushed = inLabel
@@ -31,8 +33,6 @@ initButton label inLabel action = Button
 	,	_buttonIsPushed = False
 	,	_buttonAction = Map.fromList action
 	}
-
-data ButtonEvent = ButtonEvent MouseButton KeyState Modifiers deriving (Show, Eq, Ord)
 
 uiEvent2ButtonEvent (UIEventKey _ (MouseButton mouseButton) state mods) = Just $ ButtonEvent mouseButton state mods
 uiEvent2ButtonEvent _ = Nothing

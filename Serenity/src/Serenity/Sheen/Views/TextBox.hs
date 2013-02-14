@@ -19,7 +19,7 @@ data TextBox = TextBox
 makeLenses ''TextBox
 
 textBox :: a -> Simple Lens a TextBox -> Simple Lens a String -> ((Int, Int), (Int, Int)) -> View a
-textBox a tb store ((xmin, ymin), (xsize, ysize)) = (initView ((xmin, ymin), (xsize, ysize)))
+textBox a tb store bounds = (initView bounds)
 	{	_viewDepict = Just $ Translate 3 3 $ Color color $ Scale scale scale $ Text value
 	,	_viewBackground = backg
 	} where

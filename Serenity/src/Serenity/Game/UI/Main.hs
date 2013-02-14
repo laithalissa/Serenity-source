@@ -12,7 +12,7 @@ import Control.Lens
 
 
 data ApplicationController = ApplicationController
-	{	_appViewGolbals :: ViewGlobals ApplicationController
+	{	_appViewGlobals :: ViewGlobals ApplicationController
 	,	_appMode   :: ApplicationMode
 	,	_appAssets :: Assets.Assets
 	,	_appMenus  :: [String]
@@ -27,7 +27,7 @@ data ApplicationMode = MainMenu | Game
 makeLenses ''ApplicationController
 
 initApplicationController assets = ApplicationController
-	{	_appViewGolbals = initGlobals
+	{	_appViewGlobals = initGlobals
 	,	_appMode   = MainMenu
 	,	_appAssets = assets
 	,	_appMenus  = ["Menu 1", "Menu 2"]
@@ -36,7 +36,6 @@ initApplicationController assets = ApplicationController
 	,	_appMenuButton = initButton (initLabel (StringLabel "Main Menu") black (Just red)) (initLabel (StringLabel "Main Menu") black (Just blue)) [(ButtonEvent LeftButton Up (Modifiers Up Up Up), \_ -> Game)]
 	,	_appGameLabel  = initLabel (StringLabel "Game") black (Just green)
 	}
-
 
 instance ViewController ApplicationController where
 	getView app = case app^.appMode of 
@@ -55,7 +54,6 @@ viewTwo app =
 	<++ 
 	[	label app appGameLabel ((100,100),(16,110))
 	]
-
 
 gui = do
 	assets <- Assets.initialize

@@ -31,7 +31,7 @@ initLabel value color backg = Label
 makeLenses ''Label
 
 label :: a -> Getter a (Label a) -> ((Int, Int), (Int, Int)) -> View a
-label a label ((xmin, ymin), (xsize, ysize)) = (initView ((xmin, ymin), (xsize, ysize)))
+label a label bounds = (initView bounds)
 	{	_viewDepict = Just $ Translate 3 3 $ Color color $ Scale scale scale $ Text value
 	,	_viewBackground = backg
 	} where

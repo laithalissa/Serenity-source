@@ -9,6 +9,7 @@ import Serenity.Model.Wire
 import Serenity.Maths.Util
 import Serenity.AI.Path
 
+
 import Control.Lens
 import qualified Data.Map as M
 import Data.Maybe (fromJust, isJust)
@@ -74,7 +75,7 @@ x =~= y = magnitude (x-y) < 5
 actt :: UpdateWire (Entity Ship, ShipAction, Game)
 actt = proc (entity, action, game) -> do 
 	case action of
-		ActionMove {startTime = t, startLocDir=start, endLocDir=end} -> move -< (entity, t, start, end)
+		ActionMove {startTime = t, startLocDir=start, endLocDir=end} -> move -< (entity, t, start, end, entitySpeed entity game)
 		(ActionMoveToEntity tID m) -> if isJust target
 			then moveToEntity -< (entity, fromJust target, m, game)
 			else id -< []
@@ -82,11 +83,14 @@ actt = proc (entity, action, game) -> do
 				target = game^.gameShips.at tID
 		_ -> id -< []
 
-move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)))
-move = proc (entity, startTime, start, end) -> do
+entitySpeed :: Entity Ship -> Game -> Double
+entitySpeed ship game = (shipClass' ship game)^.shipClassSpeed
+
+move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)), Double)
+move = proc (entity, startTime, start, end, speed) -> do
 	timeNow <- time -< ()
 	let (curve, curveLength) = makePath 15 start end
-	let s = (timeNow-startTime)/(curveLength*0.1)
+	let s = ((timeNow-startTime)/(curveLength*0.1)) * speed
 	let position = curve s
 	let position' = differentiate (curve, s)
 	id -< return UpdateEntityLocationDirection
@@ -104,4 +108,4 @@ moveToEntity = proc (entity, target, action, game) -> do
 	if magnitude ((fst $ endLocDir action) - (target^.entityData.shipLocation)) > 50
 		|| finishedAction game (entity^.entityData) action
 		then id -< [UpdateShipPlan (entity^.entityID) []]
-		else move -< (entity, startTime action, startLocDir action, endLocDir action)
+		else move -< (entity, startTime action, startLocDir action, endLocDir action, entitySpeed entity game)

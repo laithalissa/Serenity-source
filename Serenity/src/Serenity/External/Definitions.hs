@@ -10,9 +10,10 @@ shipClassYamlForm :: YamlForm ShipClass
 shipClassYamlForm = YamlForm toYaml' fromYaml' getName' getAssetName' "ships"
 	where
 	toYaml' (a, name, asset) = YamlNull
-	fromYaml' node = (ShipClass cor' strength' weapons' systems')
+	fromYaml' node = (ShipClass cor' speed' strength' weapons' systems')
 		where
 		cor' = read $ yamlLookupString "centerOfRotation" node
+		speed' = read $ yamlLookupString "speed" node
 		strength' = damageStrengthMaker $ yamlLookup "damageStrength" node
 		weapons' = map weaponSlotMaker $ yamlList $ yamlLookup "weaponSlots" node
 		systems' = map systemSlotMaker $  yamlList $ yamlLookup "systemSlots" node	

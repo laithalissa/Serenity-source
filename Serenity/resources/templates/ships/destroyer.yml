@@ -1,6 +1,7 @@
 shipName: Destroyer
 fileName: ship1.bmp
 centerOfRotation: (512, 128)
+speed: 1.5
 damageStrength:
   hull: 50
   shields: 100

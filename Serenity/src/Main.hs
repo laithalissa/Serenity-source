@@ -3,22 +3,13 @@ module Main
 )
 where
 
-import Serenity.Game.Server.Main (server)
 import Serenity.Game.Client.Main (client)
-
+import Serenity.Game.Server.Main (server)
+import Serenity.Game.UI.Main     (gui)
 import System.Console.ParseArgs
-	(	Args
-	,	Arg(..)
-	,	Argtype(..)
-	,	ArgsComplete(..)
-	,	parseArgsIO
-	,	argDataRequired
-	,	argDataDefaulted
-	,	getRequiredArg
-	)
 
-clientMain :: IO (Args String)
-clientMain = parseArgsIO 
+clientMainArgs :: IO (Args String)
+clientMainArgs = parseArgsIO 
 		ArgsInterspersed
 		[	Arg
 			{	argIndex="host"
@@ -43,8 +34,8 @@ clientMain = parseArgsIO
 			}
 		]
 
-serverMain :: IO (Args String)
-serverMain = parseArgsIO 
+serverMainArgs :: IO (Args String)
+serverMainArgs = parseArgsIO 
 		ArgsInterspersed
 		[	Arg
 			{	argIndex="port"
@@ -62,14 +53,14 @@ serverMain = parseArgsIO
 			}
 		]
 
-topMain :: IO (Args String)
-topMain = parseArgsIO 
+topMainArgs :: IO (Args String)
+topMainArgs = parseArgsIO 
 		ArgsInterspersed
 		[	Arg
 			{	argIndex="mode"
 			,	argAbbr=Just 'm'
 			,	argName=Just "mode"
-			,	argData=argDataRequired "client/server" ArgtypeString
+			,	argData=argDataDefaulted "client/server/gui" ArgtypeString "gui"
 			,	argDesc="Whether to start in server or client mode"
 			}		
 		]
@@ -82,19 +73,21 @@ main :: IO ()
 
 
 main = do
-	args <- topMain
+	args <- topMainArgs
 	case getRequiredArg args "mode" of
 		"server" -> do
-			sArgs <- serverMain
+			sArgs <- serverMainArgs
 			server 
 				(getRequiredArg sArgs "port")
 				(getRequiredArg sArgs "clientCount")
 				
 		"client" -> do
-			cArgs <- clientMain
+			cArgs <- clientMainArgs
 			client
 				(getRequiredArg cArgs "host")
 				(getRequiredArg cArgs "port")
 				(getRequiredArg cArgs "playerName")
 
-		_ -> print "invalid mode, must be either 'server' or 'client'"
+		"gui" -> gui
+
+		_ -> print $ argsUsage args

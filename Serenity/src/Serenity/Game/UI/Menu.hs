@@ -1,10 +1,10 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
 
 module Serenity.Game.UI.Menu where
 
 import Serenity.Sheen
 import Serenity.Game.UI.Application
+import Serenity.External
 
 import Control.Lens
 
@@ -14,14 +14,14 @@ data MenuData a = MenuData
 
 makeLenses ''MenuData
 
-initMenuData :: Simple Lens a (MenuData a) -> MenuData a
-initMenuData aMenu = MenuData
-	{	_menuLabel = (initLabel (StringLabel "Main Menu !") black (Just yellow)){_labelScale = 2}
+initMenuData :: Simple Lens a (MenuData a) -> Assets -> MenuData a
+initMenuData aMenu assets = MenuData
+	{	_menuLabel = (initLabel (StaticString "Main Menu !") black (Just green)){_labelScale = 2}
 	}
 
-viewMenu :: a -> Simple Lens a (MenuData a) -> View a
-viewMenu a aData = (initView ((0, 0), (1024, 768))) 
-	{	_viewBackground = Just (greyN 0.1)
+viewMenu :: a -> Simple Lens a (MenuData a) -> Simple Lens a Assets -> View a
+viewMenu a aData aAssets = (initView ((0, 0), (1024, 768))) 
+	{	_viewDepict = Just $ getPicture "background" (a^.aAssets)
 	} <++
 	[	label a (aData.menuLabel) ((600,600),(220,30))
 	]

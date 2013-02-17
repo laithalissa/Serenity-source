@@ -31,8 +31,8 @@ initMenuData assets = MenuData
 
 initMenuButton string action = 
 	initButton 
-	((initLabel (StaticString string) black (Just (changeAlpha (light $ bright $ bright green) 0.7))) {_labelScale = 2.1})
-	((initLabel (StaticString string) black (Just $ changeAlpha (light $ bright $ bright yellow) 0.7)) {_labelScale = 2.1})
+	(initLabel (StaticString string) black (Just (changeAlpha (light $ bright $ bright green) 0.7))) {_labelScale = 2.1}
+	(initLabel (StaticString string) black (Just $ changeAlpha (dark yellow) 0.7)) {_labelScale = 2.1}
 	[(ButtonEvent LeftButton Up (Modifiers Up Up Up), action)]
 
 viewMenu :: a -> Simple Lens a (MenuData a) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a

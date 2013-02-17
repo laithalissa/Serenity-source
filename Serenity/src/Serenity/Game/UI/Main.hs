@@ -39,7 +39,7 @@ instance ViewController ApplicationController where
 		Quit   -> undefined
 	updateTime dt app = case app^.appMode of 
 		Splash -> timeSplash appSplashData appMode dt app
-		Menu   -> timeMenu appMenuData appMode dt app
+		Menu   -> timeMenu   appMenuData   appMode dt app
 		Host   -> app
 		Join   -> app
 		Lobby  -> app

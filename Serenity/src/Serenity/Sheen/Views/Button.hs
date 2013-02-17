@@ -20,6 +20,7 @@ data Button a b = Button
 	,	_buttonLabelPushed :: Label a
 	,	_buttonMode :: ButtonMode
 	,	_buttonIsPushed :: Bool
+	,	_buttonEnabled :: Bool
 	,	_buttonAction :: Map ButtonEvent (b -> b)
 	}
 
@@ -32,6 +33,7 @@ initButton label inLabel action = Button
 	,	_buttonLabelPushed = inLabel
 	,	_buttonMode = Momentary
 	,	_buttonIsPushed = False
+	,	_buttonEnabled = True
 	,	_buttonAction = Map.fromList action
 	}
 
@@ -43,10 +45,14 @@ makeLenses ''Button
 
 button :: a -> Simple Lens a (Button a b) -> Simple Lens a b -> ((Int, Int), (Int, Int)) -> View a
 button a button lens bounds = (label a (button.labelToDisplay) bounds)
-	{	_viewEventHandler = Just $ \event -> buttonEventHandler lens (uiEvent2ButtonEvent event) a
+	{	_viewEventHandler = case a^.button.buttonEnabled of
+		True  -> Just $ \event -> buttonEventHandler lens (uiEvent2ButtonEvent event) a
+		False -> Nothing
 	} where
-		labelToDisplay :: Simple Lens (Button a b) (Label a)
-		labelToDisplay = if (a^.button.buttonIsPushed) then buttonLabelPushed else buttonLabel
+		labelToDisplay :: Getter (Button a b) (Label a)
+		labelToDisplay = if (a^.button.buttonEnabled)
+			then if (a^.button.buttonIsPushed) then buttonLabelPushed else buttonLabel
+			else to (\a -> labelBackground .~ (Just $ greyN 0.3) $ a^.buttonLabel)
 
 		buttonEventHandler _ Nothing = id
 		buttonEventHandler lens (Just event@(ButtonEvent _ keyState _)) = execState $

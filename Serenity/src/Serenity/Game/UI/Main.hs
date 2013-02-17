@@ -30,7 +30,7 @@ initApplicationController assets = ApplicationController
 
 instance ViewController ApplicationController where
 	getView app = case app^.appMode of 
-		Splash -> viewSplash app appSplashData appAssets
+		Splash -> viewSplash app appSplashData appAssets appMode
 		Menu   -> viewMenu   app appMenuData appAssets
 		Game   -> undefined
 	updateTime dt app = case app^.appMode of 

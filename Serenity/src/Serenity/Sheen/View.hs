@@ -102,7 +102,7 @@ handleViewEvent event view oldState = case getEventHandler event view of
 	Nothing -> oldState
 
 getEventHandler :: UIEvent -> View a -> Maybe (UIEvent -> a)
-getEventHandler event@(UIEventKey point _ _ _) view =
+getEventHandler event@(UIEventKey point (MouseButton _) _ _) view =
 	if eventInView then
 		case subviewHandlers of
 			[] -> view^.viewEventHandler
@@ -113,7 +113,7 @@ getEventHandler event@(UIEventKey point _ _ _) view =
 	eventInView = pointInExtent (view^.viewFrame) point
 	subviewHandlers = catMaybes $ map (getEventHandler $ translateUIEvent (-xmin) (-ymin) event) $ orderViews $ view^.viewSubviews
 	(_, ymin, _, xmin) = takeExtent $ view^.viewFrame
-getEventHandler _ _ = Nothing
+getEventHandler _ view = view^.viewEventHandler
 
 orderViews :: [View world] -> [View world]
 orderViews = sortBy (comparing (^.viewZIndex))

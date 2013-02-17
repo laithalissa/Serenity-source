@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 
@@ -17,13 +16,17 @@ import Graphics.Gloss.Data.Extent
 import Graphics.Gloss.Interface.IO.Game
 
 data View a = View
-	{	_viewSubviews     :: [View a]             -- ^ List of views below this one
-	,	_viewFrame        :: Extent               -- ^ Rectangular area the view represents
-	,	_viewZIndex       :: Int                  -- ^ Stack position of the view
-	,	_viewBackground   :: Maybe Color          -- ^ Background colour
-	,	_viewDepict       :: Maybe Picture        -- ^ Gloss picture to draw contents of view
-	,	_viewEventHandler :: Maybe (UIEvent -> a) -- ^ Callback to handle UIEvents
+	{	_viewSubviews     :: [View a]             -- ^ List of views below this one.
+	,	_viewFrame        :: Extent               -- ^ Rectangular area the view represents.
+	,	_viewZIndex       :: Int                  -- ^ Stack position of the view.
+	,	_viewBackground   :: Maybe Color          -- ^ Background colour.
+	,	_viewDepict       :: Maybe Picture        -- ^ Gloss picture to draw contents of view.
+	,	_viewDepictMode   :: ViewDepictMode       -- ^ Whether to draw subviews or own view depiction uppermost.
+	,	_viewEventHandler :: Maybe (UIEvent -> a) -- ^ Callback to handle UIEvents.
 	}
+
+data ViewDepictMode = ViewDepictModeSubviewsUppermost | ViewDepictModeViewUppermost
+
 makeLenses ''View
 
 data ViewGlobals a = ViewGlobals
@@ -43,6 +46,9 @@ class ViewController a where
 	updateTime :: Float -> a -> a
 	updateTime _ = id
 
+class Drawable a where
+	render :: a -> Picture
+
 draw :: ViewController a => a -> Picture
 draw a = drawView (getView a)
 
@@ -60,6 +66,7 @@ initView ((xmin, ymin), (xsize, ysize)) = View
 	,	_viewZIndex = 0
 	,	_viewBackground = Nothing
 	,	_viewDepict = Nothing
+	,	_viewDepictMode = ViewDepictModeSubviewsUppermost
 	,	_viewEventHandler = Nothing
 	}
 
@@ -67,8 +74,11 @@ initView ((xmin, ymin), (xsize, ysize)) = View
 drawView ::
 	View a -- ^ Root of the hierarchy to draw
 	-> Picture
-drawView view = Translate (fromIntegral xmin) (fromIntegral ymin) $ Pictures $ background ++ pict ++ children
+drawView view = Translate (fromIntegral xmin) (fromIntegral ymin) $ Pictures $ pictures
 	where
+	pictures = case view^.viewDepictMode of
+		ViewDepictModeSubviewsUppermost -> background ++ pict ++ children
+		ViewDepictModeViewUppermost     -> background ++ children ++ pict
 	(ymax, ymin, xmax, xmin) = takeExtent $ view^.viewFrame
 	background = case view^.viewBackground of
 		Just colour -> [coloredRectangle colour (fromIntegral $ xmax - xmin, fromIntegral $ ymax - ymin)]
@@ -92,7 +102,7 @@ handleViewEvent event view oldState = case getEventHandler event view of
 	Nothing -> oldState
 
 getEventHandler :: UIEvent -> View a -> Maybe (UIEvent -> a)
-getEventHandler event@(UIEventKey point _ _ _) view =
+getEventHandler event@(UIEventKey point (MouseButton _) _ _) view =
 	if eventInView then
 		case subviewHandlers of
 			[] -> view^.viewEventHandler
@@ -103,8 +113,7 @@ getEventHandler event@(UIEventKey point _ _ _) view =
 	eventInView = pointInExtent (view^.viewFrame) point
 	subviewHandlers = catMaybes $ map (getEventHandler $ translateUIEvent (-xmin) (-ymin) event) $ orderViews $ view^.viewSubviews
 	(_, ymin, _, xmin) = takeExtent $ view^.viewFrame
---getEventHandler event@(UIEventMotion point) view =
-getEventHandler _ _ = Nothing
+getEventHandler _ view = view^.viewEventHandler
 
 orderViews :: [View world] -> [View world]
 orderViews = sortBy (comparing (^.viewZIndex))

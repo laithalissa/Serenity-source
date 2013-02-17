@@ -1,5 +1,6 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ImpredicativeTypes #-}
 
 module Serenity.Sheen.Views.Button where
 

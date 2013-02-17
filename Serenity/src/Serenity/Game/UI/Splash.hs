@@ -29,12 +29,12 @@ data SplashData a = SplashData
 makeLenses ''SplashData
 
 -- | Initialise splash screen state.
-initSplashData :: Simple Lens a (SplashData a) -> Assets -> SplashData a
-initSplashData aSplash assets = SplashData
+initSplashData :: Assets -> SplashData a
+initSplashData assets = SplashData
 	{	_splashTime = 0
 	,	_splashWire = squidsWire
 	,	_splashBlueBackground = initLabel NoString green Nothing
-	,	_splashPresentsLabel  = (initLabel (StaticString "present") white Nothing){_labelScale=0}
+	,	_splashPresentsLabel  = (initLabel (StaticString "present...") white Nothing){_labelScale=0}
 	,	_splashALCLogoPictureView = initPictureView (StaticPicture (Scale 0.1 0.1 $ getPicture "ALC_logo" assets))
 	,	_splashSquids = 
 		[	ObjectState {objPosition = (-200,-200), objVelocity = (0,0)}
@@ -53,8 +53,8 @@ viewSplash a aSplash aAssets aMode =
 	,	_viewEventHandler = Just $ eventHandler a 
 	} <++
 	[	pictureView a (aSplash.splashALCLogoPictureView) ((520,400),(0,0))
-	,	label       a (aSplash.splashBlueBackground)     ((0,0),(1024,768))
-	,	label       a (aSplash.splashPresentsLabel)      ((480,100),(0,0))
+	,	label       a (aSplash.splashBlueBackground)     ((0,0),(1024,750))
+	,	label       a (aSplash.splashPresentsLabel)      ((450,100),(0,0))
 	] where
 	eventHandler a (UIEventKey _ _ _ _) = aMode.~Menu $ a
 	eventHandler a (UIEventMotion r)    = aSplash.splashTarget.~(pFloat2Double r) $ a
@@ -79,7 +79,7 @@ logoScale time = 1 + time/5
 
 presentsScale time = case time of
 	time | time < 6 -> 0
-	time -> 2 -- (time-6)/(2-(time-6)/6)
+	_ -> 2 
 
 overlayColor time = Just $ makeColor navy_r navy_g navy_b t where
 	t | time < 4  = 0
@@ -117,7 +117,7 @@ mapArrowWithIndexFrom i arrow = proc list -> do
 
 squidState i = proc (squid, target) -> do 
 	--t <- time -< ()
-	newState <- object_ (\_ -> id) (startState i) -< (Accelerate (target - (objPosition squid)), 0.2)
+	newState <- object_ (\_ -> id) (startState i) -< (Accelerate ((target- (targetOffset i)) - (objPosition squid)), 0.2)
 	id -< newState
 
 startState i = case i of
@@ -125,3 +125,9 @@ startState i = case i of
 	1 -> ObjectState {objPosition = (512, -20), objVelocity = (0,10)}
 	2 -> ObjectState {objPosition = (1024,-20), objVelocity = (10,0)}
 	_ -> ObjectState {objPosition = (500, 800), objVelocity = (10,0)}
+
+targetOffset i = case i of
+	0 -> (-100,-100)
+	1 -> (0,0)
+	2 -> (100,-100)
+	_ -> (0,0)

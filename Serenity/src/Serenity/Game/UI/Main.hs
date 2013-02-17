@@ -24,24 +24,32 @@ initApplicationController assets = ApplicationController
 	{	_appViewGlobals   = initGlobals
 	,	_appMode          = Splash
 	,	_appAssets        = assets
-	,	_appSplashData    = initSplashData appSplashData assets
-	,	_appMenuData      = initMenuData appMenuData assets
+	,	_appSplashData    = initSplashData assets
+	,	_appMenuData      = initMenuData assets
 	}
 
 instance ViewController ApplicationController where
 	getView app = case app^.appMode of 
 		Splash -> viewSplash app appSplashData appAssets appMode
-		Menu   -> viewMenu   app appMenuData appAssets
+		Menu   -> viewMenu   app appMenuData appAssets appMode
+		Host   -> undefined
+		Join   -> undefined
+		Lobby  -> undefined
 		Game   -> undefined
+		Quit   -> undefined
 	updateTime dt app = case app^.appMode of 
 		Splash -> timeSplash appSplashData appMode dt app
 		Menu   -> timeMenu appMenuData appMode dt app
+		Host   -> app
+		Join   -> app
+		Lobby  -> app
 		Game   -> app
+		Quit   -> error "Quit!"
 
 gui = do
 	assets <- initAssets
 	playIOZero
-		(InWindow "Project Serenity" (1024, 768) (0, 0))
+		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black
 		30
 		(initApplicationController assets)

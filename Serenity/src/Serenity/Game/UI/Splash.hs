@@ -10,8 +10,9 @@ import Serenity.External
 import Serenity.Maths.Util
 
 import Prelude hiding ((.), id)
-import Control.Wire
+import Control.Wire hiding (when)
 import Control.Lens
+import Control.Monad.State
 import Control.Monad.Identity (Identity, runIdentity)
 import GHC.Float
 
@@ -32,7 +33,7 @@ makeLenses ''SplashData
 initSplashData :: Assets -> SplashData a
 initSplashData assets = SplashData
 	{	_splashTime = 0
-	,	_splashWire = squidsWire
+	,	_splashWire = accelerateSquids
 	,	_splashBlueBackground = initLabel NoString green Nothing
 	,	_splashPresentsLabel  = (initLabel (StaticString "present...") white Nothing){_labelScale=0}
 	,	_splashALCLogoPictureView = initPictureView (StaticPicture (Scale 0.1 0.1 $ getPicture "ALC_logo" assets))
@@ -62,18 +63,13 @@ viewSplash a aSplash aAssets aMode =
 
 -- | Time evolution of splash screen, dependant on various lenses on the application state a.
 timeSplash :: Simple Lens a (SplashData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
-timeSplash aSplash aMode dt a = (squidLogic $ a^.aSplash.splashWire).alpha.scale1.scale2.mode.time $ a 
-	where
-		time  = aSplash.splashTime +~ dt
-		mode  = if a^.aSplash.splashTime < 12 then id else aMode.~Menu
-		alpha = aSplash.splashBlueBackground.labelBackground .~ overlayColor (a^.aSplash.splashTime)
-		scale1 = aSplash.splashALCLogoPictureView.pictureViewScale .~ logoScale (a^.aSplash.splashTime)
-		scale2 = aSplash.splashPresentsLabel.labelScale .~ presentsScale (a^.aSplash.splashTime)
-		squidLogic wire a = 
-			if (a^.aSplash.splashTime) > 5.5 
-				then aSplash.splashWire .~ wire' $ aSplash .~ splash' $ a  
-				else a
-			where (splash', wire') = updateOnTime dt (a^.aSplash)
+timeSplash aSplash aMode dt = execState $ do
+	time <- aSplash.splashTime <+= dt
+	when (time > 12) $ aMode .= Menu
+	when (time > 5.5) $ aSplash %= runSplashWire dt
+	aSplash.splashBlueBackground.labelBackground .= overlayColor time
+	aSplash.splashALCLogoPictureView.pictureViewScale .= logoScale time
+	aSplash.splashPresentsLabel.labelScale .= presentsScale time
 
 logoScale time = 1 + time/5
 
@@ -89,6 +85,7 @@ overlayColor time = Just $ makeColor navy_r navy_g navy_b t where
 
 ----------------------- The Squid Comes Home -------------------
 
+-- | Draw the squids
 depictSquids squidAsset = Just . Pictures . (map (depictSquid squidAsset))
 
 depictSquid squidAsset ObjectState{objPosition=(x,y), objVelocity=r} = 
@@ -97,14 +94,16 @@ depictSquid squidAsset ObjectState{objPosition=(x,y), objVelocity=r} =
 vectorToAngle (0, 0) = 0
 vectorToAngle (x, y) = ((atan2 (double2Float x) (double2Float y))/pi * 180)
 
-updateOnTime delta splash = (newWorld, newWire) where 
+-- | Use netwire to accelerate the squids toward the target.
+runSplashWire delta splash = newWorld where 
 	(result, newWire) = runIdentity $ stepWire (splash^.splashWire) (float2Double delta) splash
+	updateWire = splashWire .~ newWire
 	newWorld = case result of
-		Right w -> w
-		Left _ -> splash
+		Right w -> updateWire w
+		Left _ -> updateWire splash
 
-squidsWire = proc splash -> do
-	newSquids <- mapArrowWithIndexFrom 0 squidState -< zip (splash^.splashSquids) (repeat $ splash^.splashTarget)
+accelerateSquids = proc splash -> do
+	newSquids <- mapArrowWithIndexFrom 0 accelerateSquid -< zip (splash^.splashSquids) (repeat $ splash^.splashTarget)
 	id -<  splashSquids .~ newSquids $ splash 
 
 mapArrowWithIndexFrom i arrow = proc list -> do
@@ -115,8 +114,7 @@ mapArrowWithIndexFrom i arrow = proc list -> do
 			id -< y:ys
 		[] -> id -< []
 
-squidState i = proc (squid, target) -> do 
-	--t <- time -< ()
+accelerateSquid i = proc (squid, target) -> do 
 	newState <- object_ (\_ -> id) (startState i) -< (Accelerate ((target- (targetOffset i)) - (objPosition squid)), 0.2)
 	id -< newState
 

@@ -121,3 +121,5 @@ orderViews = sortBy (comparing (^.viewZIndex))
 -- | Append subviews.
 (<++) :: View a -> [View a] -> View a
 (<++) a b = viewSubviews %~ (++b) $ a
+
+infixl 1 <++

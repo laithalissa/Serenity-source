@@ -8,8 +8,6 @@ import Serenity.External
 
 import Control.Lens
 
-serenityVersionString = "Alpha 1.01"
-
 data MenuData a = MenuData
 	{	_menuTitleLabel   :: Label a
 	,	_menuVersionLabel :: Label a
@@ -28,12 +26,6 @@ initMenuData assets = MenuData
 	,	_menuJoinButton   = initMenuButton "Join    ->" (\_ -> Join)
 	,	_menuQuitButton   = initMenuButton "Quit    -<" (\_ -> Quit)
 	}
-
-initMenuButton string action = 
-	initButton 
-	(initLabel (StaticString string) black (Just (changeAlpha (light $ bright $ bright green) 0.7))) {_labelScale = 2.1}
-	(initLabel (StaticString string) black (Just $ changeAlpha (dark yellow) 0.7)) {_labelScale = 2.1}
-	[(ButtonEvent LeftButton Up (Modifiers Up Up Up), action)]
 
 viewMenu :: a -> Simple Lens a (MenuData a) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
 viewMenu a aData aAssets aMode = (initView ((0, 0), (1024, 750))) 

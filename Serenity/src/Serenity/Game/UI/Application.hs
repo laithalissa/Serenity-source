@@ -4,7 +4,7 @@ import Serenity.Sheen
 
 serenityVersionString = "Alpha 1.01"
 
-data ApplicationMode = Splash | Menu | Host| Join | Lobby | Play | Quit
+data ApplicationMode = Splash | Menu | Host| Join | Lobby | Play | Quit deriving Eq
 
 initMenuButton string action = 
 	initButton 

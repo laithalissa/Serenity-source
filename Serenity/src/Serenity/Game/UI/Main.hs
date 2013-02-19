@@ -14,6 +14,7 @@ import Control.Lens
 import Control.Monad.State
 import Control.Concurrent
 import Control.Concurrent.STM
+import System.Exit
 
 data ApplicationController = ApplicationController
 	{	_appViewGlobals :: ViewGlobals ApplicationController
@@ -53,7 +54,7 @@ instance ViewController ApplicationController where
 		Join   -> app
 		Lobby  -> app
 		Play   -> app
-		Quit   -> error "Quit!"
+		Quit   -> app
 
 gui = do
 	assets  <- initAssets
@@ -70,25 +71,9 @@ gui = do
 
 handleMainTime :: Float -> ApplicationController -> IO ApplicationController
 handleMainTime dt = execStateT $ do
-	app <- id <%= updateTime dt
-	gameRef <- use appGameData
-	case app^.appHostData.hostServerGame of
-		Starting   -> runServer' gameRef
-		Stopping _ -> stopServer' gameRef
-		_          -> return ()
-	where
-	runServer' gameRef = do
-		gameBuilder <- liftIO makeDemoGameBuilder
-		status <- liftIO.atomically $ takeTMVar gameRef
-		g <- return $ case status of 
-			Nothing -> demoGame gameBuilder
-			Just  g -> g
-		appHostData.hostServerGame .= (Running g)
-		liftIO.atomically $ putTMVar gameRef (Just g)
+	modify $ updateTime dt
+	timeHostIO appHostData appGameData dt
+	app <- get; when (app^.appMode == Quit) $ liftIO exitSuccess
 
-	stopServer' gameRef = do
-		_ <- liftIO.atomically $ swapTMVar gameRef Nothing
-		appHostData.hostServerGame .= Stopped
-
-serverThread :: (TMVar (Maybe Game)) -> IO ()
+serverThread :: TMVar (Maybe Game) -> IO ()
 serverThread ref = return ()

@@ -8,6 +8,9 @@ import Serenity.External
 import Serenity.Model
 
 import Control.Lens
+import Control.Monad.State
+import Control.Concurrent
+import Control.Concurrent.STM
 
 data HostData a = HostData
 	{	_hostTitleLabel    :: Label a
@@ -64,11 +67,33 @@ viewHost a aHost aAssets aMode = (initView ((0, 0), (1024, 750)))
 		[	button a (aHost.hostStartButton) (aHost.hostServerGame) ((451,14),(185,28))
 		,	button a (aHost.hostStopButton)  (aHost.hostServerGame) ((14 ,14),(185,28))
 		]
-	]++	case a^.aHost.hostServerGame of
-			Running g  -> return (initView ((20, 100), (650, 500))) 
-				{	_viewBackground = Just $ changeAlpha (greyN 0.1) 0.7
-				}
-			_ -> []
+	] ++ case a^.aHost.hostServerGame of
+		Running g  -> return (initView ((20, 100), (650, 500))) 
+			{	_viewBackground = Just $ changeAlpha (greyN 0.1) 0.7
+			}
+		_ -> []
 
 timeHost :: Simple Lens a (HostData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
 timeHost aData aMode dt a = a
+
+timeHostIO :: Simple Lens a (HostData a) -> Simple Lens a (TMVar (Maybe Game)) -> Float -> StateT a IO ()
+timeHostIO aHost aGameData _ = do
+	a <- get
+	gameRef <- use aGameData
+	case a^.aHost.hostServerGame of
+		Starting   -> runServer' gameRef
+		Stopping _ -> stopServer' gameRef
+		_          -> return ()
+	where
+	runServer' gameRef = do
+		gameBuilder <- liftIO makeDemoGameBuilder
+		status <- liftIO.atomically $ takeTMVar gameRef
+		g <- return $ case status of 
+			Nothing -> demoGame gameBuilder
+			Just  g -> g
+		aHost.hostServerGame .= (Running g)
+		liftIO.atomically $ putTMVar gameRef (Just g)
+
+	stopServer' gameRef = do
+		_ <- liftIO.atomically $ swapTMVar gameRef Nothing
+		aHost.hostServerGame .= Stopped

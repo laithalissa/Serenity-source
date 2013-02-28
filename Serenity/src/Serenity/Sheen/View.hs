@@ -122,15 +122,15 @@ indexPathAtPoint point view = fst $ indexPathAtPoint' [] point view
 indexPathAtPoint' :: IndexPath -> (Float, Float) -> View a -> (IndexPath, Bool)
 indexPathAtPoint' currentPath point@(x,y) view = 
 	if eventInView 
-		then case catMaybes ( map (\(x,b) -> if b then Just x else Nothing) $ subviewHandlers) of
+		then case map fst . filter snd $ subviewHandlers of
 			[] -> (currentPath, True)
 			hs -> (last hs, True)
 		else (currentPath, False)
 	where
 	eventInView = pointInExtent (view^.viewFrame) point
-	subviewHandlers = map (\(i,v) -> indexPathAtPoint' (currentPath++[i]) translatedPoint v) (zip [0..] $ subviews)
+	subviewHandlers = map (\(i,v) -> indexPathAtPoint' (currentPath++[i]) translatedPoint v) (subviews)
 	translatedPoint = (x-(fromIntegral xmin), y-(fromIntegral ymin))
-	subviews = orderViews $ view^.viewSubviews
+	subviews = sortBy (comparing (^._2.viewZIndex)) $ zip [0..] $ view^.viewSubviews
 	(_, ymin, _, xmin) = takeExtent $ view^.viewFrame
 
 -- | Draw a view hierarchy

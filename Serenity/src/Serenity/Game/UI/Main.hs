@@ -39,6 +39,7 @@ initApplicationController gameRef assets = ApplicationController
 	}
 
 instance ViewController ApplicationController where
+	globals = appViewGlobals
 	getView app = case app^.appMode of 
 		Splash -> viewSplash app appSplashData appAssets appMode
 		Menu   -> viewMenu app appMenuData appAssets appMode

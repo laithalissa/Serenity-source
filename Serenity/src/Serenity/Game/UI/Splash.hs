@@ -65,7 +65,7 @@ viewSplash a aSplash aAssets aMode =
 timeSplash :: Simple Lens a (SplashData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
 timeSplash aSplash aMode dt = execState $ do
 	time <- aSplash.splashTime <+= dt
-	when (time > 12) $ aMode .= Menu
+	when (time > 12 ) $ aMode .= Menu
 	when (time > 5.5) $ aSplash %= runSplashWire dt
 	aSplash.splashBlueBackground.labelBackground .= overlayColor time
 	aSplash.splashALCLogoPictureView.pictureViewScale .= logoScale time

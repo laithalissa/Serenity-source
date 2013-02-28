@@ -20,24 +20,32 @@ data Button a b = Button
 	,	_buttonLabelPushed :: Label a
 	,	_buttonMode :: ButtonMode
 	,	_buttonIsPushed :: Bool
+	,	_buttonIsPushedButMouseOutside :: Bool
 	,	_buttonEnabled :: Bool
 	,	_buttonAction :: Map ButtonEvent (b -> b)
 	}
 
 data ButtonMode = Momentary | Toggle
 
-data ButtonEvent = ButtonEvent MouseButton KeyState Modifiers deriving (Show, Eq, Ord)
+data ButtonEvent = 
+	  ButtonEvent MouseButton KeyState Modifiers 
+	| ButtonEventMouseOverInside
+	| ButtonEventMouseOverOutside
+	deriving (Show, Eq, Ord)
 
 initButton label inLabel action = Button
 	{	_buttonLabel = label
 	,	_buttonLabelPushed = inLabel
 	,	_buttonMode = Momentary
 	,	_buttonIsPushed = False
+	,	_buttonIsPushedButMouseOutside = False
 	,	_buttonEnabled = True
 	,	_buttonAction = Map.fromList action
 	}
 
 uiEvent2ButtonEvent (UIEventKey _ (MouseButton mouseButton) state mods) = Just $ ButtonEvent mouseButton state mods
+uiEvent2ButtonEvent UIEventMouseOverInside  = Just $ ButtonEventMouseOverInside
+uiEvent2ButtonEvent UIEventMouseOverOutside = Just $ ButtonEventMouseOverOutside
 uiEvent2ButtonEvent _ = Nothing
 
 makeLenses ''ButtonMode
@@ -55,8 +63,8 @@ button a button lens bounds = (label a (button.labelToDisplay) bounds)
 			else to (\a -> labelBackground .~ (Just $ greyN 0.3) $ a^.buttonLabel)
 
 		buttonEventHandler _ Nothing = id
-		buttonEventHandler lens (Just event@(ButtonEvent _ keyState _)) = execState $
-			do	modify $ \a -> flip fromMaybe (runButtonAction a) $ a
+		buttonEventHandler lens (Just event@(ButtonEvent _ keyState _)) = execState $ do
+				modify $ \a -> flip fromMaybe (runButtonAction a) $ a
 				modify $ \a -> button.buttonIsPushed %~ (updatePushed a) $ a
 			where
 			runButtonAction a = do
@@ -65,3 +73,15 @@ button a button lens bounds = (label a (button.labelToDisplay) bounds)
 			updatePushed a isPushed = case a^.button.buttonMode of
 				Momentary -> keyState == Down
 				Toggle    -> not isPushed
+
+		buttonEventHandler _ (Just ButtonEventMouseOverOutside) = execState $ do
+			pushed <- use $ button.buttonIsPushed
+			when pushed $ do 
+				button.buttonIsPushedButMouseOutside .= True
+				button.buttonIsPushed .= False
+
+		buttonEventHandler _ (Just ButtonEventMouseOverInside) = execState $ do
+			pushed <- use $ button.buttonIsPushedButMouseOutside
+			when pushed $ do 
+				button.buttonIsPushedButMouseOutside .= False
+				button.buttonIsPushed .= True

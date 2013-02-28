@@ -12,6 +12,8 @@ data UIEvent =
 	| UIEventMotion Point
 	| UIEventFocusGained
 	| UIEventFocusLost
+	| UIEventMouseOverInside
+	| UIEventMouseOverOutside
 
 event2UIEvent :: Event -> UIEvent
 event2UIEvent (EventKey key keystate mods point) = UIEventKey point key keystate mods

@@ -56,9 +56,11 @@ viewSplash a aSplash aAssets aMode =
 	[	pictureView a (aSplash.splashALCLogoPictureView) ((520,400),(0,0))
 	,	label       a (aSplash.splashBlueBackground)     ((0,0),(1024,750))
 	,	label       a (aSplash.splashPresentsLabel)      ((450,100),(0,0))
+	,	(initView ((0, 0), (1024, 768))) {_viewEventHandler = Just $ eventHandler a}
 	] where
-	eventHandler a (UIEventKey _ _ _ _) = aMode.~Menu $ a
-	eventHandler a (UIEventMotion r)    = aSplash.splashTarget.~(pFloat2Double r) $ a
+	eventHandler a (UIEventMouseUpInside _ _ _) = aMode.~Menu $ a
+	eventHandler a (UIEventKeyPress _ _ _) = aMode.~Menu $ a
+	eventHandler a (UIEventMotion r) = aSplash.splashTarget.~(pFloat2Double r) $ a
 	eventHandler a _ = a
 
 -- | Time evolution of splash screen, dependant on various lenses on the application state a.

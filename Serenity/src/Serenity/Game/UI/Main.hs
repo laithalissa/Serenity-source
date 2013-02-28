@@ -44,9 +44,9 @@ instance ViewController ApplicationController where
 		Splash -> viewSplash app appSplashData appAssets appMode
 		Menu   -> viewMenu app appMenuData appAssets appMode
 		Host   -> viewHost app appHostData appAssets appMode
-		Join   -> undefined
-		Lobby  -> undefined
-		Play   -> undefined
+		Join   -> error "Join Screen not here yet"
+		Lobby  -> error "Lobby Screen not here yet"
+		Play   -> error "Play Screen not here yet"
 		Quit   -> (initView ((0, 0), (1024, 750)))
 	updateTime dt app = case app^.appMode of 
 		Splash -> timeSplash appSplashData appMode dt app

@@ -3,7 +3,7 @@ module Serenity.Sheen.IO
 ) where
 
 import Graphics.Gloss.Interface.IO.Game
-import Serenity.Sheen.UIEvent (translateEvent)
+import Serenity.Sheen.UIEvent 
 
 playIOZero display@(InWindow _ (sizeX, sizeY) _) color steps initialWorld depict respond evolve = 
 	playIO display color steps initialWorld 

@@ -9,7 +9,6 @@ import Serenity.Model
 
 import Control.Lens
 import Control.Monad.State
-import Control.Concurrent
 import Control.Concurrent.STM
 
 data HostData a = HostData
@@ -41,7 +40,7 @@ startServer hostServer = case hostServer of
 	Stopped    -> Starting
 	Starting   -> Starting
 	Running g  -> Running g
-	Stopping g -> Starting
+	Stopping _ -> Starting
 
 stopServer hostServer = case hostServer of
 	Stopped    -> Stopped

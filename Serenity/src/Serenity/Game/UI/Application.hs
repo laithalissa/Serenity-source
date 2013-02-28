@@ -10,4 +10,4 @@ initMenuButton string action =
 	initButton 
 	(initLabel (StaticString string) black (Just (changeAlpha (light $ bright $ bright green) 0.7))) {_labelScale = 2.1}
 	(initLabel (StaticString string) black (Just $ changeAlpha (dark yellow) 0.7)) {_labelScale = 2.1}
-	[(ButtonEvent LeftButton Up (Modifiers Up Up Up), action)]
+	[(ButtonEventMouseUpInside LeftButton (Modifiers Up Up Up), action)]

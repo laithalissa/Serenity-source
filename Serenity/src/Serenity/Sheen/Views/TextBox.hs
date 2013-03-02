@@ -17,6 +17,7 @@ data TextBox a = TextBox
 	,	_tbLabel :: Label a
 	,	_tbFocusBackground :: Color
 	,	_tbEnabled :: Bool
+	,	_tbPostEdit :: String -> String
 	}
 makeLenses ''TextBox
 
@@ -26,6 +27,7 @@ initTextBox valueLens color backg focusBackg scale = TextBox
 	,	_tbLabel = (initLabel (DynamicString valueLens) color backg) {_labelScale = scale}
 	,	_tbFocusBackground = focusBackg
 	,	_tbEnabled = True
+	,	_tbPostEdit = id
 	}
 
 textBox :: a -> Simple Lens a (TextBox a) -> Simple Lens a String -> ((Int, Int), (Int, Int)) -> View a
@@ -34,7 +36,7 @@ textBox a tb aString bounds = (label a (tb.tbLabel) bounds)
 			then Just $ a^.tb.tbFocusBackground
 			else a^.tb.tbLabel.labelBackground
 	,	_viewEventHandler = Just $ \event -> if (a^.tb.tbEnabled) && ((a^.tb.tbFocus) || event == UIEventFocusGained)
-			then tbEventHandler tb aString event a
+			then (aString %~ a^.tb.tbPostEdit) $ tbEventHandler tb aString event a
 			else a
 	}
 

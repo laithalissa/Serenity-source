@@ -41,6 +41,7 @@ textBox a tb aString bounds = (label a (tb.tbLabel) bounds)
 	}
 
 tbEventHandler :: Simple Lens a (TextBox a) -> Simple Lens a String -> UIEvent -> a -> a
+tbEventHandler tb aString (UIEventKeyPress (Char '\b')               Up (Modifiers Up   Up Up)) = aString %~ init'
 tbEventHandler tb aString (UIEventKeyPress (Char k)                  Up (Modifiers Up   Up Up)) = aString %~ (++[k])
 tbEventHandler tb aString (UIEventKeyPress (Char k)                  Up (Modifiers Down Up Up)) = aString %~ (++[toUpper k])
 tbEventHandler tb aString (UIEventKeyPress (SpecialKey KeySpace)     Up (Modifiers _    Up Up)) = aString %~ (++" ")
@@ -50,5 +51,5 @@ tbEventHandler tb aString UIEventFocusGained = tb.tbFocus .~ True
 tbEventHandler tb aString UIEventFocusLost   = tb.tbFocus .~ False
 tbEventHandler _ _ _ = id
 
-init' list@(_:_) = init list
 init' [] = []
+init' list = init list

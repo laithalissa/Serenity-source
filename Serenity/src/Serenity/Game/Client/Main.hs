@@ -78,7 +78,7 @@ handleStep inbox delta clientState = do
 	gameState' <- return $ gameTime +~ (float2Double delta) $ updates us (clientState^.clientGame)
 
 	if UpdateGameOver `elem` us
-		then print $ "Game over! " ++ (show $ clientState^.clientGame.gameRanks)
+		then print $ "Game over! " ++ (show $ gameState'^.gameRanks)
 		else return ()
 
 	return $ (clientUIState.viewport .~ newViewPort $ clientState) {_clientGame = gameState'}

@@ -79,7 +79,9 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 			game'''           <- return $ gameRandom %~ (snd.next) $ game''
 			sendToClients (filteredUpdates' ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
-			playLoop (game''', wire') newTime
+			if UpdateGameOver `elem` updatesT
+				then return ()
+				else playLoop (game''', wire') newTime
 
 -- | Receive commands from the network from all the clients
 getCommands :: [ClientData] -> IO [Command]

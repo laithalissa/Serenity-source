@@ -70,6 +70,10 @@ data Update =
 	{	updateEntityID :: EntityID
 	,	updateShipDamage :: Damage
 	}
+	|	UpdateGameRanks
+	{	updateGameRanks :: [(OwnerID, Int)]
+	}
+	| UpdateGameOver
 	deriving (Show, Eq)
 
 -- | Commands are sent from the clients to the server and contain order information and other notifications of intention.

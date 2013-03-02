@@ -73,10 +73,14 @@ instance Updateable Game where
 	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
 		gameShips.(at eID).traverse.entityData.shipBeamTargets .~ targets $ game
 
+	update UpdateGameRanks{updateGameRanks=ranks} game = gameRanks .~ ranks $ game
+
+	update UpdateGameOver game = game
+
 instance Evolvable Game where
 	evolve = proc (game, _) -> do
 		x <- mapEvolve -< (M.elems $ game^.gameShips, game)
-		arr concat -< x
+		arr concat -< x ++ [checkGameEnd game]
 
 mapEvolve = proc (ents, game) -> do
 	case ents of
@@ -153,3 +157,15 @@ inRange
 	-> Entity Ship -- ^ Target
 	-> Bool
 inRange ship target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25
+
+checkGameEnd :: Game -> [Update]
+checkGameEnd game = case game^.gameGameMode of
+	DeathMatch ->
+		if all (== head playersLeft) (tail playersLeft)
+			then [UpdateGameRanks $ (head playersLeft, 1):(updateRanks), UpdateGameOver]
+			else [updateRanks]
+	_ -> []
+	where
+		playersLeft = map _ownerID (M.elems $ game^.gameShips)
+		deadPlayers = filter (\p -> p `notElem` playersLeft && p `notElem` (map fst $ game^.gameRanks)) (game^.gamePlayers)
+		updateRanks = UpdateGameRanks $ (game^.gameRanks) ++ (map (\p -> (p, (length (game^.gamePlayers)) - (length (game^.gameRanks)))) deadPlayers)

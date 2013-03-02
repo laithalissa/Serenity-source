@@ -84,16 +84,16 @@ initView ((xmin, ymin), (xsize, ysize)) = View
 handleViewEvents :: ViewController a => ((Float, Float), UIEvents) -> a -> a
 handleViewEvents (point, events) = execState $ do
 	a <- get
-	indexPathUnderMouse <- return $ indexPathAtPoint point (getView a)
+	indexPathUnderMouse    <- return $ indexPathAtPoint point (getView a)
 	indexPathLastMouseDown <- use (globals.globalMouseDown)
-	indexPathFocus <- use (globals.globalFocus)
-	when (events^.uieventsUpdateFocus)        $ updateFocus indexPathUnderMouse
-	when (events^.uieventsUpdateMouseOver)    $ updateMouseOver indexPathUnderMouse
-	forM (events^.uieventsEventUnderMouse)    $ sendEvent indexPathUnderMouse
-	forM (events^.uieventsEventToFocus)       $ sendEvent indexPathFocus
+	indexPathFocus         <- use (globals.globalFocus)
+	when (events^.uieventsUpdateFocus)     $ updateFocus indexPathUnderMouse
+	when (events^.uieventsUpdateMouseOver) $ updateMouseOver indexPathUnderMouse
+	forM (events^.uieventsEventUnderMouse) $ sendEvent indexPathUnderMouse
+	forM (events^.uieventsEventToFocus)    $ sendEvent indexPathFocus
 	when (indexPathUnderMouse /= indexPathLastMouseDown) $ do
 		forM (events^.uieventsEventLastMouseDown) $ sendEvent indexPathLastMouseDown; return ()
-	when (events^.uieventsUpdateMouseDown)    $ globals.globalMouseDown .= indexPathUnderMouse
+	when (events^.uieventsUpdateMouseDown) $ globals.globalMouseDown .= indexPathUnderMouse
 
 updateFocus :: ViewController a => IndexPath -> State a ()
 updateFocus = updateGlobalsWith globalFocus UIEventFocusLost UIEventFocusGained    

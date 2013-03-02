@@ -40,5 +40,13 @@ label a label bounds = (initView bounds)
 		backg = a^.label.labelBackground
 		value = case a^.label.labelValue of
 			StaticString s -> Just s
-			DynamicString lens -> Just $ show (a^.lens)
+			DynamicString lens -> Just $ (showFix.show) (a^.lens)
 			NoString -> Nothing
+
+-- This is a bit of a hack
+showFix :: String -> String
+showFix [] = []
+showFix s = start ++ middle ++ end where
+	start = if head s == '\"' then "" else [head s]
+	middle = (tail.init) s
+	end = if last s == '\"' then "" else [last s]

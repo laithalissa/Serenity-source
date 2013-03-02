@@ -12,28 +12,32 @@ import Control.Monad.State
 import Control.Concurrent.STM
 
 data HostData a = HostData
-	{	_hostTitleLabel    :: Label a
-	,	_hostVersionLabel  :: Label a
-	,	_hostStartButton   :: Button a (ServerStatus Game)
-	,	_hostStopButton    :: Button a (ServerStatus Game)
-	,	_hostBackButton    :: Button a ApplicationMode
-	,	_hostPlayButton    :: Button a ApplicationMode
-	,	_hostServerGame    :: ServerStatus Game
+	{	_hostTitleLabel        :: Label a
+	,	_hostVersionLabel      :: Label a
+	,	_hostStartButton       :: Button a (ServerStatus Game)
+	,	_hostStopButton        :: Button a (ServerStatus Game)
+	,	_hostBackButton        :: Button a ApplicationMode
+	,	_hostPlayButton        :: Button a ApplicationMode
+	,	_hostNumPlayersTextBox :: TextBox a
+	,	_hostNumPlayers        :: String
+	,	_hostServerGame        :: ServerStatus Game
 	}
 
 data ServerStatus g = Stopped | Starting | Running g | Stopping g
 
 makeLenses ''HostData
 
-initHostData :: Assets -> HostData a
-initHostData assets = HostData
-	{	_hostTitleLabel  = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
+initHostData :: Simple Lens a (HostData a) -> Assets -> HostData a
+initHostData aHost assets = HostData
+	{	_hostTitleLabel   = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
 	,	_hostVersionLabel = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
-	,	_hostStartButton = initMenuButton "Start   >>" startServer
-	,	_hostStopButton  = initMenuButton "<>    Stop" stopServer
-	,	_hostBackButton  = initMenuButton "<-    Back" (\_ -> Menu)
-	,	_hostPlayButton  = initMenuButton "Play    ->" (\_ -> Play)
-	,	_hostServerGame  = Stopped
+	,	_hostStartButton  = initMenuButton "Start    >>" startServer
+	,	_hostStopButton   = initMenuButton "Stop    <>" stopServer
+	,	_hostBackButton   = initMenuButton "<-    Back" (\_ -> Menu)
+	,	_hostPlayButton   = initMenuButton "Play    ->" (\_ -> Play)
+	,	_hostNumPlayersTextBox = initTextBox (aHost.hostNumPlayers) black (Just (changeAlpha (light $ bright $ bright green) 0.7)) (changeAlpha (dark yellow) 0.7) 2.1
+	,	_hostNumPlayers        = ""
+	,	_hostServerGame   = Stopped
 	}
 
 startServer hostServer = case hostServer of
@@ -54,23 +58,31 @@ viewHost a aHost aAssets aMode = (initView ((0, 0), (1024, 750)))
 	}	<++
 	[	label a (aHost.hostTitleLabel) ((30,650),(220,30))
 	,	label a (aHost.hostVersionLabel) ((0,0),(100,15))
-	,	(initView ((680, 0), (345, 750))) 
+	,	(initView ((680, 0), (345, 750))) -- Sidebar
 		{	_viewBackground = Just $ changeAlpha (greyN 0.1) 0.7
 		}	<++
 		[	button a (aHost.hostPlayButton) aMode ((80,650),(185,28))
 		,	button a (aHost.hostBackButton) aMode ((80, 50),(185,28))
 		]
-	,	(initView ((20, 35), (650, 56))) 
+	,	(initView ((20, 35), (650, 56))) -- Server Buttons
 		{	_viewBackground = Just $ changeAlpha (greyN 0.1) 0.7
 		}	<++
-		[	button a (aHost.hostStartButton) (aHost.hostServerGame) ((451,14),(185,28))
-		,	button a (aHost.hostStopButton)  (aHost.hostServerGame) ((14 ,14),(185,28))
+		[	if stopped
+				then (button a (aHost.hostStartButton) (aHost.hostServerGame) ((451,14),(185,28)))
+				else (button a (aHost.hostStopButton)  (aHost.hostServerGame) ((451,14),(185,28)))
+		,	textBox a (aHost.hostNumPlayersTextBox) (aHost.hostNumPlayers) ((14,14),(185,28))
 		]
 	] ++ case a^.aHost.hostServerGame of
 		Running g  -> return (initView ((20, 100), (650, 500))) 
 			{	_viewBackground = Just $ changeAlpha (greyN 0.1) 0.7
 			}
 		_ -> []
+	where
+		stopped = case a^.aHost.hostServerGame of
+			Stopped    -> True
+			Starting   -> True
+			Running g  -> False
+			Stopping g -> False
 
 timeHost :: Simple Lens a (HostData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
 timeHost aData aMode dt a = a

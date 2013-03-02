@@ -15,6 +15,21 @@ import Graphics.Gloss.Interface.IO.Game
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+data ButtonEvent = 
+	  ButtonEventMouseUpInside   MouseButton Modifiers 
+	| ButtonEventMouseUpOutside  MouseButton Modifiers 
+	| ButtonEventMouseDownInside MouseButton Modifiers 
+	| ButtonEventMouseOverInside
+	| ButtonEventMouseOverOutside
+	deriving (Show, Eq, Ord)
+
+uiEvent2ButtonEvent (UIEventMouseUpInside   mouseButton _ mods) = Just $ ButtonEventMouseUpInside   mouseButton mods
+uiEvent2ButtonEvent (UIEventMouseDownInside mouseButton _ mods) = Just $ ButtonEventMouseDownInside mouseButton mods
+uiEvent2ButtonEvent (UIEventMouseUpOutside  mouseButton _ mods) = Just $ ButtonEventMouseUpOutside  mouseButton mods
+uiEvent2ButtonEvent UIEventMouseOverInside  = Just $ ButtonEventMouseOverInside
+uiEvent2ButtonEvent UIEventMouseOverOutside = Just $ ButtonEventMouseOverOutside
+uiEvent2ButtonEvent _ = Nothing
+
 data Button a b = Button
 	{	_buttonLabel :: Label a
 	,	_buttonLabelPushed :: Label a
@@ -27,14 +42,6 @@ data Button a b = Button
 
 data ButtonMode = Momentary | Toggle
 
-data ButtonEvent = 
-	  ButtonEventMouseUpInside   MouseButton Modifiers 
-	| ButtonEventMouseUpOutside  MouseButton Modifiers 
-	| ButtonEventMouseDownInside MouseButton Modifiers 
-	| ButtonEventMouseOverInside
-	| ButtonEventMouseOverOutside
-	deriving (Show, Eq, Ord)
-
 initButton label inLabel action = Button
 	{	_buttonLabel = label
 	,	_buttonLabelPushed = inLabel
@@ -45,21 +52,14 @@ initButton label inLabel action = Button
 	,	_buttonAction = Map.fromList action
 	}
 
-uiEvent2ButtonEvent (UIEventMouseUpInside   mouseButton _ mods) = Just $ ButtonEventMouseUpInside   mouseButton mods
-uiEvent2ButtonEvent (UIEventMouseDownInside mouseButton _ mods) = Just $ ButtonEventMouseDownInside mouseButton mods
-uiEvent2ButtonEvent (UIEventMouseUpOutside  mouseButton _ mods) = Just $ ButtonEventMouseUpOutside  mouseButton mods
-uiEvent2ButtonEvent UIEventMouseOverInside  = Just $ ButtonEventMouseOverInside
-uiEvent2ButtonEvent UIEventMouseOverOutside = Just $ ButtonEventMouseOverOutside
-uiEvent2ButtonEvent _ = Nothing
-
 makeLenses ''ButtonMode
 makeLenses ''Button
 
 button :: a -> Simple Lens a (Button a b) -> Simple Lens a b -> ((Int, Int), (Int, Int)) -> View a
 button a button lens bounds = (label a (button.labelToDisplay) bounds)
-	{	_viewEventHandler = case a^.button.buttonEnabled of
-		True  -> Just $ \event -> buttonEventHandler lens (uiEvent2ButtonEvent event) a
-		False -> Nothing
+	{	_viewEventHandler = if a^.button.buttonEnabled
+		then Just $ \event -> buttonEventHandler lens (uiEvent2ButtonEvent event) a
+		else Nothing
 	} where
 		labelToDisplay :: Getter (Button a b) (Label a)
 		labelToDisplay = if (a^.button.buttonEnabled)

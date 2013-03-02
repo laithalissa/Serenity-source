@@ -21,6 +21,7 @@ data UIEvent =
 	| UIEventFocusLost
 	| UIEventMouseOverInside
 	| UIEventMouseOverOutside
+	deriving Eq
 
 data UIEvents = UIEvents 
 	{	_uieventsEventUnderMouse     :: [UIEvent]

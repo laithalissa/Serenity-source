@@ -34,7 +34,7 @@ initApplicationController gameRef assets = ApplicationController
 	,	_appAssets      = assets
 	,	_appSplashData  = initSplashData assets
 	,	_appMenuData    = initMenuData assets
-	,	_appHostData    = initHostData assets
+	,	_appHostData    = initHostData appHostData assets
 	,	_appGameData    = gameRef
 	}
 

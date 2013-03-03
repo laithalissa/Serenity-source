@@ -22,6 +22,10 @@ data HostData a = HostData
 	,	_hostNumPlayersBox   :: TextBoxLabel a
 	,	_hostNumPlayers      :: String
 	,	_hostServerGame      :: ServerStatus Game
+	,	_hostNickName        :: String
+	,	_hostNickNameBox     :: TextBoxLabel a
+	,	_hostPort            :: String
+	,	_hostPortBox         :: TextBoxLabel a
 	}
 
 data ServerStatus g = Stopped | Starting | Running g | Stopping g
@@ -32,16 +36,18 @@ initHostData :: Simple Lens a (HostData a) -> Assets -> HostData a
 initHostData aHost assets    = HostData
 	{	_hostTitleLabel      = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
 	,	_hostVersionLabel    = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
-	,	_hostStartButton     = initMenuButton "Start  >>" startServer
-	,	_hostStopButton      = initMenuButton "Stop  <>" stopServer
-	,	_hostBackButton      = initMenuButton "<-   Back" (\_ -> Menu)
-	,	_hostPlayButton      = initMenuButton "Play    ->" (\_ -> Lobby)
+	,	_hostStartButton     = initMenuButton "Start    >>" startServer
+	,	_hostStopButton      = initMenuButton "Stop    <>" stopServer
+	,	_hostBackButton      = initMenuButton "<-      Back" (\_ -> Menu)
+	,	_hostPlayButton      = initMenuButton "Play      ->" (\_ -> Lobby)
 	,	_hostNumPlayersBox   = (initMenuTextBoxLabel "Players:" (aHost.hostNumPlayers)) & (tblPostEdit .~ numPlayersValidation)
 	,	_hostNumPlayers      = "2"
 	,	_hostServerGame      = Stopped
+	,	_hostNickName        = ""
+	,	_hostNickNameBox     = (initMenuTextBoxLabel "Name:" (aHost.hostNickName)) & (tblPostEdit .~ nameValidation)
+	,	_hostPort            = "9050"
+	,	_hostPortBox         = (initMenuTextBoxLabel "Port:" (aHost.hostPort)) & (tblPostEdit .~ portValidation)
 	}
-
-numPlayersValidation = (\x -> case x of _:_ -> [last x]; _ -> "").(filter isDigit)
 
 startServer hostServer = case hostServer of
 	Stopped    -> Starting
@@ -57,40 +63,43 @@ stopServer hostServer = case hostServer of
 
 viewHost :: a -> Simple Lens a (HostData a) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
 viewHost a aHost aAssets aMode = (initView ((0, 0), (1024, 750))) 
-	{	_viewDepict = Just $ getPicture "background" (a^.aAssets)
+	{	_viewDepict = background (a^.aAssets)
 	}	<++
 	[	label a (aHost.hostTitleLabel) ((30,650),(220,30))
 	,	label a (aHost.hostVersionLabel) ((0,0),(100,15))
-	,	(initView ((680, 0), (345, 750))) -- Sidebar
-		{	_viewBackground = Just $ changeAlpha (greyN 0.1) 0.7
-		}	<++
+	,	(initBox ((680, 0), (345, 750))) <++ -- Sidebar
 		[	button a (aHost.hostPlayButton) aMode ((80,650),(185,28))
 		,	button a (aHost.hostBackButton) aMode ((80, 50),(185,28))
 		]
-	,	(initView ((20, 35), (650, 56))) -- Server Buttons
-		{	_viewBackground = Just $ changeAlpha (greyN 0.1) 0.7
-		}	<++
-		[	if stopped
-				then (button a (aHost.hostStartButton) (aHost.hostServerGame) ((491,14),(145,28)))
-				else (button a (aHost.hostStopButton)  (aHost.hostServerGame) ((491,14),(145,28)))
-		,	textBoxLabel a (aHost.hostNumPlayersBox) (aHost.hostNumPlayers) ((14,14),(128,28)) 105
+	,	(initBox ((20, 545), (650, 56))) <++ -- Name Field
+		[	textBoxLabel a (aHost.hostNickNameBox) (aHost.hostNickName) ((14,14),(620,28)) 80
 		]
-	] ++ case a^.aHost.hostServerGame of
-		Running g  -> return (initView ((20, 100), (650, 500))) 
-			{	_viewBackground = Just $ changeAlpha (greyN 0.1) 0.7
-			}
-		_ -> []
-	where
-		stopped = case a^.aHost.hostServerGame of
-			Stopped    -> True
-			Starting   -> True
-			Running g  -> False
-			Stopping g -> False
+	,	(initBox ((20, 35), (650, 56))) <++ -- Server Buttons
+		[	if serverRunning $ a^.aHost
+				then (button a (aHost.hostStopButton)  (aHost.hostServerGame) ((491,14),(145,28)))
+				else (button a (aHost.hostStartButton) (aHost.hostServerGame) ((491,14),(145,28)))
+		,	textBoxLabel a (aHost.hostNumPlayersBox) (aHost.hostNumPlayers) ((14,14),(108,28)) 85
+		,	textBoxLabel a (aHost.hostPortBox) (aHost.hostPort) ((236,14),(149,28)) 65
+		]
+	] ++ if serverRunning $ a^.aHost 
+		then return (initBox ((20, 100), (650, 435)))
+		else return (initBox ((20, 100), (650, 435)))
+
+serverRunning host = case host^.hostServerGame of
+	Running _ -> True
+	_ -> False
 
 timeHost :: Simple Lens a (HostData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
 timeHost aHost aMode dt = execState $ do
+	a <- get
+	host <- use aHost
 	numPlayersString <- use (aHost.hostNumPlayers)
+	nickNameString   <- use (aHost.hostNickName)
+	portString       <- use (aHost.hostPort)
 	aHost.hostStartButton.buttonEnabled .= (numPlayersString `notElem` ["", "0"])
+	aHost.hostPlayButton.buttonEnabled  .= ((serverRunning host) && (nickNameString /= ""))
+	aHost.hostNumPlayersBox.tblEnabled  .= (not $ serverRunning host)
+	aHost.hostPortBox.tblEnabled        .= (not $ serverRunning host)
 
 timeHostIO :: Simple Lens a (HostData a) -> Simple Lens a (TMVar (Maybe Game)) -> Float -> StateT a IO ()
 timeHostIO aHost aGameData _ = do

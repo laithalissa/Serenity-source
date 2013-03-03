@@ -32,7 +32,7 @@ label :: a -> Getter a (Label a) -> ((Int, Int), (Int, Int)) -> View a
 label a label bounds = (initView bounds)
 	{	_viewDepict = do
 			v <- value
-			return $ Translate 3 3 $ Color color $ Scale scale scale $ Text v
+			return $ Translate 6 6 $ Color color $ Scale scale scale $ Text v
 	,	_viewBackground = backg
 	} where
 		scale = 0.1 * a^.label.labelScale

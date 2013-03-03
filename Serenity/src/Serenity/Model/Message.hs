@@ -70,6 +70,10 @@ data Update =
 	{	updateEntityID :: EntityID
 	,	updateShipDamage :: Damage
 	}
+	|	UpdateGameRanks
+	{	updateGameRanks :: [(OwnerID, Int)]
+	}
+	| UpdateGameOver
 	deriving (Show, Eq)
 
 -- | Commands are sent from the clients to the server and contain order information and other notifications of intention.
@@ -85,10 +89,13 @@ data Command =
 -- $(derive makeBinary ''ShipOrderState)
 derive makeBinary ''Damage
 derive makeBinary ''Entity
-derive makeBinary ''ShipType
 derive makeBinary ''ShipConfiguration
-derive makeBinary ''SystemUpgrade
+derive makeBinary ''System
 derive makeBinary ''Weapon
+derive makeBinary ''ShipClass
+derive makeBinary ''WeaponSlot
+derive makeBinary ''SystemSlot
+derive makeBinary ''WeaponType
 derive makeBinary ''Resources
 derive makeBinary ''WeaponEffect
 derive makeBinary ''Ship

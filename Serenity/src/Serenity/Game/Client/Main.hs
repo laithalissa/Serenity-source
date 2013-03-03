@@ -3,7 +3,7 @@ module Serenity.Game.Client.Main (
 )
 where
 
-import qualified Serenity.Game.Client.Assets as Assets
+import Serenity.External
 import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.Controller
 import Serenity.Game.Client.KeyboardState
@@ -17,7 +17,7 @@ import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad.State
 import Graphics.Gloss.Interface.IO.Game
-
+import GHC.Float
 -- | Run the client
 client ::
 	String -- ^ Host
@@ -34,13 +34,14 @@ client serverHost serverPort ownerId = do
 
 	waitUntilConnected (channelConnection channels)
 	print "Connected!"
+	assets <- initAssets
+	gameBuilder <- makeDemoGameBuilder
 
-	assets <- Assets.initialize
 	playIO
 		(InWindow "Project Serenity" windowSize (0, 0))
 		black
 		30
-		(initClientState assets ownerId)
+		(initClientState assets gameBuilder ownerId)
 		(return . render)
 		(handleEvent outbox)
 		(handleStep inbox)
@@ -78,13 +79,18 @@ handleEvent outbox event clientState = do
 -- | Update the game state on a time step
 -- Updates are received from the server and then applied to the game state
 handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
-handleStep inbox _ clientState = do
+handleStep inbox delta clientState = do
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
 	let us = concatMap getUpdate messages
 
 	-- Apply the updates to the game state
-	gameState' <- return $ updates us (clientState^.clientGame)
+	gameState' <- return $ gameTime +~ (float2Double delta) $ updates us (clientState^.clientGame)
+
+	if UpdateGameOver `elem` us
+		then print $ "Game over! " ++ (show $ gameState'^.gameRanks)
+		else return ()
+
 	return $ (clientUIState.viewport .~ newViewPort $ clientState) {_clientGame = gameState'}
 
 	where

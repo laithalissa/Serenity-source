@@ -8,12 +8,13 @@ import Serenity.Maths.Util
 import Control.Lens
 import System.Random
 
+type Location = (Double, Double)
+type Direction = (Double, Double)
+
 data Ship = Ship
-	{	_shipName :: String
-	,	_shipType :: ShipType
-	,	_shipConfiguration :: ShipConfiguration
-	,	_shipLocation :: (Double, Double)
-	,	_shipDirection :: (Double, Double)
+	{	_shipConfiguration :: ShipConfiguration
+	,	_shipLocation :: Location
+	,	_shipDirection :: Direction
 	,	_shipDamage :: Damage
 	,	_shipOrder :: Order
 	,	_shipGoal :: Goal
@@ -21,6 +22,18 @@ data Ship = Ship
 	,	_shipBeamTargets :: [Int]
 	}
 	deriving (Show, Eq)
+
+initShip :: ShipConfiguration -> Location -> Direction -> Ship
+initShip conf location direction = Ship
+	{	_shipConfiguration=conf
+	,	_shipLocation=location
+	,	_shipDirection=direction
+	,	_shipDamage=Damage 0 0
+	,	_shipOrder=OrderNone
+	,	_shipGoal=GoalNone
+	,	_shipPlan=[]
+	,	_shipBeamTargets=[]
+	}
 
 data Damage = Damage 
 	{	_damageHull   :: Int
@@ -32,29 +45,30 @@ data Damage = Damage
 
 data Order = 
 	  OrderNone
-	| OrderMove (Double, Double) (Maybe (Double, Double))
+	| OrderMove Location (Maybe Direction)
 	| OrderAttack Int
 	| OrderGuardShip Int
 	| OrderGuardPlanet Int
-	| OrderGuardLocation (Double, Double)
+	| OrderGuardLocation Location
 	| OrderCapture Int
 	deriving (Show, Eq)
 
 data Goal = 
 	  GoalNone
-	| GoalBeAt (Double, Double) (Maybe (Double, Double))
+	| GoalBeAt Location (Maybe Direction)
 	| GoalDestroyed Int
 	| GoalGuardShip Int
 	| GoalGuardPlanet Int
-	| GoalGuardLocation (Double, Double)
+	| GoalGuardLocation Location
 	| GoalCaptured Int
 	deriving (Show, Eq)
+
 
 data ShipAction = 
 	ActionMove 
 	{	startTime :: Double
-	,	startLocDir :: ((Double,Double),(Double,Double))
-	,	endLocDir   :: ((Double,Double),(Double,Double))
+	,	startLocDir :: (Location, Direction)
+	,	endLocDir   :: (Location, Direction)
 	}
 	| ActionAttack {targetID :: Int}
 	| ActionCapture Int
@@ -65,22 +79,19 @@ type Plan = [ShipAction]
 
 ----------------- Weapons and Configuration -------------------
 
-data ShipType = ShipType
-	{	_shipTypeFrontWeaponSlots   :: Int
-	,	_shipTypeSideWeaponSlots    :: Int
-	,	_shipTypeDorsalWeaponSlots  :: Int
-	,	_shipTypeSystemUpgradeSlots :: Int
-	,	_shipTypeMaxDamage :: Damage 
+data ShipConfiguration = ShipConfiguration
+	{	_shipConfigurationShipClass :: String
+	,	_shipConfigurationWeapons   :: [Maybe String]
+	,	_shipConfigurationSystems   :: [Maybe String]
 	}
 	deriving (Show, Eq)
 
-data ShipConfiguration = ShipConfiguration 
-	{	_shipConfFrontWeapons   :: [Weapon]
-	,	_shipConfSideWeapons    :: [Weapon]
-	,	_shipConfDorsalWeapons  :: [Weapon]
-	,	_shipConfSystemUpgrades :: SystemUpgrade
+demoShipConfiguration :: ShipConfiguration
+demoShipConfiguration = ShipConfiguration
+	{	_shipConfigurationShipClass="Destroyer"
+	,	_shipConfigurationWeapons=[Just "Laser"]
+	,	_shipConfigurationSystems=[Just "ShieldBoost"]
 	}
-	deriving (Show, Eq)
 
 data Weapon = Weapon
 	{	_weaponRange      :: Int
@@ -91,11 +102,18 @@ data Weapon = Weapon
 	}
 	deriving (Show, Eq)
 
-data SystemUpgrade = 
-	  ShieldUpgrade Int
-	| HullUpgrade Int
-	| EngineUpgrade Int
-	deriving (Show, Eq)
+data System = System
+	{	_systemShield :: Int -- ^ additional shield capacity
+	,	_systemHull   :: Int -- ^ additional hull capacity
+	,	_systemEngine :: Int -- ^ additional engine(speed)
+	}
+	deriving(Show, Eq)
+
+data WeaponType = 
+	  Side 
+	| Special 
+	| Turret 
+	deriving(Read, Show, Eq)
 
 data WeaponEffect = WeaponEffect
 	{	_effectShield      :: Int    -- ^ Effect on a shielded ship to shield
@@ -104,24 +122,57 @@ data WeaponEffect = WeaponEffect
 	}
 	deriving (Show, Eq)
 
+
+-- ship class --
+
+data ShipClass = ShipClass
+	{	_shipClassCenterOfRotation  :: Location
+	,	_shipClassSpeed		    :: Double
+	,	_shipClassMaxDamage         :: Damage
+	,	_shipClassWeaponSlots       :: [WeaponSlot]
+	,	_shipClassSystemSlots       :: [SystemSlot]
+	}
+	deriving (Show, Eq)
+
+data WeaponSlot = WeaponSlot
+	{	_weaponSlotLocation  :: Location
+	,	_weaponSlotDirection :: Direction
+	,	_weaponSlotType      :: WeaponType
+	}
+	deriving (Show, Eq)
+
+data SystemSlot = SystemSlot
+	{	_systemSlotLocation  :: Location
+	,	_systemSlotDirection :: Direction
+	}
+	deriving (Show, Eq)
+
+
+makeLenses ''Ship
+makeLenses ''Damage
 makeLenses ''Order
 makeLenses ''Goal
 makeLenses ''ShipAction
-makeLenses ''Weapon
-makeLenses ''WeaponEffect
-makeLenses ''SystemUpgrade
-makeLenses ''ShipType
 makeLenses ''ShipConfiguration
-makeLenses ''Damage
-makeLenses ''Ship
+makeLenses ''Weapon
+makeLenses ''System
+makeLenses ''WeaponEffect
+makeLenses ''ShipClass
+makeLenses ''WeaponSlot
+makeLenses ''SystemSlot
 
-applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
-applyWeaponDamage gen effect ship
-	| shielded || penetrated = shipDamage.damageHull   %~ updateHull $ ship
-	| otherwise              = shipDamage.damageShield %~ updateShield $ ship
-	where
-		updateHull   = f (ship^.shipType.shipTypeMaxDamage.damageHull) (effect^.effectHull)
-		updateShield = f (ship^.shipType.shipTypeMaxDamage.damageShield) (effect^.effectShield)
-		f maxDamage a b = rangeLimitAttainBounds 0 maxDamage (b+a)
-		shielded   = ship^.shipDamage^.damageShield == 0
-		penetrated = fst (randomR (0,1) gen) < effect^.effectPenetration
+---------- Lens Helpers ----------
+
+
+
+
+-- applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
+-- applyWeaponDamage gen effect ship
+-- 	| shielded || penetrated = shipDamage.damageHull   %~ updateHull $ ship
+-- 	| otherwise              = shipDamage.damageShield %~ updateShield $ ship
+-- 	where
+-- 		updateHull   = f (ship^.shipType.shipTypeMaxDamage.damageHull) (effect^.effectHull)
+-- 		updateShield = f (ship^.shipType.shipTypeMaxDamage.damageShield) (effect^.effectShield)
+-- 		f maxDamage a b = rangeLimitAttainBounds 0 maxDamage (b+a)
+-- 		shielded   = ship^.shipDamage^.damageShield == 0
+-- 		penetrated = fst (randomR (0,1) gen) < effect^.effectPenetration

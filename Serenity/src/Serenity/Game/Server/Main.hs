@@ -8,6 +8,7 @@ module Serenity.Game.Server.Main
 ,	getCommands
 ) where
 
+import Serenity.External
 import Serenity.Game.Server.ClientData
 import Serenity.Model
 import Serenity.Model.Wire
@@ -28,10 +29,11 @@ server
 	-> IO ()
 server port clientCount = do
 	print "server started"	
+	gameBuilder' <- makeDemoGameBuilder
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
-	play 5 clients demoGame commands evolve updates
+	play 5 clients (demoGame gameBuilder') commands evolve updates
 	print "server finished"
 
 -- | Wait for n clients to connect
@@ -70,15 +72,18 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 		playLoop (game, wire) lastTime = do
 			commands          <- getCommands clientDataList
 			updatesC          <- return $ transform commands game
-			game'             <- return $ updateWorld updatesC game
+			filteredUpdates'  <- return $ filteredUpdates updatesC
+			game'             <- return $ updateWorld filteredUpdates' game
 			newTime           <- getCurrentTime
 			time              <- return $ toRational $ diffUTCTime newTime lastTime
 			(updatesT, wire') <- return $ runWire wire (fromRational time) (game', game')
 			game''            <- return $ gameTime +~ (fromRational time) $ updateWorld updatesT game'
 			game'''           <- return $ gameRandom %~ (snd.next) $ game''
-			sendToClients (updatesC ++ updatesT) clientDataList
+			sendToClients (filteredUpdates' ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
-			playLoop (game''', wire') newTime
+			if UpdateGameOver `elem` updatesT
+				then return ()
+				else playLoop (game''', wire') newTime
 
 -- | Receive commands from the network from all the clients
 getCommands :: [ClientData] -> IO [Command]

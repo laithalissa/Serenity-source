@@ -1,8 +1,14 @@
-{-# LANGUAGE TemplateHaskell #-}
-
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE DataKinds, TypeOperators #-}
+{-# LANGUAGE FlexibleContexts, NoMonomorphismRestriction #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, UndecidableInstances, StandaloneDeriving #-}
 module Serenity.Model.Game where
 
+import Data.Maybe(fromJust)
+import Serenity.Debug(trace')
+
 import Serenity.Model.Entity
+import Serenity.Model.Fleet
 import Serenity.Model.Sector
 
 import Control.Lens
@@ -10,49 +16,115 @@ import System.Random
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+data GameBuilder = GameBuilder
+	{	_gbSector	:: Sector
+	,	_gbShipClasses 	:: Map String ShipClass
+	,	_gbWeapons 	:: Map String Weapon
+	,	_gbSystems	:: Map String System
+	,	_gbPlayerFleets	:: Map OwnerID Fleet
+	}
+	deriving(Show, Eq)
+makeLenses ''GameBuilder
+
+data GameMode =
+	DeathMatch
+	deriving Show
+
 data Game = Game
 	{	_gameTime :: Double
 	,	_gameRandom :: StdGen
-	,	_gameSector :: Sector
+	,	_gameNextEntityId :: Int
 	,	_gameShips  :: Map EntityID (Entity Ship)
+	,	_gameBuilder :: GameBuilder
+	,	_gameGameMode :: GameMode
+	,	_gamePlayers :: [OwnerID]
+	,	_gameRanks :: [(OwnerID, Int)]
 	}
 	deriving Show
 makeLenses ''Game
 
-defaultGame = Game
-	{	_gameTime = 0
-	,	_gameRandom = mkStdGen 1758836
-	,	_gameSector = sectorOne
-	,	_gameShips  = Map.fromList []
-	}
-
-demoGame = Game
-	{	_gameTime = 0
-	,	_gameSector = sectorOne
-	,	_gameShips = Map.fromList entities
-	}
+addShip :: OwnerID -> Ship -> Game -> Game
+addShip ownerId ship game = game'
 	where
-		entities =
-			[	createEntity 0 (25,25) OrderNone 0 "Vic"
-			,	createEntity 1 (25,75) OrderNone 1 "Jon"
-			,	createEntity 2 (75,75) (OrderAttack 1) 2 "Squidballs"
-			,	createEntity 3 (75,25) OrderNone 3 "Laith"
-			]
+	game' = gameNextEntityId .~ eId' $ (gameShips .~ ships' $ game)
+	eId' = eId+1
+	eId = game^.gameNextEntityId
+	ships' = Map.insert eId entity' (game^.gameShips)
+	entity' = Entity
+		{	_entityID=eId
+		,	_ownerID=ownerId
+		,	_entityData=ship
+		}
 
-		createEntity eid location order player name =
-			(eid, Entity
-			{	_entityID = eid
-			,	_ownerID = player
-			,	_entityData = createShip location order name
-			})
+initGame :: GameBuilder -> Game
+initGame gameBuilder = game'
+	where 
+	fleetsList :: [(OwnerID, Fleet)]
+	fleetsList = Map.toList (gameBuilder^.gbPlayerFleets)
+	spawnPoints :: [(Double, Double)]
+	spawnPoints = gameBuilder^.gbSector^.sectorSpawnPoints
+	fleetsSpawnPoint :: [(OwnerID, Fleet, Double, Double)]
+	fleetsSpawnPoint = zipWith (\(oId, f) (x,y) -> (oId, f, x, y)) fleetsList spawnPoints
+	shipsSpawnPoint :: [(OwnerID, ShipConfiguration, Double, Double)]
+	shipsSpawnPoint = concat $ map f fleetsSpawnPoint
+		where
+		f (oId,Fleet scs,x,y) = map (\sc-> (oId,sc,x,y)) scs
+	game' :: Game
+	game' = foldl f game shipsSpawnPoint
+		where
+		f g (oId,sc,x,y) = addShip oId (initShip sc (x,y) (0,1)) g
+		
+	game = Game
+		{	_gameTime = 0
+		,	_gameRandom = mkStdGen 1758836
+		,	_gameNextEntityId=0
+		,	_gameShips  = Map.empty
+		,	_gameBuilder = gameBuilder
+		,	_gameGameMode = DeathMatch
+		,	_gamePlayers = [0, 1, 2, 3] -- XXX
+		,	_gameRanks = []
+		}
 
-		createShip location order name = Ship
-			{	_shipName = name
-			,	_shipLocation = location
-			,	_shipDirection = (0,1)
-			,	_shipDamage = Damage 0 0
-			,	_shipOrder = order
-			,	_shipGoal = GoalNone
-			,	_shipPlan = []
-			,	_shipBeamTargets = []
-			}
+
+
+demoGame :: GameBuilder -> Game
+demoGame gameBuilder = game' game
+	where 
+	game = initGame gameBuilder
+	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game
+		where
+		f :: Entity Ship -> Entity Ship
+		f e = entityData.shipOrder .~ (OrderAttack $ (getEntity ((e^.ownerID + 1) `mod` 4))^.entityID) $ e
+		getEntity :: OwnerID -> Entity Ship
+		getEntity oId = foldl1 (\x y -> if x^.ownerID == oId then x else y) $ Map.elems (game^.gameShips)
+
+
+
+
+--shipClass' entity game = gameBuilder.gbShipClasses.(at $ entity^.entityData.shipConfiguration.shipConfigurationShipClass)
+
+--shipCurrentHull :: Game -> EntityID -> Int
+
+---------- Lens Helpers ----------
+
+gameMap' :: Simple Lens Game Sector
+gameMap' = gameBuilder.gbSector
+
+shipClass' :: Entity Ship -> Game -> ShipClass
+shipClass' entity game = 
+	let
+		shipClassName = entity^.entityData.shipConfiguration.shipConfigurationShipClass
+	in
+		fromJust $ Map.lookup shipClassName (game^.gameBuilder.gbShipClasses)
+
+shipMaxHealth' :: Entity Ship -> Game -> Int
+shipMaxHealth' entity game = (shipClass' entity game)^.shipClassMaxDamage.damageHull
+
+shipCurrentDamage' :: Entity Ship -> Int
+shipCurrentDamage' entity = entity^.entityData.shipDamage.damageHull
+
+shipHealth' :: Entity Ship -> Game -> Int
+shipHealth' entity game = (shipMaxHealth' entity game) - (shipCurrentDamage' entity)
+
+gameEntity' :: EntityID -> Game -> Entity Ship
+gameEntity' eID game = fromJust $ Map.lookup eID (game^.gameShips)

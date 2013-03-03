@@ -28,8 +28,11 @@ derive makeArbitrary ''Resources
 derive makeArbitrary ''Ship
 derive makeArbitrary ''ShipAction
 derive makeArbitrary ''ShipConfiguration
-derive makeArbitrary ''ShipType
-derive makeArbitrary ''SystemUpgrade
+derive makeArbitrary ''ShipClass
+derive makeArbitrary ''WeaponSlot
+derive makeArbitrary ''SystemSlot
+derive makeArbitrary ''WeaponType
+derive makeArbitrary ''System
 derive makeArbitrary ''Update
 derive makeArbitrary ''Weapon
 derive makeArbitrary ''WeaponEffect

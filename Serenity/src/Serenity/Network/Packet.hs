@@ -8,9 +8,11 @@ module Serenity.Network.Packet
 ,	sendPacket
 ,	Flag (..)
 ,	emptySynPacket
+,	emptySynAckPacket
 ,	emptyFinPacket
 ,	setFlags
 ,	getFlags
+,	messageToBinary
 )
 where
 
@@ -37,11 +39,12 @@ import Serenity.Model.Message (Message)
 import qualified Serenity.Model.Message as Message
 
 data Packet = Packet
-	{	packetProt  :: Word32
-	,	packetSeq   :: Word32
-	,	packetAck   :: Word32
+	{	packetProt :: Word32
+	,	packetSeq :: Word32
+	,	packetAck :: Word32
+	,	packetAckBits :: Word32
 	,	packetFlags :: Word8
-	,	packetData  :: C.ByteString
+	,	packetData :: C.ByteString
 	} deriving (Show, Eq)
 
 readPacket :: ByteString -> Maybe Packet
@@ -52,6 +55,7 @@ readPacket' = runGet $ do
 	pProt  <- getWord32be
 	pSeq   <- getWord32be
 	pAck   <- getWord32be
+	pAckBits <- getWord32be
 	pFlags <- getWord8
 	r       <- remaining
 	pData  <- getByteString r
@@ -59,6 +63,7 @@ readPacket' = runGet $ do
 		{	packetProt = pProt
 		,	packetSeq = pSeq
 		,	packetAck = pAck
+		,	packetAckBits = pAckBits
 		,	packetFlags = pFlags
 		,	packetData = pData
 		}
@@ -74,27 +79,30 @@ writePacket packet = B.concat $ BL.toChunks $ runPut $ do
 	putWord32be   $ packetProt packet
 	putWord32be   $ packetSeq packet
 	putWord32be   $ packetAck packet
+	putWord32be   $ packetAckBits packet
 	putWord8      $ packetFlags packet
 	putByteString $ packetData packet
 
 initialPacket :: Message -> Packet
 initialPacket message = Packet
-	{	packetProt  = fromIntegral $ 1
-	,	packetSeq   = fromIntegral $ 1
-	,	packetAck   = fromIntegral $ 1
-	,	packetFlags = fromIntegral $ 0
-	,	packetData  = messageToBinary message
+	{	packetProt = fromIntegral 1
+	,	packetSeq = fromIntegral 1
+	,	packetAck = fromIntegral 1
+	,	packetAckBits = fromIntegral 0
+	,	packetFlags = fromIntegral 0
+	,	packetData = messageToBinary message
 	}
 
 getPacketData :: Packet -> Message
 getPacketData Packet {packetData = dat} = binaryToMessage dat
 
-data Flag = Syn | Fin deriving (Eq, Ord, Show)
+data Flag = Syn | Ack | Fin deriving (Eq, Ord, Show)
 
 flagValues :: [(Flag, Word8)]
 flagValues =
 	[	(Syn, 0)
 	,	(Fin, 1)
+	,	(Ack, 2)
 	]
 
 getFlags :: Packet -> [Flag]
@@ -110,6 +118,7 @@ setFlags flags packet = packet {packetFlags = field} where
 	buildField currentBits flag = bit (fromIntegral ((Map.fromList flagValues) Map.! flag)) .|. currentBits
 
 emptySynPacket = setFlags [Syn] (initialPacket Message.Empty)
+emptySynAckPacket = setFlags [Syn, Ack] (initialPacket Message.Empty)
 emptyFinPacket = setFlags [Fin] (initialPacket Message.Empty)
 
 receivePacket sock = do
@@ -121,5 +130,4 @@ receivePacket sock = do
 
 sendPacket sock packet = do
 	sendAllTo sock (writePacket packet)
-
 

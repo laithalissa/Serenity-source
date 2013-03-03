@@ -1,76 +1,55 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Serenity.Network.Transport
-(	Connection (..)
-,	Packet (..)
-,	runTransport
-,	evalTransport
-,	runConnect
-,	runListen
+(	TransportInterface(..)
+,	listen
+,	acceptClient
 ,	connect
-,	startListening
-,	accept
-,	send
+,	connectTo
+,	sendAndReceive
 ,	receive
-,	isConnected
-,	getConnection
-,	liftIO
-,	Transport
-,	MonadTransport
+,	send
+,	newTransportInterface
 ,	PortNumber
-) where
+)
+where
 
-import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect, isConnected)
-import Network.Socket.ByteString hiding (send)
-import System.Posix.IO
-import Data.Time.Clock.POSIX
-
-import Data.Set (Set)
-import qualified Data.Set as Set
-
-import Control.Monad (liftM)
+import Control.Concurrent.STM
+import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad.State
-import Data.Monoid
+import qualified Data.Map as M
+import Network.Socket hiding (Connected, connect, listen, send)
 
+import Serenity.Model.Message
+import Serenity.Network.Connection
 import Serenity.Network.Packet
 
-import Data.Binary (Binary)
+-- | The network transport represents a list of connected
+-- clients and a socket that can be used to communicate
+-- with them.
+type Transport = (ConnectionMap, Socket)
 
-import Serenity.Model.Message (Message)
-import qualified Serenity.Model.Message as Message
+-- | Mapping from client address to a connection and its
+-- related inbox/outbox channels.
+type ConnectionMap = M.Map SockAddr TransportInterface
 
-data Connection =
-	Connected
-	{	connectionSocket :: Socket
-	,	connectionAddr :: SockAddr
-	,	connectionId :: Int
-	,	connectionSent :: Set (Packet, POSIXTime)
-	,	connectionLocalSequence ::  Int
-	,	connectionRemoteSequence ::  Int
-	}
-	| Listening
-	{	listeningSocket :: Socket
-	}
-	| Unconnected deriving (Show, Eq)
-
-initialConnection sock addr cid = Connected
-	{	connectionSocket = sock
-	,	connectionAddr = addr
-	,	connectionId = cid
-	,	connectionSent = Set.empty
-	,	connectionLocalSequence = 1
-	,	connectionRemoteSequence = 1
+-- | Connection information and related Inbox/outbox channels
+-- used to communicate with another machine.
+data TransportInterface = TransportInterface
+	{	channelInbox  :: TChan Message
+	,	channelOutbox :: TChan Message
+	, channelConnection :: TVar Connection
 	}
 
-isConnected :: Connection -> Bool
-isConnected Connected {} = True
-isConnected _ = False
+-- | Create the initial server transport.
+-- A socket bound to the given port and an empty client map.
+listen :: PortNumber -> IO Transport
+listen port = withSocketsDo $ do
+	sock <- socket AF_INET Datagram 0
+	bindSocket sock (SockAddrInet port iNADDR_ANY)
+	return (M.empty, sock)
 
-getOutboundSocket host port = withSocketsDo $ do
-	addrInfo <-
-		liftM head $
+getOutboundSocket :: HostName -> PortNumber -> IO (Socket, SockAddr)
+getOutboundSocket host port = do
+	addrInfo <- liftM head $
 		liftM (filter (\x -> addrFamily x == AF_INET)) $
 		getAddrInfo Nothing (Just host) (Just (show port))
 	let addr = addrAddress addrInfo
@@ -78,86 +57,114 @@ getOutboundSocket host port = withSocketsDo $ do
 
 	sock <- socket family Datagram 0
 	bindSocket sock (SockAddrInet aNY_PORT iNADDR_ANY)
-	return (sock, addr, family)
+	return (sock, addr)
 
-class MonadIO m => MonadTransport m where
-	connect        :: String -> PortNumber -> m ()
-	startListening :: PortNumber -> m ()
-	accept         :: m ()
-	send           :: Message -> m ()
-	receive        :: m Message
-	getConnection  :: m Connection
+connect :: HostName -> PortNumber -> IO Transport
+connect host port = do
+	(sock, addr) <- getOutboundSocket host port
+	channels <- newTransportInterface
+	send (channelConnection channels) sock Empty addr
+	return (M.singleton addr channels, sock)
 
-newtype Transport a = Transport (StateT Connection IO a)
-	deriving (Functor, Monad, MonadIO, MonadState Connection)
+connectTo :: HostName -> PortNumber -> IO TransportInterface
+connectTo host port = do
+	transport <- connect host port
+	sendAndReceive transport
+	let [channels] = M.elems (fst transport)
+	return channels
 
-instance MonadTransport Transport where
-	connect host port = do
-		connection <- get
-		case connection of
-			Connected {} -> return ()
-			Unconnected -> do
-				(sock, addr, family) <- liftIO $ getOutboundSocket host port
-				put $ initialConnection sock addr 13
-				liftIO $ sendPacket sock emptySynPacket addr
-				return ()
+-- | Computation that accepts a connection from a new client and provides
+-- inbox/outbox channels to communicate with it.
+--
+-- It might be simpler to have explicit state i.e.
+-- acceptClient :: ServerTransport -> IO (TransportInterface, ServerTransport)
+acceptClient :: StateT Transport IO TransportInterface
+acceptClient = do
+	(clients, sock) <- get
+	(client, channels) <- lift $ acceptClient' (clients, sock)
+	put $ (M.insert client channels clients, sock)
+	return channels
 
-	startListening port = do
-		connection <- liftIO $ withSocketsDo $ do
-			sock <- socket AF_INET Datagram 0
-			bindSocket sock (SockAddrInet port iNADDR_ANY)	
-			return $ Listening{listeningSocket=sock}
-		put connection
+acceptClient' :: Transport -> IO (SockAddr, TransportInterface)
+acceptClient' (clients, sock) = do
+	(packet, client) <- receivePacket sock
+	if Syn `elem` (getFlags packet) && M.notMember client clients
+		then do
+			channels <- newTransportInterface
+			updateConnection (channelConnection channels) (connectionReceivedPacket packet)
+			send (channelConnection channels) sock Empty client
+			return (client, channels)
+		else acceptClient' (clients, sock)
 
-	accept = do
-		con <- getConnection
-		case con of 
-			Listening{listeningSocket=sock} -> do
-				connection <- liftIO $ withSocketsDo $ do 
-					(packet, client) <- receivePacket sock
-					if Syn `elem` (getFlags packet)
-						then return $ initialConnection sock client 12
-						else return con
-				put connection
-			_ -> put Unconnected
+-- | Start communications with clients connected to the given
+-- server transport.
+sendAndReceive :: Transport -> IO ()
+sendAndReceive (clients, sock) = do
+	socketTVar <- atomically $ newTVar sock
+	forkIO $ forever $ inboxLoop clients socketTVar
+	forkIO $ forever $ outboxLoop clients socketTVar
+	return ()
+	where
+		inboxLoop clients socketTVar = do
+			sock <- atomically $ readTVar socketTVar
+			maybe <- receive clients sock
+			case maybe of
+				Just (message, channels) -> atomically $ writeTChan (channelInbox channels) message
+				Nothing -> return ()
 
-	send string = do
-		connection <- get
-		liftIO $ sendPacket
-			(connectionSocket connection)
-			(initialPacket string)
-			(connectionAddr connection)
+		outboxLoop clients socketTVar = do
+			sock <- atomically $ readTVar socketTVar
+			mapM_ (readAndSend sock) (M.toList clients)
+			threadDelay 1000
+			return ()
 
-	receive = do
-		connection <- get
-		(packet, client) <- liftIO $ receivePacket (connectionSocket connection)
-		return $ getPacketData packet
+		readAndSend sock (addr, channels) = do
+			message <- atomically $ tryReadTChan (channelOutbox channels)
+			case message of
+				Just m -> send (channelConnection channels) sock m addr
+				Nothing -> return ()
 
-	getConnection = get
+-- | Get the next Message along with the address of the
+-- sender from the given socket.
+receive :: ConnectionMap -> Socket -> IO (Maybe (Message, TransportInterface))
+receive clients sock = do
+	(packet, addr) <- receivePacket sock
+	case M.lookup addr clients of
+		Just channels -> do
+			-- TODO Packet verification
+			updateConnection (channelConnection channels) (connectionReceivedPacket packet)
+			return $ Just (getPacketData packet, channels)
+		Nothing -> return Nothing
 
-instance (Monoid a) => Monoid (Transport a) where
-	mempty = return mempty
-	m1 `mappend` m2 = do
-		x1 <- m1
-		x2 <- m2
-		return (x1 `mappend` x2)
+-- | Send a Message on the given socket to the specified address.
+send :: TVar Connection -> Socket -> Message -> SockAddr -> IO ()
+send connTVar sock message addr = do
+	conn <- atomically $ readTVar connTVar
+	let packet = connectionPacket conn message
+	sendPacket sock packet addr
+	updateConnection connTVar connectionSentPacket
 
-evalTransport :: Transport a -> Connection -> IO a
-evalTransport (Transport c) =  evalStateT c
+newTransportInterface :: IO TransportInterface
+newTransportInterface = do
+	inbox <- atomically $ newTChan
+	outbox <- atomically $ newTChan
+	connection <- atomically $ newTVar initialConnection
+	return $ TransportInterface
+		{	channelInbox = inbox
+		,	channelOutbox = outbox
+		,	channelConnection = connection
+		}
 
-runTransport :: Transport a -> Connection -> IO (a, Connection)
-runTransport (Transport c) =  runStateT c
+updateConnection :: TVar Connection -> (Connection -> Connection) -> IO ()
+updateConnection tvar f = atomically $ modifyTVar' tvar f
 
-runOne :: Transport a -> IO Connection
-runOne f = do
-	(_, connection) <- runTransport f Unconnected
-	return connection
+connectionReceivedPacket :: Packet -> Connection -> Connection
+connectionReceivedPacket packet connection = connection
+	{	connectionReliability = packetReceived (packetSeq packet) (connectionReliability connection)
+	,	connectionState = Connected
+	}
 
-runConnect :: String -> PortNumber -> IO Connection
-runConnect host port = runOne $ connect host port
-
-runListen :: PortNumber -> IO Connection
-runListen port = runOne $ do 
-	startListening port
-	accept
-
+connectionSentPacket :: Connection -> Connection
+connectionSentPacket connection = connection
+	{	connectionReliability = packetSent (connectionReliability connection)
+	}

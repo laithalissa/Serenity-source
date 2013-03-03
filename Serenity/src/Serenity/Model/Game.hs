@@ -26,12 +26,19 @@ data GameBuilder = GameBuilder
 	deriving(Show, Eq)
 makeLenses ''GameBuilder
 
+data GameMode =
+	DeathMatch
+	deriving Show
+
 data Game = Game
 	{	_gameTime :: Double
 	,	_gameRandom :: StdGen
 	,	_gameNextEntityId :: Int
 	,	_gameShips  :: Map EntityID (Entity Ship)
 	,	_gameBuilder :: GameBuilder
+	,	_gameGameMode :: GameMode
+	,	_gamePlayers :: [OwnerID]
+	,	_gameRanks :: [(OwnerID, Int)]
 	}
 	deriving Show
 makeLenses ''Game
@@ -73,6 +80,9 @@ initGame gameBuilder = game'
 		,	_gameNextEntityId=0
 		,	_gameShips  = Map.empty
 		,	_gameBuilder = gameBuilder
+		,	_gameGameMode = DeathMatch
+		,	_gamePlayers = [0, 1, 2, 3] -- XXX
+		,	_gameRanks = []
 		}
 
 

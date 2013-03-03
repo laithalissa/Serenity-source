@@ -8,8 +8,11 @@ import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.Controller
 import Serenity.Game.Client.KeyboardState
 import Serenity.Model
+import Serenity.Network.Connection
+import Serenity.Network.Transport
 import Serenity.Network.Utility
 
+import Control.Concurrent (threadDelay)
 import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad.State
@@ -25,10 +28,11 @@ client serverHost serverPort ownerId = do
 
 	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
 
-	transport <- connectChannelsIO serverHost (fromIntegral serverPort)
-	let inbox = channelInbox transport
-	let outbox = channelOutbox transport
+	channels <- connectTo serverHost (fromIntegral serverPort)
+	let inbox = channelInbox channels
+	let outbox = channelOutbox channels
 
+	waitUntilConnected (channelConnection channels)
 	print "Connected!"
 	assets <- initAssets
 	gameBuilder <- makeDemoGameBuilder
@@ -41,6 +45,12 @@ client serverHost serverPort ownerId = do
 		(return . render)
 		(handleEvent outbox)
 		(handleStep inbox)
+	where
+		waitUntilConnected connTVar = do
+			connection <- atomically $ readTVar connTVar
+			if isConnected connection
+				then return ()
+				else threadDelay 10000 >> waitUntilConnected connTVar
 
 -- | Handle a Gloss input event, e.g. keyboard action
 -- The event is used to create a list of commands which are sent to the server.
@@ -76,6 +86,11 @@ handleStep inbox delta clientState = do
 
 	-- Apply the updates to the game state
 	gameState' <- return $ gameTime +~ (float2Double delta) $ updates us (clientState^.clientGame)
+
+	if UpdateGameOver `elem` us
+		then print $ "Game over! " ++ (show $ gameState'^.gameRanks)
+		else return ()
+
 	return $ (clientUIState.viewport .~ newViewPort $ clientState) {_clientGame = gameState'}
 
 	where

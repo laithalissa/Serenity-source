@@ -7,6 +7,7 @@ import Serenity.Game.UI.Application
 import Serenity.Game.UI.Menu
 import Serenity.Game.UI.Splash
 import Serenity.Game.UI.Host
+import Serenity.Game.UI.Join
 import Serenity.External
 import Serenity.Model
 
@@ -23,6 +24,7 @@ data ApplicationController = ApplicationController
 	,	_appSplashData  :: SplashData ApplicationController
 	,	_appMenuData    :: MenuData ApplicationController
 	,	_appHostData    :: HostData ApplicationController
+	,	_appJoinData    :: JoinData ApplicationController
 	,	_appGameData    :: TMVar (Maybe Game)
 	}
 
@@ -35,6 +37,7 @@ initApplicationController gameRef assets = ApplicationController
 	,	_appSplashData  = initSplashData assets
 	,	_appMenuData    = initMenuData assets
 	,	_appHostData    = initHostData appHostData assets
+	,	_appJoinData    = initJoinData appJoinData assets
 	,	_appGameData    = gameRef
 	}
 
@@ -44,7 +47,7 @@ instance ViewController ApplicationController where
 		Splash -> viewSplash app appSplashData appAssets appMode
 		Menu   -> viewMenu app appMenuData appAssets appMode
 		Host   -> viewHost app appHostData appAssets appMode
-		Join   -> error "Join Screen not here yet"
+		Join   -> viewJoin app appJoinData appAssets appMode
 		Lobby  -> error "Lobby Screen not here yet"
 		Play   -> error "Play Screen not here yet"
 		Quit   -> (initView ((0, 0), (1024, 750)))
@@ -52,7 +55,7 @@ instance ViewController ApplicationController where
 		Splash -> timeSplash appSplashData appMode dt app
 		Menu   -> timeMenu appMenuData appMode dt app
 		Host   -> timeHost appHostData appMode dt app
-		Join   -> app
+		Join   -> timeJoin appJoinData appMode dt app
 		Lobby  -> app
 		Play   -> app
 		Quit   -> app

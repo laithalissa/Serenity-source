@@ -35,7 +35,7 @@ initHostData aHost assets    = HostData
 	,	_hostStartButton     = initMenuButton "Start  >>" startServer
 	,	_hostStopButton      = initMenuButton "Stop  <>" stopServer
 	,	_hostBackButton      = initMenuButton "<-   Back" (\_ -> Menu)
-	,	_hostPlayButton      = initMenuButton "Play    ->" (\_ -> Play)
+	,	_hostPlayButton      = initMenuButton "Play    ->" (\_ -> Lobby)
 	,	_hostNumPlayersBox   = (initMenuTextBoxLabel "Players:" (aHost.hostNumPlayers)) & (tblPostEdit .~ numPlayersValidation)
 	,	_hostNumPlayers      = "2"
 	,	_hostServerGame      = Stopped
@@ -88,7 +88,9 @@ viewHost a aHost aAssets aMode = (initView ((0, 0), (1024, 750)))
 			Stopping g -> False
 
 timeHost :: Simple Lens a (HostData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
-timeHost aData aMode dt a = a
+timeHost aHost aMode dt = execState $ do
+	numPlayersString <- use (aHost.hostNumPlayers)
+	aHost.hostStartButton.buttonEnabled .= (numPlayersString `notElem` ["", "0"])
 
 timeHostIO :: Simple Lens a (HostData a) -> Simple Lens a (TMVar (Maybe Game)) -> Float -> StateT a IO ()
 timeHostIO aHost aGameData _ = do
@@ -98,7 +100,6 @@ timeHostIO aHost aGameData _ = do
 		Starting   -> runServer' gameRef
 		Stopping _ -> stopServer' gameRef
 		_          -> return ()
-	aHost.hostStartButton.buttonEnabled .= (a^.aHost.hostNumPlayers `notElem` ["", "0"])
 	where
 	runServer' gameRef = do
 		gameBuilder <- liftIO makeDemoGameBuilder

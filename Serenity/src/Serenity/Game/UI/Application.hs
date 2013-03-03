@@ -1,6 +1,10 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Serenity.Game.UI.Application where
 
 import Serenity.Sheen
+
+import Control.Lens
 
 serenityVersionString = "Alpha 1.01"
 
@@ -17,3 +21,9 @@ initMenuButton string action =
 	[(ButtonEventMouseUpInside LeftButton (Modifiers Up Up Up), action)]
 
 initMenuLabel string = initLabel (StaticString string) buttonColor (Just buttonBackground)
+
+initMenuTextBox :: Simple Lens a String -> TextBox a
+initMenuTextBox lens = initTextBox lens buttonColor (Just buttonBackground) buttonPressedBackground 2.1
+
+initMenuTextBoxLabel :: String -> Simple Lens a String -> TextBoxLabel a
+initMenuTextBoxLabel string lens = initTextBoxLabel string lens buttonColor (Just buttonBackground) buttonPressedBackground 2.1

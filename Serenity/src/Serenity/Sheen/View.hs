@@ -24,10 +24,12 @@ data View a = View
 	,	_viewBackground   :: Maybe Color          -- ^ Background colour.
 	,	_viewDepict       :: Maybe Picture        -- ^ Gloss picture to draw contents of view.
 	,	_viewDepictMode   :: ViewDepictMode       -- ^ Whether to draw subviews or own view depiction uppermost.
+	,	_viewSubviewMode  :: ViewSubviewMode      -- ^ Whether to pass events to subviews.
 	,	_viewEventHandler :: Maybe (UIEvent -> a) -- ^ Callback to handle UIEvents.
 	}
 
 data ViewDepictMode = ViewDepictModeSubviewsUppermost | ViewDepictModeViewUppermost
+data ViewSubviewMode = ViewSubviewModePass | ViewSubviewModeKeep
 
 makeLenses ''View
 
@@ -73,11 +75,12 @@ initView
 
 initView ((xmin, ymin), (xsize, ysize)) = View
 	{	_viewFrame = makeExtent (ymin+ysize) ymin (xmin+xsize) xmin
-	,	_viewSubviews = []
-	,	_viewZIndex = 0
-	,	_viewBackground = Nothing
-	,	_viewDepict = Nothing
-	,	_viewDepictMode = ViewDepictModeSubviewsUppermost
+	,	_viewSubviews     = []
+	,	_viewZIndex       = 0
+	,	_viewBackground   = Nothing
+	,	_viewDepict       = Nothing
+	,	_viewDepictMode   = ViewDepictModeSubviewsUppermost
+	,	_viewSubviewMode  = ViewSubviewModePass
 	,	_viewEventHandler = Nothing
 	}
 
@@ -122,9 +125,11 @@ indexPathAtPoint point view = fst $ indexPathAtPoint' [] point view
 indexPathAtPoint' :: IndexPath -> (Float, Float) -> View a -> (IndexPath, Bool)
 indexPathAtPoint' currentPath point@(x,y) view = 
 	if eventInView 
-		then case map fst . filter snd $ subviewHandlers of
-			[] -> (currentPath, True)
-			hs -> (last hs, True)
+		then case view^.viewSubviewMode of
+			ViewSubviewModeKeep -> (currentPath, True)
+			ViewSubviewModePass -> case map fst . filter snd $ subviewHandlers of
+				[] -> (currentPath, True)
+				hs -> (last hs, True)
 		else (currentPath, False)
 	where
 	eventInView = pointInExtent (view^.viewFrame) point

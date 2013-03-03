@@ -13,16 +13,15 @@ import Control.Concurrent.STM
 import Data.Char
 
 data HostData a = HostData
-	{	_hostTitleLabel        :: Label a
-	,	_hostVersionLabel      :: Label a
-	,	_hostNumPlayersLabel   :: Label a
-	,	_hostStartButton       :: Button a (ServerStatus Game)
-	,	_hostStopButton        :: Button a (ServerStatus Game)
-	,	_hostBackButton        :: Button a ApplicationMode
-	,	_hostPlayButton        :: Button a ApplicationMode
-	,	_hostNumPlayersTextBox :: TextBox a
-	,	_hostNumPlayers        :: String
-	,	_hostServerGame        :: ServerStatus Game
+	{	_hostTitleLabel      :: Label a
+	,	_hostVersionLabel    :: Label a
+	,	_hostStartButton     :: Button a (ServerStatus Game)
+	,	_hostStopButton      :: Button a (ServerStatus Game)
+	,	_hostBackButton      :: Button a ApplicationMode
+	,	_hostPlayButton      :: Button a ApplicationMode
+	,	_hostNumPlayersBox   :: TextBoxLabel a
+	,	_hostNumPlayers      :: String
+	,	_hostServerGame      :: ServerStatus Game
 	}
 
 data ServerStatus g = Stopped | Starting | Running g | Stopping g
@@ -30,17 +29,16 @@ data ServerStatus g = Stopped | Starting | Running g | Stopping g
 makeLenses ''HostData
 
 initHostData :: Simple Lens a (HostData a) -> Assets -> HostData a
-initHostData aHost assets      = HostData
-	{	_hostTitleLabel        = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
-	,	_hostVersionLabel      = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
-	,	_hostNumPlayersLabel   = (initLabel (StaticString "Players:") buttonColor (Just buttonBackground)) {_labelScale = 2.1}
-	,	_hostStartButton       = initMenuButton "Start  >>" startServer
-	,	_hostStopButton        = initMenuButton "Stop  <>" stopServer
-	,	_hostBackButton        = initMenuButton "<-    Back" (\_ -> Menu)
-	,	_hostPlayButton        = initMenuButton "Play    ->" (\_ -> Play)
-	,	_hostNumPlayersTextBox = (initTextBox (aHost.hostNumPlayers) buttonColor (Just buttonBackground) buttonPressedBackground 2.1) {_tbPostEdit = numPlayersValidation}
-	,	_hostNumPlayers        = "2"
-	,	_hostServerGame        = Stopped
+initHostData aHost assets    = HostData
+	{	_hostTitleLabel      = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
+	,	_hostVersionLabel    = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
+	,	_hostStartButton     = initMenuButton "Start  >>" startServer
+	,	_hostStopButton      = initMenuButton "Stop  <>" stopServer
+	,	_hostBackButton      = initMenuButton "<-   Back" (\_ -> Menu)
+	,	_hostPlayButton      = initMenuButton "Play    ->" (\_ -> Play)
+	,	_hostNumPlayersBox   = (initMenuTextBoxLabel "Players:" (aHost.hostNumPlayers)) & (tblPostEdit .~ numPlayersValidation)
+	,	_hostNumPlayers      = "2"
+	,	_hostServerGame      = Stopped
 	}
 
 numPlayersValidation = (\x -> case x of _:_ -> [last x]; _ -> "").(filter isDigit)
@@ -75,8 +73,7 @@ viewHost a aHost aAssets aMode = (initView ((0, 0), (1024, 750)))
 		[	if stopped
 				then (button a (aHost.hostStartButton) (aHost.hostServerGame) ((491,14),(145,28)))
 				else (button a (aHost.hostStopButton)  (aHost.hostServerGame) ((491,14),(145,28)))
-		,	label a (aHost.hostNumPlayersLabel) ((14,14),(105,28))
-		,	textBox a (aHost.hostNumPlayersTextBox) (aHost.hostNumPlayers) ((120,14),(22,28))
+		,	textBoxLabel a (aHost.hostNumPlayersBox) (aHost.hostNumPlayers) ((14,14),(128,28)) 105
 		]
 	] ++ case a^.aHost.hostServerGame of
 		Running g  -> return (initView ((20, 100), (650, 500))) 

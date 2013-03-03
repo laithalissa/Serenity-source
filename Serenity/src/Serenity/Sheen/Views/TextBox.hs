@@ -16,7 +16,7 @@ data TextBox a = TextBox
 	{	_tbFocus :: Bool
 	,	_tbLabel :: Label a
 	,	_tbFocusBackground :: Color
-	,	_tbEnabled :: Bool
+	,	_tbEnabled :: a -> Bool
 	,	_tbPostEdit :: String -> String
 	}
 makeLenses ''TextBox
@@ -26,13 +26,13 @@ initTextBox valueLens color backg focusBackg scale = TextBox
 	{	_tbFocus = False
 	,	_tbLabel = (initLabel (DynamicString valueLens) color backg) {_labelScale = scale}
 	,	_tbFocusBackground = focusBackg
-	,	_tbEnabled = True
+	,	_tbEnabled = \_ -> True
 	,	_tbPostEdit = id
 	}
 
 textBox :: a -> Simple Lens a (TextBox a) -> Simple Lens a String -> ((Int, Int), (Int, Int)) -> View a
 textBox a tb aString bounds = (label a (tb.tbLabel) bounds)
-	{	_viewBackground = if not (a^.tb.tbEnabled)
+	{	_viewBackground = if not (a^.tb.tbEnabled $ a)
 		then Just $ greyN 0.3
 		else if a^.tb.tbFocus 
 			then Just $ a^.tb.tbFocusBackground
@@ -42,7 +42,7 @@ textBox a tb aString bounds = (label a (tb.tbLabel) bounds)
 
 tbEventHandler :: a -> Simple Lens a (TextBox a) -> Simple Lens a String -> UIEvent -> a 
 tbEventHandler a tb aString event = 
-	if (a^.tb.tbEnabled) && ((a^.tb.tbFocus) || event == UIEventFocusGained)
+	if (a^.tb.tbEnabled $ a) && ((a^.tb.tbFocus) || event == UIEventFocusGained)
 		then (aString %~ a^.tb.tbPostEdit) $ tbEventUpdate tb aString event a
 		else a
 
@@ -72,7 +72,7 @@ _tblEnabled  = _tbEnabled  . _tblTextBox
 tblPostEdit :: Simple Lens (TextBoxLabel a) (String -> String)
 tblPostEdit = tblTextBox . tbPostEdit
 
-tblEnabled :: Simple Lens (TextBoxLabel a) Bool
+tblEnabled :: Simple Lens (TextBoxLabel a) (a -> Bool)
 tblEnabled = tblTextBox . tbEnabled
 
 initTextBoxLabel :: String -> Simple Lens a String -> Color -> Maybe Color -> Color -> Float -> TextBoxLabel a
@@ -86,6 +86,6 @@ textBoxLabel a tbl aString bounds@((x,y),(dx,dy)) width = (initView bounds)
 	{	_viewSubviewMode  = ViewSubviewModeKeep
 	,	_viewEventHandler = Just $ tbEventHandler a (tbl.tblTextBox) aString 
 	} <++
-	[	(label a (tbl.tblLabel)  ((0,0),(width-1,dy)) ) & (if (a^.tbl.tblEnabled) then id else viewBackground .~ (Just $ greyN 0.3))
+	[	(label a (tbl.tblLabel)  ((0,0),(width-1,dy)) ) & (if (a^.tbl.tblEnabled $ a) then id else viewBackground .~ (Just $ greyN 0.3))
 	,	(textBox a (tbl.tblTextBox) aString ((width,0),(dx-width,dy)) )
 	]

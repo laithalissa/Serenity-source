@@ -163,7 +163,9 @@ checkGameEnd game = case game^.gameGameMode of
 	DeathMatch ->
 		if all (== head playersLeft) (tail playersLeft)
 			then [UpdateGameRanks $ (head playersLeft, 1):(updateRanks), UpdateGameOver]
-			else [UpdateGameRanks updateRanks]
+			else if not $ null deadPlayers
+				then [UpdateGameRanks updateRanks]
+				else []
 	_ -> []
 	where
 		playersLeft = map _ownerID (M.elems $ game^.gameShips)

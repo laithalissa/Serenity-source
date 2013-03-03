@@ -32,7 +32,9 @@ initTextBox valueLens color backg focusBackg scale = TextBox
 
 textBox :: a -> Simple Lens a (TextBox a) -> Simple Lens a String -> ((Int, Int), (Int, Int)) -> View a
 textBox a tb aString bounds = (label a (tb.tbLabel) bounds)
-	{	_viewBackground = if a^.tb.tbFocus 
+	{	_viewBackground = if not (a^.tb.tbEnabled)
+		then Just $ greyN 0.3
+		else if a^.tb.tbFocus 
 			then Just $ a^.tb.tbFocusBackground
 			else a^.tb.tbLabel.labelBackground
 	,	_viewEventHandler = Just $ tbEventHandler a tb aString
@@ -65,9 +67,13 @@ data TextBoxLabel a = TextBoxLabel
 makeLenses ''TextBoxLabel
 
 _tblPostEdit = _tbPostEdit . _tblTextBox
+_tblEnabled  = _tbEnabled  . _tblTextBox
 
 tblPostEdit :: Simple Lens (TextBoxLabel a) (String -> String)
-tblPostEdit  =  tblTextBox .  tbPostEdit
+tblPostEdit = tblTextBox . tbPostEdit
+
+tblEnabled :: Simple Lens (TextBoxLabel a) Bool
+tblEnabled = tblTextBox . tbEnabled
 
 initTextBoxLabel :: String -> Simple Lens a String -> Color -> Maybe Color -> Color -> Float -> TextBoxLabel a
 initTextBoxLabel labelString valueLens color backg focusBackg scale = TextBoxLabel
@@ -80,6 +86,6 @@ textBoxLabel a tbl aString bounds@((x,y),(dx,dy)) width = (initView bounds)
 	{	_viewSubviewMode  = ViewSubviewModeKeep
 	,	_viewEventHandler = Just $ tbEventHandler a (tbl.tblTextBox) aString 
 	} <++
-	[	(label a (tbl.tblLabel)  ((0,0),(width-1,dy)) )
+	[	(label a (tbl.tblLabel)  ((0,0),(width-1,dy)) ) & (if (a^.tbl.tblEnabled) then id else viewBackground .~ (Just $ greyN 0.3))
 	,	(textBox a (tbl.tblTextBox) aString ((width,0),(dx-width,dy)) )
 	]

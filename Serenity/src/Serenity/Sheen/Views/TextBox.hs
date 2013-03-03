@@ -45,12 +45,12 @@ tbEventHandler a tb aString event =
 		else a
 
 tbEventUpdate :: Simple Lens a (TextBox a) -> Simple Lens a String -> UIEvent -> a -> a
-tbEventUpdate tb aString (UIEventKeyPress (Char '\b')               Up (Modifiers Up   Up Up)) = aString %~ init'
-tbEventUpdate tb aString (UIEventKeyPress (Char k)                  Up (Modifiers Up   Up Up)) = aString %~ (++[k])
-tbEventUpdate tb aString (UIEventKeyPress (Char k)                  Up (Modifiers Down Up Up)) = aString %~ (++[toUpper k])
-tbEventUpdate tb aString (UIEventKeyPress (SpecialKey KeySpace)     Up (Modifiers _    Up Up)) = aString %~ (++" ")
-tbEventUpdate tb aString (UIEventKeyPress (SpecialKey KeyBackspace) Up (Modifiers _    Up Up)) = aString %~ init'
-tbEventUpdate tb aString (UIEventKeyPress (SpecialKey KeyDelete)    Up (Modifiers _    Up Up)) = aString %~ init'
+tbEventUpdate tb aString (UIEventKeyPress (Char '\b')               Down (Modifiers Up   Up Up)) = aString %~ init'
+tbEventUpdate tb aString (UIEventKeyPress (Char k)                  Down (Modifiers Up   Up Up)) = aString %~ (++[k])
+tbEventUpdate tb aString (UIEventKeyPress (Char k)                  Down (Modifiers Down Up Up)) = aString %~ (++[toUpper k])
+tbEventUpdate tb aString (UIEventKeyPress (SpecialKey KeySpace)     Down (Modifiers _    Up Up)) = aString %~ (++" ")
+tbEventUpdate tb aString (UIEventKeyPress (SpecialKey KeyBackspace) Down (Modifiers _    Up Up)) = aString %~ init'
+tbEventUpdate tb aString (UIEventKeyPress (SpecialKey KeyDelete)    Down (Modifiers _    Up Up)) = aString %~ init'
 tbEventUpdate tb aString UIEventFocusGained = tb.tbFocus .~ True
 tbEventUpdate tb aString UIEventFocusLost   = tb.tbFocus .~ False
 tbEventUpdate _ _ _ = id

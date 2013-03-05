@@ -74,7 +74,7 @@ initView
 	-> View world
 
 initView ((xmin, ymin), (xsize, ysize)) = View
-	{	_viewFrame = makeExtent (ymin+ysize) ymin (xmin+xsize) xmin
+	{	_viewFrame = toExtent ((xmin, ymin), (xsize, ysize))
 	,	_viewSubviews     = []
 	,	_viewZIndex       = 0
 	,	_viewBackground   = Nothing
@@ -83,6 +83,12 @@ initView ((xmin, ymin), (xsize, ysize)) = View
 	,	_viewSubviewMode  = ViewSubviewModePass
 	,	_viewEventHandler = Nothing
 	}
+
+viewOrigin :: Simple Lens (View a) (Int, Int)
+viewOrigin = viewFrame.extentOrigin
+
+viewSize :: Simple Lens (View a) (Int, Int)
+viewSize = viewFrame.extentSize
 
 handleViewEvents :: ViewController a => ((Float, Float), UIEvents) -> a -> a
 handleViewEvents (point, events) = execState $ do

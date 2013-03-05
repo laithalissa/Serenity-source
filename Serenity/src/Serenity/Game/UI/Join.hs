@@ -52,7 +52,6 @@ viewJoin a aJoin aAssets aMode = (initView ((0, 0), (1024, 750)))
 		,	button  a (aJoin.joinBackButton) aMode ((80, 50),(185,28))
 		]
 	,	(initBox ((20, 35), (650, 565))) <++ -- Main
-
 		[	textBoxLabel a (aJoin.joinNickNameBox) (aJoin.joinNickName) ((14,520),(620,28)) 80
 		,	textBoxLabel a (aJoin.joinAddressBox) (aJoin.joinAddress) ((14,470),(540,28)) 80
 		,	textBox a (aJoin.joinPortBox)    (aJoin.joinPort)    ((555,470),(80,28))

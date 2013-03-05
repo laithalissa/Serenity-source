@@ -61,12 +61,12 @@ instance ViewController ApplicationController where
 		Join   -> timeJoin appJoinData appMode dt app
 		Lobby  -> app
 		Play   -> app
-		Quit   -> app
+		Quit   -> app -- Quit handled by handleMainTime below
 
 gui = do
 	assets  <- initAssets
 	gameRef <- newTMVarIO Nothing
-	forkIO (serverThread gameRef)
+	forkIO (forever $ serverThread gameRef)
 	playIOZero
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black
@@ -83,4 +83,9 @@ handleMainTime dt = execStateT $ do
 	app <- get; when (app^.appMode == Quit) $ liftIO exitSuccess
 
 serverThread :: TMVar (Maybe Game) -> IO ()
-serverThread ref = return ()
+serverThread ref = do
+	mGame <- atomically $ takeTMVar ref
+	case mGame of
+		Just game -> return ()
+		Nothing -> return ()
+	atomically $ putTMVar ref mGame

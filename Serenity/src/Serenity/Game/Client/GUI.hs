@@ -67,11 +67,16 @@ render game uiState assets = Pictures
 
 			selection = if shipIsSelected then [drawSelectionArc 5 (double2Float time)] else []
 			shipAndHealth time = map (translate x y) $
-				selection ++ [rotate ((atan2 dx dy)/pi * 180) $ (getPictureSized "commander-green" dim dim assets), 
-				(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox, 
-				healthMeter]), 
-				(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, 
-				shieldMeter])] where
+				selection ++ 
+				[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (getPictureSized "transparent" dim dim assets)]
+					--translate 136 22 $ color red $ polygon [(30, 424), (0, 0), (61, 0), (61, 624), (0, 624)],
+				,	(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox , healthMeter])
+				,	(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, shieldMeter])
+				] where
+			--shipBridge = translate (-0.2 * dim) (-0.6 * dim) $ scale (0.75*hRatio) (0.95*vRatio) $ color red $ polygon [(0,0), (0,624), (30, 644), (61, 624), (61, 0)]
+			shipBridge = translate (-0.052 * dim) (-0.47 * dim) $ scale (0.105 * dim) (0.96 * dim) $ color blue $ polygon [(0,0), (0,0.95), (0.5, 1), (1, 0.95), (1, 0)]
+			--hRatio = dim / 334
+			--vRatio = dim / 673
 			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
 			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
 			dim = 10

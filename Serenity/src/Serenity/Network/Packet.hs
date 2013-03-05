@@ -16,27 +16,20 @@ module Serenity.Network.Packet
 )
 where
 
-import Network.Socket hiding (send, sendTo, recv, recvFrom, SocketStatus(..), accept, listen, connect)
-import Network.Socket.ByteString hiding (send)
-import Data.ByteString.Char8 (ByteString)
-import qualified Data.ByteString.Char8 as C
-import Data.Word (Word32, Word8)
-import qualified Data.Word as Word
-
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as BL
-import Data.Binary.Put
-import Data.Binary.Strict.Get
-
-import Serenity.Model.Message
-import Data.Binary (encode, decode)
-import Data.Bits
-
-import Data.Map (Map)
-import qualified Data.Map as Map
-
 import Serenity.Model.Message (Message)
 import qualified Serenity.Model.Message as Message
+
+import Data.Binary (encode, decode)
+import Data.Binary.Put
+import Data.Binary.Strict.Get
+import Data.Bits
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import Data.ByteString.Char8 (ByteString)
+import qualified Data.ByteString.Char8 as C
+import qualified Data.Map as Map
+import Data.Word (Word32, Word8)
+import Network.Socket.ByteString hiding (send)
 
 data Packet = Packet
 	{	packetProt :: Word32
@@ -106,7 +99,7 @@ flagValues =
 	]
 
 getFlags :: Packet -> [Flag]
-getFlags packet@Packet{packetFlags=flagsField} =
+getFlags Packet{packetFlags=flagsField} =
 	concat $ zipWith flagInField (map snd flagValues) (map fst flagValues)
 	where
 		flagInField i flag = if (bit $ fromIntegral i) .&. flagsField == (bit $ fromIntegral i) then [flag] else []

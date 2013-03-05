@@ -5,7 +5,7 @@ module Serenity.Network.Utility
 ) where
 
 import Control.Concurrent.STM
-import Control.Monad (liftM, mapM_)
+import Control.Monad (liftM)
 
 import Serenity.Model.Message (Message)
 

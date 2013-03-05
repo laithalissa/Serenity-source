@@ -5,7 +5,7 @@ module Serenity.Game.Client.ClientState where
 import Serenity.External
 import Serenity.Game.Client.KeyboardState
 import Serenity.Model hiding(Location, Direction)
-import Serenity.Sheen.View
+import Serenity.Sheen 
 
 import Control.Lens
 
@@ -52,11 +52,11 @@ data ClientState = ClientState
 	,	_clientCommands :: [Command]          -- ^ List of commands to send to the server
 	,	_clientAssets :: Assets
 	,	_clientOwnerID :: OwnerID
+	,	_clientViewGlobals :: ViewGlobals ClientState
 	}
 
 data UIState a = UIState
-	{	_views :: View a
-	,	_viewport :: ViewPort
+	{	_viewport :: ViewPort
 	}
 
 makeLenses ''UIState
@@ -75,18 +75,18 @@ initClientState assets gameBuilder ownerID = ClientState
 	,	_clientCommands = []
 	,	_clientAssets = assets
 	,	_clientOwnerID = ownerID
+	,	_clientViewGlobals = initGlobals
 	}
 	where
 		game = demoGame gameBuilder
 
 initUIState :: Game -> UIState ClientState
 initUIState game = UIState
-	{	_views = mainView
-	,	_viewport = ((width/2, height/2), zoom)
+	{	_viewport = ((width/2, height/2), zoom)
 	}
 	where
 		(width, height) = game^.gameBuilder^.gbSector.sectorSize
 		zoom = 1
 
-mainView :: View ClientState
-mainView = initView ((0, 0), (fst windowSize, snd windowSize))
+--mainView :: View ClientState
+--mainView = initView ((0, 0), (fst windowSize, snd windowSize))

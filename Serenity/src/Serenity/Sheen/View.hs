@@ -60,7 +60,7 @@ class ViewController a where
 	updateTime _ = id
 
 class Drawable a where
-	render :: a -> Picture
+	renderPicture :: a -> Picture
 
 draw :: ViewController a => a -> Picture
 draw a = drawView (getView a)

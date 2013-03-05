@@ -5,7 +5,6 @@
 module Serenity.Model.Game where
 
 import Data.Maybe(fromJust)
-import Serenity.Debug(trace')
 
 import Serenity.Model.Entity
 import Serenity.Model.Fleet

@@ -8,6 +8,7 @@ import Serenity.Game.UI.Menu
 import Serenity.Game.UI.Splash
 import Serenity.Game.UI.Host
 import Serenity.Game.UI.Join
+import Serenity.Game.Client.ClientState
 import Serenity.External
 import Serenity.Model
 
@@ -26,6 +27,7 @@ data ApplicationController = ApplicationController
 	,	_appHostData    :: HostData ApplicationController
 	,	_appJoinData    :: JoinData ApplicationController
 	,	_appGameData    :: TMVar (Maybe Game)
+	,	_appClientState :: Maybe ClientState
 	}
 
 makeLenses ''ApplicationController
@@ -39,6 +41,7 @@ initApplicationController gameRef assets = ApplicationController
 	,	_appHostData    = initHostData appHostData assets
 	,	_appJoinData    = initJoinData appJoinData assets
 	,	_appGameData    = gameRef
+	,	_appClientState = Nothing
 	}
 
 instance ViewController ApplicationController where

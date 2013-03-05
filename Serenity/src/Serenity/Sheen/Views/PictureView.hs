@@ -30,4 +30,4 @@ pictureView a pictureView bounds = (initView bounds)
 		scale = a^.pictureView.pictureViewScale
 		picture = case a^.pictureView.pictureViewValue of
 			StaticPicture p -> p
-			DynamicPicture lens -> render (a^.lens)
+			DynamicPicture lens -> renderPicture (a^.lens)

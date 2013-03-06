@@ -19,9 +19,6 @@ import Serenity.Model.Ship
 
 import Control.Lens
 
-
-
-
 data Entity a = 
 	Entity
 	{	_entityID :: EntityID

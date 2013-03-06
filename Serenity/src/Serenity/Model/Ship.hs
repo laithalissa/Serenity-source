@@ -27,7 +27,7 @@ initShip conf location direction = Ship
 	,	_shipLocation=location
 	,	_shipDirection=direction
 	,	_shipDamage=Damage 0 0
-	,	_shipOrder=OrderNone
+	,	_shipOrder=makeOrderNone
 	,	_shipGoal=GoalNone
 	,	_shipPlan=[]
 	,	_shipBeamTargets=[]
@@ -42,14 +42,39 @@ data Damage = Damage
 ----------------- Orders and Planning -------------------
 
 data Order = 
-	  OrderNone
-	| OrderMove Location (Maybe Direction)
-	| OrderAttack Int
+	OrderNone 
+		{	orderAvoidConflict :: Bool
+		}
+	| OrderMove
+		{	orderLocation :: Location 
+		,	orderDirection :: (Maybe Direction)
+		,	orderAvoidConflict :: Bool
+		}
+	| OrderAttack
+		{	orderTargetEntityID :: Int
+		}
 	| OrderGuardShip Int
 	| OrderGuardPlanet Int
 	| OrderGuardLocation Location
 	| OrderCapture Int
 	deriving (Show, Eq)
+
+makeOrderNone = 
+	OrderNone 
+	{	orderAvoidConflict=False
+	}
+
+makeOrderMove location = 
+	OrderMove 
+	{	orderLocation=location 
+	,	orderDirection=Nothing 
+	,	orderAvoidConflict=True
+	}
+
+makeOrderAttack targetEntityID =
+	OrderAttack
+	{	orderTargetEntityID = targetEntityID
+	}
 
 data Goal = 
 	  GoalNone

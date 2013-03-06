@@ -11,13 +11,15 @@ import Control.Lens
 import qualified Data.Map as Map
 
 handleClick :: (Double, Double) -> ClientState -> [ClientMessage]
-handleClick click clientState = map f (playersShips clientState) where
+handleClick click clientState = map f (playersShips clientState) 
+	where
 	f entity = ClientMessageCommand $ GiveOrder (entity^.entityID) order
-	order = OrderMove ( 
+	order = makeOrderMove orderLocation
+	orderLocation = ( 
 		mapLocationFromView click 
 		(clientState^.clientUIState.viewport) 
 		(clientState^.clientGame.gameBuilder.gbSector.sectorSize)
-		) Nothing
+		)
 
 playersShips :: ClientState -> [Entity Ship]
 playersShips clientState = Map.elems $ Map.filter f $ clientState^.clientGame.gameShips where

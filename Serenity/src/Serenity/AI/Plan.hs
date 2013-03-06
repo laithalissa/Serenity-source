@@ -6,6 +6,7 @@ import Serenity.Model.Common
 import Serenity.Model.Entity
 import Serenity.Model.Game
 import Serenity.Model.Message 
+import Serenity.Model.Sector
 import Serenity.Model.Wire
 import Serenity.Maths.Util
 import Serenity.AI.Path
@@ -17,11 +18,12 @@ import Data.Maybe (fromJust, isJust)
 import Data.VectorSpace
 import Prelude hiding (id, (.))
 
+import Debug.Trace(trace)
 
 goal :: Game -> Order -> Goal
-goal _ (OrderNone)            = GoalNone
-goal _ (OrderMove a b)        = GoalBeAt a b
-goal _ (OrderAttack a)        = GoalDestroyed a
+goal _ (OrderNone{})           					= GoalNone
+goal _ (OrderMove{orderLocation=loc, orderDirection=dir}) 	= GoalBeAt loc dir
+goal _ (OrderAttack{orderTargetEntityID=eID})        		= GoalDestroyed eID
 goal _ (OrderGuardShip a)     = GoalGuardShip a
 goal _ (OrderGuardPlanet a)   = GoalGuardPlanet a 
 goal _ (OrderGuardLocation a) = GoalGuardLocation a
@@ -30,20 +32,27 @@ goal _ (OrderCapture a)       = GoalCaptured a
 plan :: BaseWire (Game, Entity Ship, Goal) Plan
 plan = proc (game, entity, goal) -> case goal of
 	GoalNone -> id -< []
-	(GoalBeAt goalLoc mGoalDir) -> id -< [actionMove1, actionMove2]
+	(GoalBeAt goalLoc mGoalDir) -> id -< trace "goal planning" $ [actionMove1, actionMove2]
 		where
 		actionMove1 = ActionMove (game^.gameTime) (shipLoc, shipDir) ((100.0, 100.0), shipDir)
 		actionMove2 = ActionMove (game^.gameTime) ((100.0, 100.0), shipDir) (goalLoc,goalDir)
 		goalDir = case mGoalDir of {Just x -> x; Nothing -> normalized (goalLoc - shipLoc)}
 		shipLoc = entity^.entityData.shipLocation
 		shipDir = entity^.entityData.shipDirection
-	(GoalDestroyed target) -> id -< [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] 
+	(GoalDestroyed target) -> id -< trace "goal destroyed" $ [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] 
 		where
 		goalLoc = case game^.gameShips.at target of {Just e -> e^.entityData.shipLocation; Nothing -> shipLoc}
 		goalDir = normalized (goalLoc - shipLoc)
 		shipLoc = entity^.entityData.shipLocation
 		shipDir = entity^.entityData.shipDirection
 	_ -> id -< []
+
+
+
+
+makeWaypoints :: BaseWire (Sector, Position, Position, Speed) [Location]
+makeWaypoints = proc (sector, start, finish, speed) -> do
+	id -< [fst start, fst finish]
 
 evolveShipPlan :: UpdateWire (Entity Ship, Game)
 evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
@@ -52,7 +61,7 @@ evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 			g <- id -< goal game (ship^.shipOrder)
 			p <- plan -< (game, entity, g)
 			id -< if finishedOrder game ship (ship^.shipOrder)
-				then [UpdateShipOrder (entity^.entityID) OrderNone]
+				then [UpdateShipOrder (entity^.entityID) makeOrderNone]
 				else if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] 
 
 		(action:rest) -> if finishedAction game ship action
@@ -66,8 +75,8 @@ finishedAction _ ship (ActionCapture a) = True
 finishedAction game ship (ActionMoveToEntity target _) = (not (game^.gameShips.contains target)) || ((ship^.shipLocation) =~= (game^.gameShips.(at target).(to fromJust).entityData.shipLocation))
 
 finishedOrder :: Game -> Ship -> Order -> Bool
-finishedOrder _ _ OrderNone = False
-finishedOrder _ ship (OrderMove dest mDir) = ((ship^.shipLocation) =~= dest) && x 
+finishedOrder _ _ OrderNone{} = False
+finishedOrder _ ship (OrderMove{orderLocation=dest, orderDirection=mDir}) = ((ship^.shipLocation) =~= dest) && x 
 	where
 	x = case mDir of
 		Just dir -> ((ship^.shipDirection) =~= dir)

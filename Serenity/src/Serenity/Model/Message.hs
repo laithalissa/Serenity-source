@@ -14,6 +14,7 @@ import Serenity.Model.Sector
 
 import Data.Binary
 import Data.DeriveTH
+import Data.Map (Map)
 
 type ClientID = Int
 type Time = Int
@@ -62,9 +63,9 @@ data Update =
 	{	updateEntityID :: EntityID
 	,	updateShipGoal :: Goal
 	}
-	|	UpdateShipBeamTargets
+	|	UpdateShipTargets
 	{	updateEntityID :: EntityID
-	,	updateShipBeamTargets :: [EntityID]
+	,	updateShipTargets :: Map Int [EntityID]
 	}
 	| UpdateShipDamage
 	{	updateEntityID :: EntityID

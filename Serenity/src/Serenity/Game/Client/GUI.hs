@@ -60,7 +60,7 @@ render game uiState assets = Pictures
 
 		pictureEntity :: Double -> Entity Ship -> Picture
 		pictureEntity time entity = pictures $ (shipAndHealth time) ++ beams where
-			beams = concatMap pictureBeam (entity^.entityData.shipTargets)
+			beams = concatMap pictureBeam (concat . Map.elems $ entity^.entityData.shipTargets)
 			pictureBeam target = case Map.lookup target (game^.gameShips) of
 				Just entity -> [color red $ line [(x, y + 2), (pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []

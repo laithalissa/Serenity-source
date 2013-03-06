@@ -68,7 +68,7 @@ instance Updateable Game where
 	update UpdateShipDamage{updateEntityID=eID, updateShipDamage=damage} game =
 		gameShips.(at eID).traverse.entityData.shipDamage .~ damage $ game
 
-	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
+	update UpdateShipTargets{updateEntityID=eID, updateShipTargets=targets} game =
 		gameShips.(at eID).traverse.entityData.shipTargets .~ targets $ game
 
 	update UpdateGameRanks{updateGameRanks=ranks} game = gameRanks .~ ranks $ game
@@ -135,19 +135,21 @@ evolveShipDamage = proc (entity, game) -> do
 		lostHealth entity = entity^.entityData.shipDamage.damageHull
 		totalHealth entity game = (fromJust $ M.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageHull
 		health entity game = (totalHealth entity game) - (lostHealth entity)
-		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipTargets)
+		damageTargets entity game = concatMap (damageTarget game) (concat . M.elems $ entity^.entityData.shipTargets)
 		damageTarget game target = case M.lookup target (game^.gameShips) of
 			Just entity -> [UpdateShipDamage (entity^.entityID) (entity^.entityData.shipDamage & damageHull +~ 1)]
 			Nothing -> []
 
 evolveShipTargets :: UpdateWire (Entity Ship, Game)
 evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
-	let targets = M.keys $ M.filter (otherInRange entity) (game^.gameShips)
-	if (not $ null targets) || (not $ null $ ship^.shipTargets)
-		then id -< [UpdateShipBeamTargets (entity^.entityID) targets]
+	let targets = M.fromList $ map (weaponTargets entity (game^.gameShips)) weapons
+	if targets /= (ship^.shipTargets)
+		then id -< [UpdateShipTargets (entity^.entityID) targets]
 		else id -< []
 	where
-		otherInRange e t = e /= t && (e^.ownerID) /= (t^.ownerID) && inRange (e^.entityData) Front t
+		weapons = [(0, LeftSide), (1, Front)]
+		weaponTargets entity ships (weapon, quadrant) = (weapon, M.keys $ M.filter (otherInRange entity quadrant) ships)
+		otherInRange e quad t = (e^.ownerID) /= (t^.ownerID) && inRange (e^.entityData) quad t
 
 data Quadrant = LeftSide | Front | RightSide
 

@@ -21,7 +21,7 @@ data Ship = Ship
 	,	_shipOrder :: Order
 	,	_shipGoal :: Goal
 	,	_shipPlan :: Plan
-	,	_shipTargets :: [Int] -- Map Int [Int] -- ^ Map from weapon ID to list of targets
+	,	_shipTargets :: Map Int [Int] -- ^ Map from weapon ID to list of targets
 	}
 	deriving (Show, Eq)
 
@@ -34,7 +34,7 @@ initShip conf location direction = Ship
 	,	_shipOrder=OrderNone
 	,	_shipGoal=GoalNone
 	,	_shipPlan=[]
-	,	_shipTargets = [] -- M.empty
+	,	_shipTargets = M.empty
 	}
 
 data Damage = Damage 

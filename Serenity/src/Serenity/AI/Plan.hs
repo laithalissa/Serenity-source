@@ -2,6 +2,7 @@
 
 module Serenity.AI.Plan where
 
+import Serenity.Model.Common
 import Serenity.Model.Entity
 import Serenity.Model.Game
 import Serenity.Model.Message 
@@ -16,10 +17,6 @@ import Data.Maybe (fromJust, isJust)
 import Data.VectorSpace
 import Prelude hiding (id, (.))
 
-type Location = (Double, Double)
-type Direction = (Double, Double)
-type Position = (Location, Direction)
-type Speed = Double
 
 goal :: Game -> Order -> Goal
 goal _ (OrderNone)            = GoalNone
@@ -30,34 +27,34 @@ goal _ (OrderGuardPlanet a)   = GoalGuardPlanet a
 goal _ (OrderGuardLocation a) = GoalGuardLocation a
 goal _ (OrderCapture a)       = GoalCaptured a
 
-plan :: Game -> Entity Ship -> Goal -> Plan
-plan _ _ GoalNone = []
-
-plan game entity (GoalBeAt goalLoc mGoalDir) = [actionMove1, actionMove2] where
-	actionMove1 = ActionMove(game^.gameTime) (shipLoc, shipDir) ((100.0, 100.0), shipDir)
-	actionMove2 = ActionMove (game^.gameTime) ((100.0, 100.0), shipDir) (goalLoc,goalDir)
-	--actionMove2 = ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir)
-	goalDir = case mGoalDir of {Just x -> x; Nothing -> normalized (goalLoc - shipLoc)}
-	shipLoc = entity^.entityData.shipLocation
-	shipDir = entity^.entityData.shipDirection
-
-
-plan game entity (GoalDestroyed target) = [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] where
-	goalLoc = case game^.gameShips.at target of {Just e -> e^.entityData.shipLocation; Nothing -> shipLoc}
-	goalDir = normalized (goalLoc - shipLoc)
-	shipLoc = entity^.entityData.shipLocation
-	shipDir = entity^.entityData.shipDirection
-plan _ _ _ = []
+plan :: BaseWire (Game, Entity Ship, Goal) Plan
+plan = proc (game, entity, goal) -> case goal of
+	GoalNone -> id -< []
+	(GoalBeAt goalLoc mGoalDir) -> id -< [actionMove1, actionMove2]
+		where
+		actionMove1 = ActionMove (game^.gameTime) (shipLoc, shipDir) ((100.0, 100.0), shipDir)
+		actionMove2 = ActionMove (game^.gameTime) ((100.0, 100.0), shipDir) (goalLoc,goalDir)
+		goalDir = case mGoalDir of {Just x -> x; Nothing -> normalized (goalLoc - shipLoc)}
+		shipLoc = entity^.entityData.shipLocation
+		shipDir = entity^.entityData.shipDirection
+	(GoalDestroyed target) -> id -< [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] 
+		where
+		goalLoc = case game^.gameShips.at target of {Just e -> e^.entityData.shipLocation; Nothing -> shipLoc}
+		goalDir = normalized (goalLoc - shipLoc)
+		shipLoc = entity^.entityData.shipLocation
+		shipDir = entity^.entityData.shipDirection
+	_ -> id -< []
 
 evolveShipPlan :: UpdateWire (Entity Ship, Game)
 evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 	case ship^.shipPlan of
-		[] -> id -<
-			if finishedOrder game ship (ship^.shipOrder)
+		[] -> do
+			g <- id -< goal game (ship^.shipOrder)
+			p <- plan -< (game, entity, g)
+			id -< if finishedOrder game ship (ship^.shipOrder)
 				then [UpdateShipOrder (entity^.entityID) OrderNone]
-				else if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] where
-			g = goal game (ship^.shipOrder)
-			p = plan game entity g
+				else if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] 
+
 		(action:rest) -> if finishedAction game ship action
 			then id -< [UpdateShipPlan (entity^.entityID) rest]
 			else actt -< (entity, action, game)
@@ -70,7 +67,8 @@ finishedAction game ship (ActionMoveToEntity target _) = (not (game^.gameShips.c
 
 finishedOrder :: Game -> Ship -> Order -> Bool
 finishedOrder _ _ OrderNone = False
-finishedOrder _ ship (OrderMove dest mDir) = ((ship^.shipLocation) =~= dest) && x where
+finishedOrder _ ship (OrderMove dest mDir) = ((ship^.shipLocation) =~= dest) && x 
+	where
 	x = case mDir of
 		Just dir -> ((ship^.shipDirection) =~= dir)
 		Nothing -> True
@@ -101,14 +99,21 @@ entitySpeed ship game = (shipClass' ship game)^.shipClassSpeed
 -- move = proc (entity, startTime, start, end, speed) -> do
 -- 	moveSubGoal -< (entity, startTime, start, end, speed)
 
-moveDuration :: BaseWire (Double, Position, Position, Speed) Double
-moveDuration = proc (startTime, start, end, speed) -> do
-	
+radiusOfCurvature = 15
+
+moveTimeRemaining :: BaseWire (Double, Position, Position, Speed) Double
+moveTimeRemaining = proc (startTime, start, end, speed) -> do
+	timeNow <- time -< ()
+	let (curve, curveLength) = makePath radiusOfCurvature start end
+	timeConsumed <- id -< (timeNow - startTime)
+	totalTime <- id -< (curveLength / speed)
+	timeRemaining <- id -< (totalTime - timeConsumed)
+	id -< timeRemaining
 
 move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)), Double)
 move = proc (entity, startTime, start, end, speed) -> do
 	timeNow <- time -< ()
-	let (curve, curveLength) = makePath 15 start end
+	let (curve, curveLength) = makePath radiusOfCurvature start end
 	let s = ((timeNow-startTime)/(curveLength)) * speed -- * speed
 	let position = curve s
 	let position' = differentiate (curve, s)

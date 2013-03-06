@@ -2,15 +2,12 @@
 
 module Serenity.Model.Ship where
 
+import Serenity.Model.Common
 import Serenity.Model.Sector
 import Serenity.Maths.Util
 
 import Control.Lens
 import System.Random
-
-type Location = (Double, Double)
-type Direction = (Double, Double)
-
 
 data Ship = Ship
 	{	_shipConfiguration :: ShipConfiguration
@@ -163,9 +160,6 @@ makeLenses ''WeaponSlot
 makeLenses ''SystemSlot
 
 ---------- Lens Helpers ----------
-
-
-
 
 -- applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
 -- applyWeaponDamage gen effect ship

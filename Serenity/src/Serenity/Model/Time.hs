@@ -12,8 +12,6 @@ module Serenity.Model.Time
 ,	filteredUpdates
 ) where
 
-import Debug.Trace(trace)
-
 import Serenity.AI.Plan
 import Serenity.Maths.Util
 import Serenity.Model.Game
@@ -157,6 +155,21 @@ inRange
 	-> Entity Ship -- ^ Target
 	-> Bool
 inRange ship target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25
+	&& inFiringArc
+	where
+		-- Deal with discontinuous angles by using || if crossing boundary where signs flip
+		inFiringArc = if arcExtreme'' < arcExtreme'
+			then angle2Enemy >= arcExtreme' || angle2Enemy <= arcExtreme''
+			else angle2Enemy >= arcExtreme' && angle2Enemy <= arcExtreme''
+		shipAngle = (uncurry . flip) atan2 $ ship^.shipDirection
+		angle2Enemy = (uncurry . flip) atan2 $ (target^.entityData.shipLocation) ^-^ (ship^.shipLocation)
+		-- World angles marking the edge of the firing arc
+		arcExtreme' = if shipAngle - (pi / 2.0) < -pi
+			then shipAngle - (pi / 2.0) + (2 * pi)
+			else shipAngle - (pi / 2.0)
+		arcExtreme'' = if shipAngle + (pi / 2.0) > pi
+			then shipAngle + (pi / 2.0) - (2 * pi)
+			else shipAngle + (pi / 2.0)
 
 checkGameEnd :: Game -> [Update]
 checkGameEnd game = case game^.gameGameMode of

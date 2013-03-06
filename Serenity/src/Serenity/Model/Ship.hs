@@ -6,6 +6,8 @@ import Serenity.Model.Sector
 import Serenity.Maths.Util
 
 import Control.Lens
+import Data.Map (Map)
+import qualified Data.Map as M (empty)
 import System.Random
 
 type Location = (Double, Double)
@@ -19,7 +21,7 @@ data Ship = Ship
 	,	_shipOrder :: Order
 	,	_shipGoal :: Goal
 	,	_shipPlan :: Plan
-	,	_shipBeamTargets :: [Int]
+	,	_shipTargets :: [Int] -- Map Int [Int] -- ^ Map from weapon ID to list of targets
 	}
 	deriving (Show, Eq)
 
@@ -32,7 +34,7 @@ initShip conf location direction = Ship
 	,	_shipOrder=OrderNone
 	,	_shipGoal=GoalNone
 	,	_shipPlan=[]
-	,	_shipBeamTargets=[]
+	,	_shipTargets = [] -- M.empty
 	}
 
 data Damage = Damage 

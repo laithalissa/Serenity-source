@@ -69,7 +69,7 @@ instance Updateable Game where
 		gameShips.(at eID).traverse.entityData.shipDamage .~ damage $ game
 
 	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
-		gameShips.(at eID).traverse.entityData.shipBeamTargets .~ targets $ game
+		gameShips.(at eID).traverse.entityData.shipTargets .~ targets $ game
 
 	update UpdateGameRanks{updateGameRanks=ranks} game = gameRanks .~ ranks $ game
 
@@ -135,7 +135,7 @@ evolveShipDamage = proc (entity, game) -> do
 		lostHealth entity = entity^.entityData.shipDamage.damageHull
 		totalHealth entity game = (fromJust $ M.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageHull
 		health entity game = (totalHealth entity game) - (lostHealth entity)
-		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipBeamTargets)
+		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipTargets)
 		damageTarget game target = case M.lookup target (game^.gameShips) of
 			Just entity -> [UpdateShipDamage (entity^.entityID) (entity^.entityData.shipDamage & damageHull +~ 1)]
 			Nothing -> []
@@ -143,18 +143,21 @@ evolveShipDamage = proc (entity, game) -> do
 evolveShipTargets :: UpdateWire (Entity Ship, Game)
 evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
 	let targets = M.keys $ M.filter (otherInRange entity) (game^.gameShips)
-	if (not $ null targets) || (not $ null $ ship^.shipBeamTargets)
+	if (not $ null targets) || (not $ null $ ship^.shipTargets)
 		then id -< [UpdateShipBeamTargets (entity^.entityID) targets]
 		else id -< []
 	where
-		otherInRange e t = e /= t && (e^.ownerID) /= (t^.ownerID) && inRange (e^.entityData) t
+		otherInRange e t = e /= t && (e^.ownerID) /= (t^.ownerID) && inRange (e^.entityData) Front t
+
+data Quadrant = LeftSide | Front | RightSide
 
 -- | Check if the target ship is in range
 inRange
 	:: Ship -- ^ Ship
+	-> Quadrant -- ^ Quadrant of the weapon's firing arc
 	-> Entity Ship -- ^ Target
 	-> Bool
-inRange ship target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25
+inRange ship quadrant target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25
 	&& inFiringArc
 	where
 		-- Deal with discontinuous angles by using || if crossing boundary where signs flip
@@ -164,12 +167,17 @@ inRange ship target = magnitude ((ship^.shipLocation) - (target^.entityData.ship
 		shipAngle = (uncurry . flip) atan2 $ ship^.shipDirection
 		angle2Enemy = (uncurry . flip) atan2 $ (target^.entityData.shipLocation) ^-^ (ship^.shipLocation)
 		-- World angles marking the edge of the firing arc
-		arcExtreme' = if shipAngle - (pi / 2.0) < -pi
-			then shipAngle - (pi / 2.0) + (2 * pi)
-			else shipAngle - (pi / 2.0)
-		arcExtreme'' = if shipAngle + (pi / 2.0) > pi
-			then shipAngle + (pi / 2.0) - (2 * pi)
-			else shipAngle + (pi / 2.0)
+		arcExtreme' = if shipAngle + angle' < -pi
+			then shipAngle + angle' + (2 * pi)
+			else shipAngle + angle'
+		arcExtreme'' = if shipAngle + angle'' > pi
+			then shipAngle + angle'' - (2 * pi)
+			else shipAngle + angle''
+
+		(angle'', angle') = case quadrant of
+			LeftSide -> (3.0 * pi / 4.0, pi / 4.0)
+			Front -> (pi / 4.0, - pi / 4.0)
+			RightSide -> (- pi / 4.0, - 3.0 * pi / 4.0)
 
 checkGameEnd :: Game -> [Update]
 checkGameEnd game = case game^.gameGameMode of

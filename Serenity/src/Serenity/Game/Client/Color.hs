@@ -5,15 +5,9 @@ import Data.Colour.RGBSpace.HSV
 import Data.Colour.RGBSpace
 import Data.Fixed (mod')
 
-ownerColor :: Int -> Color
-ownerColor _ = red
---ownerColor ownerID = where 
 
-convertForGloss :: RGB Float -> Color
-convertForGloss rgb = makeColor8 red green blue 255 where
-	red   = floor $ channelRed   rgb
-	green = floor $ channelGreen rgb
-	blue  = floor $ channelBlue  rgb
+ownerIDColor :: Int -> Color
+ownerIDColor ownerID = teamColors !! ownerID
 
 teamColors :: [Color]
 teamColors = map (convertForGloss.rgbValue) [0..] where
@@ -21,10 +15,13 @@ teamColors = map (convertForGloss.rgbValue) [0..] where
 	hueSpace = 360
 
 	rgbValue :: Int -> RGB Float
-	rgbValue playerNumber = hsv (phiMod $ fromIntegral playerNumber) 0 0 
+	rgbValue playerNumber = hsv (phiMod $ fromIntegral playerNumber) 1 0.8
 
-	--phiMod :: Int -> Int
-	phiMod playerNumber = hueSpace * ((playerNumber * phi) `mod'` 1)
+	phiMod :: Int -> Float
+	phiMod playerNumber = hueSpace * ((fromIntegral playerNumber * phi) `mod'` 1)
 
-ownerIDColor :: Int -> Color
-ownerIDColor i = teamColors !! (i+3)
+convertForGloss :: RGB Float -> Color
+convertForGloss rgb = makeColor red green blue 1 where
+	red   = channelRed   rgb
+	green = channelGreen rgb
+	blue  = channelBlue  rgb

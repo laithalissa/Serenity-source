@@ -9,6 +9,7 @@ import Serenity.Game.Client.ClientState
 import Serenity.Game.Client.ClientMessage (GUICommand(..))
 import Serenity.Maths.Util
 import Serenity.Model
+import Serenity.Game.Client.Color
 
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Data.Color
@@ -69,14 +70,10 @@ render game uiState assets = Pictures
 			shipAndHealth time = map (translate x y) $
 				selection ++ 
 				[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (getPictureSized "transparent" dim dim assets)]
-					--translate 136 22 $ color red $ polygon [(30, 424), (0, 0), (61, 0), (61, 624), (0, 624)],
 				,	(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox , healthMeter])
 				,	(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, shieldMeter])
 				] where
-			--shipBridge = translate (-0.2 * dim) (-0.6 * dim) $ scale (0.75*hRatio) (0.95*vRatio) $ color red $ polygon [(0,0), (0,624), (30, 644), (61, 624), (61, 0)]
-			shipBridge = translate (-0.052 * dim) (-0.47 * dim) $ scale (0.105 * dim) (0.96 * dim) $ color blue $ polygon [(0,0), (0,0.95), (0.5, 1), (1, 0.95), (1, 0)]
-			--hRatio = dim / 334
-			--vRatio = dim / 673
+			shipBridge = translate (-0.052 * dim) (-0.47 * dim) $ scale (0.105 * dim) (0.96 * dim) $ color (ownerIDColor (entity^.ownerID)) $ polygon [(0,0), (0,0.95), (0.5, 1), (1, 0.95), (1, 0)]
 			(x,y) = pDouble2Float $ entity^.entityData.shipLocation
 			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
 			dim = 10
@@ -96,9 +93,9 @@ render game uiState assets = Pictures
 				,   (0, boxHeight)
 				]
 
-			healthBarWidth = boundingBoxWidth - (lostHealthAsPercentage * boundingBoxWidth)
-			boxHeight = 0.5
 			boundingBoxWidth = 5
+			boxHeight = 0.5
+			healthBarWidth = boundingBoxWidth - (lostHealthAsPercentage * boundingBoxWidth)
 			-- Ship health values
 			totalHealth = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassMaxDamage^.damageHull
 			----totalHealth = entity^.entityData.shipType.shipTypeMaxDamage.damageHull
@@ -106,7 +103,7 @@ render game uiState assets = Pictures
 			currentHealth = totalHealth - lostHealth
 			healthAsPercentage = fromIntegral currentHealth / fromIntegral totalHealth
 			lostHealthAsPercentage = fromIntegral lostHealth / fromIntegral totalHealth
-			-- Shop shield values
+			-- Ship shield values
 			shieldBarWidth = boundingBoxWidth - (lostShieldPercentage * boundingBoxWidth)
 			lostShield = entity^.entityData.shipDamage.damageShield
 			shipTotalShield = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassMaxDamage^.damageShield
@@ -125,7 +122,7 @@ drawSelectionArc radius time = color (selectionColour time) $ rotate (time * 10)
 		pulsingColour base time = (base + (round (oscillationLimit * (sin $ 2 * time))))
 		red = 100
 		blue = 100
-		-- Minimum amount of green so the pulsing doesn't overflow max (255)
+		-- Minimum amount of green so the pulsing doesn't exceed max (255)
 		greenBase = (255 - (round oscillationLimit))
 		alpha = 75
 		oscillationLimit = 35
@@ -137,8 +134,8 @@ healthColor health
 	| health <= yBoundary = (makeColor8 255 (greenRatio health) 0 alpha)
 	| otherwise = (makeColor8 (redRatio health) 255 0 alpha)
 	where
-		greenRatio h = floor ((h - rBoundary)/(yBoundary - rBoundary) * 255)
-		redRatio h = 255 - floor ((h - yBoundary)/(gBoundary - yBoundary) * 255)
+		greenRatio health = floor ((health - rBoundary)/(yBoundary - rBoundary) * 255)
+		redRatio health = 255 - floor ((health - yBoundary)/(gBoundary - yBoundary) * 255)
 		alpha = 100
 		rBoundary = 0.2
 		yBoundary = 0.5

@@ -82,7 +82,7 @@ gui = do
 	playIOZero
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black
-		30
+		50
 		(initApplicationController gameRef assets)
 		(\a -> return $ draw a)
 		(\event -> \a -> return $ handleEvent event a)

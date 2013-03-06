@@ -26,8 +26,6 @@ client serverHost serverPort ownerId = do
 	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
 
 	channels <- connectTo serverHost (fromIntegral serverPort)
-	let inbox = channelInbox channels
-	let outbox = channelOutbox channels
 
 	waitUntilConnected (channelConnection channels)
 	print "Connected!"
@@ -40,8 +38,8 @@ client serverHost serverPort ownerId = do
 		30
 		(initClientState assets gameBuilder ownerId channels)
 		(return . render)
-		(handleEvent outbox)
-		(handleStep inbox)
+		(\e c -> return $ handleEvent e c)
+		(handleStep)
 	where
 		waitUntilConnected connTVar = do
 			connection <- atomically $ readTVar connTVar
@@ -52,17 +50,10 @@ client serverHost serverPort ownerId = do
 -- | Handle a Gloss input event, e.g. keyboard action
 -- The event is used to create a list of commands which are sent to the server.
 -- For example, clicking in the game area will order a ship to move to that location.
-handleEvent :: TChan Message -> Event -> ClientState -> IO ClientState
-handleEvent outbox event clientState = do
-	-- Get a list of commands
-	newClientState <- return $ handleInput (translateEvent event) clientState
-	let messages = map (\c -> CommandMessage c 0 0) (newClientState^.clientCommands)
-
-	-- Send commands to the server
-	sendMessages outbox messages
-
-	return $ newClientState {_clientCommands = [], _clientKeyboardState = getNewKeyboardState event (newClientState^.clientKeyboardState) }
-
+handleEvent :: Event -> ClientState -> ClientState
+handleEvent event = execState $ do
+	id %= handleInput (translateEvent event)
+	clientKeyboardState %= getNewKeyboardState event 
 	where
 		translateEvent (EventKey key state modifiers (x, y)) = EventKey key state modifiers (x + wx, y + wy)
 		translateEvent (EventMotion (x, y)) = EventMotion (x + wx, y + wy)
@@ -75,8 +66,16 @@ handleEvent outbox event clientState = do
 
 -- | Update the game state on a time step
 -- Updates are received from the server and then applied to the game state
-handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
-handleStep inbox delta clientState = do
+handleStep :: Float -> ClientState -> IO ClientState
+handleStep delta clientState = do
+
+	let inbox = channelInbox $ clientState^.clientChannels
+	let outbox = channelOutbox $ clientState^.clientChannels
+
+	let messagesOut = map (\c -> CommandMessage c 0 0) (clientState^.clientCommands)
+	-- Send commands to the server
+	sendMessages outbox messagesOut
+
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
 	let us = concatMap getUpdate messages
@@ -88,7 +87,7 @@ handleStep inbox delta clientState = do
 		then print $ "Game over! " ++ (show $ gameState'^.gameRanks)
 		else return ()
 
-	return $ (clientUIState.viewport .~ newViewPort $ clientState) {_clientGame = gameState'}
+	return $ (clientUIState.viewport .~ newViewPort $ clientState) {_clientGame = gameState', _clientCommands = []}
 
 	where
 		getUpdate (UpdateMessage update _) = [update]

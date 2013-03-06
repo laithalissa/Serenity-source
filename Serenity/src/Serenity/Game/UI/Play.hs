@@ -24,7 +24,7 @@ initPlayData aPlay aAssets = PlayData
 viewPlay :: a -> Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
 viewPlay a aPlay aClientState aAssets aMode = case (a^.aClientState) of
 	Just clientState -> (initView ((0,0),(1024, 750))) <++
-		[	mainView clientState (a^.aAssets)
+		[	mainView a aClientState clientState (a^.aAssets)
 		,	sidebarView clientState
 		]
 	Nothing -> mempty
@@ -32,8 +32,17 @@ viewPlay a aPlay aClientState aAssets aMode = case (a^.aClientState) of
 sidebarView clientState = (initBox ((0,0),(200,750)))
 	& (viewBackground .~ Just translucentBackground)
 
-mainView clientState assets = (initView ((0,0),(1024, 750)))
+mainView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
+mainView a aClientState clientState assets = (initView ((0,0),(1024, 750)))
 	& (viewDepict .~ (Just $ render (clientState^.clientGame) (clientState^.clientUIState) assets))
+	& (viewEventHandler .~ (Just $ \event -> aClientState %~ handleGameEvent event $ a))
+
+handleGameEvent :: UIEvent -> Maybe ClientState -> Maybe ClientState
+handleGameEvent event = case event of
+		UIEventMouseUpInside mouseButton point mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey (MouseButton mouseButton) Up mods point)
+		UIEventMouseDownInside mouseButton point mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey (MouseButton mouseButton) Down mods point)
+		UIEventKeyPress key keystate mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey key keystate mods (0,0))
+		_ -> fmap id
 
 timePlay :: Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a ApplicationMode -> Float -> a -> a
 timePlay _ aMClientState aMode _ = execState $ do
@@ -48,6 +57,6 @@ timePlayIO aPlay aClientState dt = do
 	case mClientState of 
 		Just clientState -> do
 			channels <- return $ clientState^.clientChannels
-			newClientState <- liftIO $ handleStep (channelInbox channels) dt clientState
+			newClientState <- liftIO $ handleStep dt clientState
 			aClientState .= Just newClientState
 		Nothing -> return ()

@@ -28,9 +28,9 @@ drawMinimap a aSector = (initView ((0,0),miniMapSize) )
 	planets = map picturePlanet (Map.elems $ sector^.sectorPlanets)
 	spaceLanes = map (pictureSpaceLane $ a^.aSector.sectorPlanets) (sector^.sectorSpaceLanes)
 
-picturePlanet :: Planet -> Picture 
+picturePlanet :: Planet -> Picture
 picturePlanet p = translate x y (color planetColor $ circleSolid 4) where
-	(x,y) = scaleToFit (p^.planetLocation) 
+	(x,y) = scaleToFit (p^.planetLocation)
 	planetColor = case p^.planetEcotype of
 		Blue   -> green
 		Desert -> yellow

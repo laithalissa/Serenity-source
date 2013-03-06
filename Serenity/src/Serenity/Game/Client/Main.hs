@@ -1,7 +1,4 @@
-module Serenity.Game.Client.Main (
-	client
-)
-where
+module Serenity.Game.Client.Main where
 
 import Serenity.External
 import Serenity.Game.Client.ClientState
@@ -41,7 +38,7 @@ client serverHost serverPort ownerId = do
 		(InWindow "Project Serenity" windowSize (0, 0))
 		black
 		30
-		(initClientState assets gameBuilder ownerId)
+		(initClientState assets gameBuilder ownerId channels)
 		(return . render)
 		(handleEvent outbox)
 		(handleStep inbox)

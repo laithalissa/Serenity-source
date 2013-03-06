@@ -6,8 +6,10 @@ import Serenity.External
 import Serenity.Game.Client.KeyboardState
 import Serenity.Model hiding(Location, Direction)
 import Serenity.Sheen 
+import Serenity.Network.Transport
 
 import Control.Lens
+import Control.Concurrent.STM
 
 -- | The size of the Gloss window
 windowSize :: (Int, Int)
@@ -52,7 +54,7 @@ data ClientState = ClientState
 	,	_clientCommands :: [Command]          -- ^ List of commands to send to the server
 	,	_clientAssets :: Assets
 	,	_clientOwnerID :: OwnerID
-	,	_clientViewGlobals :: ViewGlobals ClientState
+	,	_clientChannels :: TransportInterface
 	}
 
 data UIState a = UIState
@@ -67,15 +69,16 @@ initClientState
 	:: Assets	 	-- ^ Assets
 	-> GameBuilder		-- ^ addons
 	-> OwnerID     		-- ^ Player's id
+	-> TransportInterface
 	-> ClientState
-initClientState assets gameBuilder ownerID = ClientState
+initClientState assets gameBuilder ownerID channels = ClientState
 	{	_clientGame = game
 	,	_clientUIState = initUIState game
 	,	_clientKeyboardState = emptyKeyboardState
 	,	_clientCommands = []
 	,	_clientAssets = assets
 	,	_clientOwnerID = ownerID
-	,	_clientViewGlobals = initGlobals
+	,	_clientChannels = channels
 	}
 	where
 		game = demoGame gameBuilder

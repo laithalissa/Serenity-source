@@ -19,9 +19,15 @@ import Data.Monoid
 import Data.Maybe
 
 data PlayData a = PlayData 
+	{	_playSelectBox :: Maybe ((Float, Float), (Float, Float))
+	}
+
+makeLenses ''PlayData
 
 initPlayData :: Simple Lens a (PlayData a) -> Assets -> PlayData a
 initPlayData aPlay aAssets = PlayData
+	{	_playSelectBox = Nothing
+	}
 
 viewPlay :: a -> Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
 viewPlay a aPlay aClientState aAssets aMode = case (a^.aClientState) of
@@ -33,8 +39,7 @@ viewPlay a aPlay aClientState aAssets aMode = case (a^.aClientState) of
 
 sidebarView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
 sidebarView a aClientState clientState assets = (initBox ((0,0),(200,750))) <++
-	[	minimap a (aClientState.(to fromJust).clientGame)
-			& (viewOrigin .~ (0,550))
+	[	minimap a (aClientState.(to fromJust).clientGame) & (viewOrigin .~ (0,550))
 	]
 
 mainView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
@@ -44,10 +49,10 @@ mainView a aClientState clientState assets = (initView ((0,0),(1024, 750)))
 
 handleGameEvent :: UIEvent -> Maybe ClientState -> Maybe ClientState
 handleGameEvent event = case event of
-		UIEventMouseUpInside mouseButton point mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey (MouseButton mouseButton) Up mods point)
-		UIEventMouseDownInside mouseButton point mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey (MouseButton mouseButton) Down mods point)
-		UIEventKeyPress key keystate mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey key keystate mods (0,0))
-		_ -> fmap id
+	UIEventMouseUpInside mouseButton point mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey (MouseButton mouseButton) Up mods point)
+	UIEventMouseDownInside mouseButton point mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey (MouseButton mouseButton) Down mods point)
+	UIEventKeyPress key keystate mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey key keystate mods (0,0))
+	_ -> fmap id
 
 timePlay :: Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a ApplicationMode -> Float -> a -> a
 timePlay _ aMClientState aMode _ = execState $ do

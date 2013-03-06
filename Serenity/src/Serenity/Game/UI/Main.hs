@@ -85,8 +85,12 @@ gui = do
 		50
 		(initApplicationController gameRef assets)
 		(\a -> return $ draw a)
-		(\event -> \a -> return $ handleEvent event a)
+		(\event -> \a -> return $ handleEvent event a & correctFocus)
 		handleMainTime
+
+correctFocus = execState $ do
+	mode <- use appMode
+	when (mode == Play) $ appViewGlobals.globalFocus .= [0]
 
 handleMainTime :: Float -> ApplicationController -> IO ApplicationController
 handleMainTime dt = execStateT $ do

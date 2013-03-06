@@ -21,7 +21,7 @@ import Serenity.Model.Wire
 
 import Control.Lens
 import qualified Data.Map as M
-import Data.Maybe (catMaybes, fromJust)
+import Data.Maybe (catMaybes, fromJust, isJust)
 import Data.VectorSpace
 import Prelude hiding (id, (.))
 
@@ -142,16 +142,26 @@ evolveShipDamage = proc (entity, game) -> do
 
 evolveShipTargets :: UpdateWire (Entity Ship, Game)
 evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
-	let targets = M.fromList $ map (weaponTargets entity (game^.gameShips)) weapons
+	let targets = M.fromList $ map (weaponTargets entity (game^.gameShips)) (zip [0..] $ expandSlots (weaponsAndSlots ship game))
 	if targets /= (ship^.shipTargets)
 		then id -< [UpdateShipTargets (entity^.entityID) targets]
 		else id -< []
 	where
-		weapons = [(0, LeftSide), (1, Front)]
-		weaponTargets entity ships (weapon, quadrant) = (weapon, M.keys $ M.filter (otherInRange entity quadrant) ships)
+		weaponTargets entity ships (id, (weapon, quadrant)) = if isJust weapon
+			then (id, M.keys $ M.filter (otherInRange entity quadrant) ships)
+			else (id, [])
 		otherInRange e quad t = (e^.ownerID) /= (t^.ownerID) && inRange (e^.entityData) quad t
 
-data Quadrant = LeftSide | Front | RightSide
+		weaponsAndSlots ship game = zip (ship^.shipConfiguration.shipConfigurationWeapons) (ship^.shipWeaponSlots (game^.gameBuilder))
+
+		expandSlots slots = concatMap expandSlot slots
+		expandSlot (weapon, slot) = case slot^.weaponSlotType of
+			Front -> [(weapon, FrontQuad)]
+			Side -> [(weapon, LeftQuad), (weapon, RightQuad)]
+			Turret -> [(weapon, AllQuads)]
+
+-- | Quadrants, relative to the ship, that a weapon can fire upon
+data Quadrant = LeftQuad | FrontQuad | RightQuad | AllQuads
 
 -- | Check if the target ship is in range
 inRange
@@ -177,9 +187,10 @@ inRange ship quadrant target = magnitude ((ship^.shipLocation) - (target^.entity
 			else shipAngle + angle''
 
 		(angle'', angle') = case quadrant of
-			LeftSide -> (3.0 * pi / 4.0, pi / 4.0)
-			Front -> (pi / 4.0, - pi / 4.0)
-			RightSide -> (- pi / 4.0, - 3.0 * pi / 4.0)
+			LeftQuad -> (3.0 * pi / 4.0, pi / 4.0)
+			FrontQuad -> (pi / 4.0, - pi / 4.0)
+			RightQuad -> (- pi / 4.0, - 3.0 * pi / 4.0)
+			AllQuads -> (3.0 * pi / 4.0, - 3.0 * pi /4.0)
 
 checkGameEnd :: Game -> [Update]
 checkGameEnd game = case game^.gameGameMode of

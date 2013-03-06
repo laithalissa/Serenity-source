@@ -96,7 +96,7 @@ derive makeBinary ''Weapon
 derive makeBinary ''ShipClass
 derive makeBinary ''WeaponSlot
 derive makeBinary ''SystemSlot
-derive makeBinary ''WeaponType
+derive makeBinary ''SlotType
 derive makeBinary ''Resources
 derive makeBinary ''WeaponEffect
 derive makeBinary ''Ship

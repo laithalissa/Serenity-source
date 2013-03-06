@@ -14,7 +14,7 @@ weaponSlots:
   -
     location: (10, 12)
     direction: (9, 12)
-    type: Special
+    type: Turret
 
 systemSlots:
   -

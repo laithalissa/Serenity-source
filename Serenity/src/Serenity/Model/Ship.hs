@@ -91,7 +91,7 @@ data ShipConfiguration = ShipConfiguration
 demoShipConfiguration :: ShipConfiguration
 demoShipConfiguration = ShipConfiguration
 	{	_shipConfigurationShipClass="Destroyer"
-	,	_shipConfigurationWeapons=[Just "Laser"]
+	,	_shipConfigurationWeapons=[Just "Laser", Nothing]
 	,	_shipConfigurationSystems=[Just "ShieldBoost"]
 	}
 
@@ -111,12 +111,6 @@ data System = System
 	}
 	deriving(Show, Eq)
 
-data WeaponType = 
-	  Side 
-	| Special 
-	| Turret 
-	deriving(Read, Show, Eq)
-
 data WeaponEffect = WeaponEffect
 	{	_effectShield      :: Int    -- ^ Effect on a shielded ship to shield
 	,	_effectHull        :: Int    -- ^ Effect on an unshielded ship to hull
@@ -128,18 +122,24 @@ data WeaponEffect = WeaponEffect
 -- ship class --
 
 data ShipClass = ShipClass
-	{	_shipClassCenterOfRotation  :: Location
-	,	_shipClassSpeed		    :: Double
-	,	_shipClassMaxDamage         :: Damage
-	,	_shipClassWeaponSlots       :: [WeaponSlot]
-	,	_shipClassSystemSlots       :: [SystemSlot]
+	{	_shipClassCenterOfRotation :: Location
+	,	_shipClassSpeed            :: Double
+	,	_shipClassMaxDamage        :: Damage
+	,	_shipClassWeaponSlots      :: [WeaponSlot]
+	,	_shipClassSystemSlots      :: [SystemSlot]
 	}
 	deriving (Show, Eq)
+
+data SlotType =
+		Front
+	|	Side
+	|	Turret
+	deriving (Read, Show, Eq)
 
 data WeaponSlot = WeaponSlot
 	{	_weaponSlotLocation  :: Location
 	,	_weaponSlotDirection :: Direction
-	,	_weaponSlotType      :: WeaponType
+	,	_weaponSlotType      :: SlotType
 	}
 	deriving (Show, Eq)
 

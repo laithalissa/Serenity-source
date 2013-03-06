@@ -4,6 +4,7 @@ module Serenity.Game.UI.Play where
 
 import Serenity.Sheen
 import Serenity.Game.UI.Application
+import Serenity.Game.UI.Minimap
 import Serenity.Game.Client.ClientState
 import Serenity.External
 import Serenity.Model
@@ -15,6 +16,7 @@ import Serenity.Network.Transport
 import Control.Lens
 import Control.Monad.State
 import Data.Monoid
+import Data.Maybe
 
 data PlayData a = PlayData 
 
@@ -25,12 +27,15 @@ viewPlay :: a -> Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState)
 viewPlay a aPlay aClientState aAssets aMode = case (a^.aClientState) of
 	Just clientState -> (initView ((0,0),(1024, 750))) <++
 		[	mainView a aClientState clientState (a^.aAssets)
-		,	sidebarView clientState
+		,	sidebarView a aClientState clientState (a^.aAssets)
 		]
 	Nothing -> mempty
 
-sidebarView clientState = (initBox ((0,0),(200,750)))
-	& (viewBackground .~ Just translucentBackground)
+sidebarView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
+sidebarView a aClientState clientState assets = (initBox ((0,0),(200,750))) <++
+	[	minimap a (aClientState.(to fromJust).clientGame)
+			& (viewOrigin .~ (0,550))
+	]
 
 mainView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
 mainView a aClientState clientState assets = (initView ((0,0),(1024, 750)))

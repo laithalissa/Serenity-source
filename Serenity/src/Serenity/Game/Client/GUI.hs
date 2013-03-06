@@ -51,7 +51,7 @@ render game uiState assets = Pictures
 			,	pictures $ map (pictureEntity (game^.gameTime)) $ Map.elems $ game^.gameShips
 			]
 
-		picturePlanet planet = translate x y $ getPictureSized (planet^.planetEcotype.ecotypeAssetName) 5 5 assets where
+		picturePlanet planet = translate x y $ getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets where
 			(x,y) = pDouble2Float $ planet^.planetLocation
 
 		pictureSpaceLane (p1, p2) = color (dark green) $ line $ map (\p -> pDouble2Float $ p^.planetLocation) planets where

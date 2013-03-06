@@ -11,6 +11,7 @@ import System.Random
 type Location = (Double, Double)
 type Direction = (Double, Double)
 
+
 data Ship = Ship
 	{	_shipConfiguration :: ShipConfiguration
 	,	_shipLocation :: Location
@@ -72,7 +73,7 @@ data ShipAction =
 	}
 	| ActionAttack {targetID :: Int}
 	| ActionCapture Int
-	|	ActionMoveToEntity Int ShipAction
+	| ActionMoveToEntity Int ShipAction
 	deriving (Show, Eq)
 
 type Plan = [ShipAction]

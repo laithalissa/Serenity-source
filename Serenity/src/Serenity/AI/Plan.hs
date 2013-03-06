@@ -16,6 +16,11 @@ import Data.Maybe (fromJust, isJust)
 import Data.VectorSpace
 import Prelude hiding (id, (.))
 
+type Location = (Double, Double)
+type Direction = (Double, Double)
+type Position = (Location, Direction)
+type Speed = Double
+
 goal :: Game -> Order -> Goal
 goal _ (OrderNone)            = GoalNone
 goal _ (OrderMove a b)        = GoalBeAt a b
@@ -27,10 +32,16 @@ goal _ (OrderCapture a)       = GoalCaptured a
 
 plan :: Game -> Entity Ship -> Goal -> Plan
 plan _ _ GoalNone = []
-plan game entity (GoalBeAt goalLoc mGoalDir) = [ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir)] where
+
+plan game entity (GoalBeAt goalLoc mGoalDir) = [actionMove1, actionMove2] where
+	actionMove1 = ActionMove(game^.gameTime) (shipLoc, shipDir) ((100.0, 100.0), shipDir)
+	actionMove2 = ActionMove (game^.gameTime) ((100.0, 100.0), shipDir) (goalLoc,goalDir)
+	--actionMove2 = ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir)
 	goalDir = case mGoalDir of {Just x -> x; Nothing -> normalized (goalLoc - shipLoc)}
 	shipLoc = entity^.entityData.shipLocation
 	shipDir = entity^.entityData.shipDirection
+
+
 plan game entity (GoalDestroyed target) = [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] where
 	goalLoc = case game^.gameShips.at target of {Just e -> e^.entityData.shipLocation; Nothing -> shipLoc}
 	goalDir = normalized (goalLoc - shipLoc)
@@ -73,7 +84,7 @@ finishedOrder _ ship (OrderCapture a)       = True
 x =~= y = magnitude (x-y) < 5
 
 actt :: UpdateWire (Entity Ship, ShipAction, Game)
-actt = proc (entity, action, game) -> do 
+actt = proc (entity, action, game) -> do
 	case action of
 		ActionMove {startTime = t, startLocDir=start, endLocDir=end} -> move -< (entity, t, start, end, entitySpeed entity game)
 		(ActionMoveToEntity tID m) -> if isJust target
@@ -86,11 +97,19 @@ actt = proc (entity, action, game) -> do
 entitySpeed :: Entity Ship -> Game -> Double
 entitySpeed ship game = (shipClass' ship game)^.shipClassSpeed
 
+-- move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)), Double)
+-- move = proc (entity, startTime, start, end, speed) -> do
+-- 	moveSubGoal -< (entity, startTime, start, end, speed)
+
+moveDuration :: BaseWire (Double, Position, Position, Speed) Double
+moveDuration = proc (startTime, start, end, speed) -> do
+	
+
 move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)), Double)
 move = proc (entity, startTime, start, end, speed) -> do
 	timeNow <- time -< ()
 	let (curve, curveLength) = makePath 15 start end
-	let s = ((timeNow-startTime)/(curveLength*0.1)) * speed
+	let s = ((timeNow-startTime)/(curveLength)) * speed -- * speed
 	let position = curve s
 	let position' = differentiate (curve, s)
 	id -< return UpdateEntityLocationDirection

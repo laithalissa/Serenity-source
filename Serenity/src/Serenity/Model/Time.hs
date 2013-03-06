@@ -73,10 +73,14 @@ instance Updateable Game where
 	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
 		gameShips.(at eID).traverse.entityData.shipBeamTargets .~ targets $ game
 
+	update UpdateGameRanks{updateGameRanks=ranks} game = gameRanks .~ ranks $ game
+
+	update UpdateGameOver game = game
+
 instance Evolvable Game where
 	evolve = proc (game, _) -> do
 		x <- mapEvolve -< (M.elems $ game^.gameShips, game)
-		arr concat -< x
+		arr concat -< x ++ [checkGameEnd game]
 
 mapEvolve = proc (ents, game) -> do
 	case ents of
@@ -131,7 +135,7 @@ evolveShipDamage = proc (entity, game) -> do
 		h -> id -< damageTargets entity game
 		where
 		lostHealth entity = entity^.entityData.shipDamage.damageHull
-		totalHealth entity game = (fromJust $ M.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameShipClasses))^.shipClassMaxDamage^.damageHull
+		totalHealth entity game = (fromJust $ M.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageHull
 		health entity game = (totalHealth entity game) - (lostHealth entity)
 		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipBeamTargets)
 		damageTarget game target = case M.lookup target (game^.gameShips) of
@@ -153,3 +157,17 @@ inRange
 	-> Entity Ship -- ^ Target
 	-> Bool
 inRange ship target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25
+
+checkGameEnd :: Game -> [Update]
+checkGameEnd game = case game^.gameGameMode of
+	DeathMatch ->
+		if all (== head playersLeft) (tail playersLeft)
+			then [UpdateGameRanks $ (head playersLeft, 1):(updateRanks), UpdateGameOver]
+			else if not $ null deadPlayers
+				then [UpdateGameRanks updateRanks]
+				else []
+	_ -> []
+	where
+		playersLeft = map _ownerID (M.elems $ game^.gameShips)
+		deadPlayers = filter (\p -> p `notElem` playersLeft && p `notElem` (map fst $ game^.gameRanks)) (game^.gamePlayers)
+		updateRanks = (game^.gameRanks) ++ (map (\p -> (p, (length (game^.gamePlayers)) - (length (game^.gameRanks)))) deadPlayers)

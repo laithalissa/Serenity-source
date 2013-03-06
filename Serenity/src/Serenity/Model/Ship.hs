@@ -127,6 +127,7 @@ data WeaponEffect = WeaponEffect
 
 data ShipClass = ShipClass
 	{	_shipClassCenterOfRotation  :: Location
+	,	_shipClassSpeed		    :: Double
 	,	_shipClassMaxDamage         :: Damage
 	,	_shipClassWeaponSlots       :: [WeaponSlot]
 	,	_shipClassSystemSlots       :: [SystemSlot]
@@ -159,6 +160,10 @@ makeLenses ''WeaponEffect
 makeLenses ''ShipClass
 makeLenses ''WeaponSlot
 makeLenses ''SystemSlot
+
+---------- Lens Helpers ----------
+
+
 
 
 -- applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship

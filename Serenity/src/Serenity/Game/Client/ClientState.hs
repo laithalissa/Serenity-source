@@ -2,12 +2,14 @@
 
 module Serenity.Game.Client.ClientState where
 
-import AssetsManager
+import Serenity.External
 import Serenity.Game.Client.KeyboardState
 import Serenity.Model hiding(Location, Direction)
-import Serenity.Sheen.View
+import Serenity.Sheen 
+import Serenity.Network.Transport
 
 import Control.Lens
+import Control.Concurrent.STM
 
 -- | The size of the Gloss window
 windowSize :: (Int, Int)
@@ -52,11 +54,11 @@ data ClientState = ClientState
 	,	_clientCommands :: [Command]          -- ^ List of commands to send to the server
 	,	_clientAssets :: Assets
 	,	_clientOwnerID :: OwnerID
+	,	_clientChannels :: TransportInterface
 	}
 
 data UIState a = UIState
-	{	_views :: View a
-	,	_viewport :: ViewPort
+	{	_viewport :: ViewPort
 	}
 
 makeLenses ''UIState
@@ -65,28 +67,29 @@ makeLenses ''ClientState
 -- | Create the initial client state
 initClientState
 	:: Assets	 	-- ^ Assets
-	-> Addons		-- ^ addons
+	-> GameBuilder		-- ^ addons
 	-> OwnerID     		-- ^ Player's id
+	-> TransportInterface
 	-> ClientState
-initClientState assets addons ownerID = ClientState
+initClientState assets gameBuilder ownerID channels = ClientState
 	{	_clientGame = game
 	,	_clientUIState = initUIState game
 	,	_clientKeyboardState = emptyKeyboardState
 	,	_clientCommands = []
 	,	_clientAssets = assets
 	,	_clientOwnerID = ownerID
+	,	_clientChannels = channels
 	}
 	where
-		game = demoGame addons
+		game = demoGame gameBuilder
 
 initUIState :: Game -> UIState ClientState
 initUIState game = UIState
-	{	_views = mainView
-	,	_viewport = ((width/2, height/2), zoom)
+	{	_viewport = ((width/2, height/2), zoom)
 	}
 	where
-		(width, height) = game^.gameSector.sectorSize
+		(width, height) = game^.gameBuilder^.gbSector.sectorSize
 		zoom = 1
 
-mainView :: View ClientState
-mainView = makeView "main" (0, fst windowSize, 0, snd windowSize)
+--mainView :: View ClientState
+--mainView = initView ((0, 0), (fst windowSize, snd windowSize))

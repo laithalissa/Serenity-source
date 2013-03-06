@@ -19,7 +19,7 @@ data Sector = Sector
 	,	_sectorPlanets      :: Map PlanetID Planet
 	,	_sectorSpaceLanes   :: [SpaceLane]	
 	}
-	deriving Show
+	deriving (Show, Eq)
 
 data Planet = Planet
 	{	_planetID        :: PlanetID
@@ -28,7 +28,7 @@ data Planet = Planet
 	,	_planetLocation  :: (Double, Double)
 	,	_planetResources :: Resources
 	}
-	deriving Show
+	deriving (Show, Eq)
 
 data Ecotype = 
 	  Blue
@@ -77,9 +77,9 @@ sectorOne = Sector
 	,	_sectorSize        = (200, 200)
 	,	_sectorSpawnPoints = [(50,50), (50,150), (150,150), (150,50)]
 	,	_sectorPlanets     = Map.fromList
-		[	(1, Planet {_planetID = 1, _planetName = "Splearth" , _planetEcotype = Blue  , _planetLocation  = (10 , 100), _planetResources = res 10 10 0})
-		,	(2, Planet {_planetID = 2, _planetName = "Tatooine" , _planetEcotype = Desert, _planetLocation  = (100, 100), _planetResources = res 10 10 0})
-		,	(3, Planet {_planetID = 3, _planetName = "Qoruscant", _planetEcotype = Metal , _planetLocation  = (190, 190), _planetResources = res 10 0 10})
+		[	(1, Planet {_planetID = 1, _planetName = "Splearth" , _planetEcotype = Blue  , _planetLocation  = (30 , 40 ), _planetResources = res 10 10 0})
+		,	(2, Planet {_planetID = 2, _planetName = "Tatooine" , _planetEcotype = Desert, _planetLocation  = (120, 50), _planetResources = res 10 10 0})
+		,	(3, Planet {_planetID = 3, _planetName = "Qoruscant", _planetEcotype = Metal , _planetLocation  = (170, 170), _planetResources = res 10 0 10})
 		]
 	,	_sectorSpaceLanes  = [(1,2), (2,3)]
 	}

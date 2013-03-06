@@ -8,17 +8,18 @@ module Serenity.Game.Server.Main
 ,	getCommands
 ) where
 
-import AssetsManager
+import Serenity.External
 import Serenity.Game.Server.ClientData
 import Serenity.Model
 import Serenity.Model.Wire
 import Serenity.Network.Transport
-import Serenity.Network.Utility
+import Serenity.Network.Utility (readTChanUntilEmpty, sendMessages)
 
 import Prelude hiding (id, (.))
 
 import Control.Concurrent (threadDelay)
 import Control.Lens
+import Control.Monad.State (runStateT)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 -- | Run the server.
@@ -28,13 +29,11 @@ server
 	-> IO ()
 server port clientCount = do
 	print "server started"	
-	print "server loading addons"
-	addonsDir <- defaultAssetsDirectory
-	addons <- initAddons addonsDir
+	gameBuilder' <- makeDemoGameBuilder
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	clients <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
-	play 5 clients (demoGame addons) commands evolve updates
+	play 5 clients (demoGame gameBuilder') commands evolve updates
 	print "server finished"
 
 -- | Wait for n clients to connect
@@ -44,16 +43,17 @@ connectionPhase
 	-> IO [ClientData] -- ^ Client connection information.
 
 connectionPhase port clientLimit = do 
-	connection <- startListeningIO port
-	connectionPhase' clientLimit port connection [] 
-	where 
-		connectionPhase' clientLimit port connection clientDataList = do
-			channels <- listenChannelsIO connection
-			clientDataList' <- return $ (ClientData{clientTransportInterface=channels}):clientDataList
-			threadDelay 100
-			if length clientDataList' >= clientLimit 
-				then return clientDataList' 
-				else connectionPhase' clientLimit port connection clientDataList'
+	transport <- listen port
+	(clients, server) <- connectionPhase' clientLimit transport []
+	sendAndReceive server
+	return clients
+	where
+		connectionPhase' limit transport clients = do
+			(channels, transport') <- runStateT acceptClient transport
+			let clients' = (ClientData{clientTransportInterface=channels}):clients
+			if length clients' >= limit
+				then return (clients', transport')
+				else connectionPhase' limit transport' clients'
 
 -- | Run the server with given update functions.
 play :: forall world . (Show world, world ~ Game) 
@@ -81,7 +81,9 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 			game'''           <- return $ gameRandom %~ (snd.next) $ game''
 			sendToClients (filteredUpdates' ++ updatesT) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
-			playLoop (game''', wire') newTime
+			if UpdateGameOver `elem` updatesT
+				then return ()
+				else playLoop (game''', wire') newTime
 
 -- | Receive commands from the network from all the clients
 getCommands :: [ClientData] -> IO [Command]
@@ -95,10 +97,7 @@ getCommands clientDataList = do
 
 -- | Send updates to all clients
 sendToClients :: [Update] -> [ClientData] -> IO ()
-sendToClients updates clientDataList = do 
-		--print updates
-		mapM (\o -> sendMessages o messages) outboxes
-		return ()
+sendToClients updates clientDataList = mapM_ (\outbox -> sendMessages outbox messages) outboxes
 		where
 			outboxes = map (channelOutbox . clientTransportInterface) clientDataList
 			messages = map (\u -> UpdateMessage u 0) updates

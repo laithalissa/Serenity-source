@@ -39,7 +39,7 @@ viewPlay a aPlay aClientState aAssets aMode = case (a^.aClientState) of
 
 sidebarView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
 sidebarView a aClientState clientState assets = (initBox ((0,0),(200,750))) <++
-	[	minimap a (aClientState.(to fromJust).clientGame) & (viewOrigin .~ (0,550))
+	[	minimap a (aClientState.(to fromJust).clientGame) (a^.aClientState.(to fromJust).clientOwnerID) & (viewOrigin .~ (0,550))
 	]
 
 mainView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a

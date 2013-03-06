@@ -60,7 +60,7 @@ timeLobbyIO aLobby aClientState aHostName aPort dt = do
 			liftIO $ waitUntilConnected (channelConnection channels)
 			assets <- liftIO initAssets
 			gameBuilder <- liftIO makeDemoGameBuilder
-			ownerID <- return 1
+			ownerID <- return 0
 			return $ Just $ initClientState assets gameBuilder ownerID channels
 		loadClientState x = return x
 

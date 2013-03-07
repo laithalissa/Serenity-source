@@ -4,23 +4,29 @@ import Serenity.Model.Entity
 import Serenity.Model.Game
 
 import Control.Lens
-import Data.List (findIndex)
+import Data.List (findIndex, group, sort, sortBy)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (isJust)
+import Data.Maybe (fromMaybe, isJust)
 import Data.VectorSpace
 
 -- | Quadrants, relative to the ship, that a weapon can fire upon
 data Quadrant = LeftQuad | FrontQuad | RightQuad | AllQuads deriving Show
 
+type PartitionedShips = ([Entity Ship], [Entity Ship], [Entity Ship])
 type WeaponInfo = (Int, (Maybe String, Quadrant))
 
 -- | Build a list of enemy ships to fire upon for each weapon of the
 -- given ship
-findShipTargets :: Entity Ship -> Game -> Map Int [Int]
-findShipTargets entity@Entity{_entityData=ship} game = M.fromList $ map (weaponTargets entity enemies) weaponInfo
+findShipTargets :: Entity Ship -> Game -> Map Int [EntityID]
+findShipTargets entity@Entity{_entityData=ship} game = M.fromList targets
 	where
+		targets = map (\(id, ts) -> (id, take 1 $ sortBy compareTFreq ts)) potentialTargets
+
+		allTargets = map (\xs -> (head xs, length xs)) $ group $ sort (concatMap snd potentialTargets)
+		potentialTargets = map (weaponTargets (ship^.shipLocation) enemies) weaponInfo
 		enemies = partition3 (target2Quadrant entity) (M.elems $ game^.gameShips)
+		compareTFreq a b = compare (fromMaybe 0 $ lookup a allTargets) (fromMaybe 0 $ lookup b allTargets)
 
 		weaponInfo = zip [0..] $ expandSlots weaponsAndSlots
 		weaponsAndSlots = zip (ship^.shipConfiguration.shipConfigurationWeapons) (ship^.shipWeaponSlots (game^.gameBuilder))
@@ -57,17 +63,21 @@ findShipTargets entity@Entity{_entityData=ship} game = M.fromList $ map (weaponT
 				_ -> Nothing
 
 -- | Build a list of enemy ships in range of the given weapon
-weaponTargets :: Entity Ship -> ([Entity Ship], [Entity Ship], [Entity Ship]) -> WeaponInfo -> (Int, [EntityID])
-weaponTargets entity (l, f, r) (id, (weapon, quadrant)) = if isJust weapon
+weaponTargets
+	:: (Double, Double) -- ^ Location of the ship
+	-> PartitionedShips -- ^ List of all enemy ships
+	-> WeaponInfo       -- ^ Info about the weapon to select targets for
+  -> (Int, [EntityID])
+weaponTargets loc (l, f, r) (id, (weapon, quadrant)) = if isJust weapon
 	then case quadrant of
-		LeftQuad -> (id, (idOfInRange entity) l)
-		FrontQuad -> (id, (idOfInRange entity) f)
-		RightQuad -> (id, (idOfInRange entity) r)
-		AllQuads -> (id, (idOfInRange entity) (l ++ f ++ r))
+		LeftQuad -> (id, getPotentialTargets l)
+		FrontQuad -> (id, getPotentialTargets f)
+		RightQuad -> (id, getPotentialTargets r)
+		AllQuads -> (id, getPotentialTargets (l ++ f ++ r))
 	else (id, [])
 	where
-		idOfInRange e ts = map (_entityID) $ filter (inRange e) ts
-		inRange e t = magnitude ((e^.entityData.shipLocation) ^-^ (t^.entityData.shipLocation)) < 25
+		getPotentialTargets enemies = map (_entityID) $ filter inRange enemies
+		inRange t = (magnitude $ loc ^-^ (t^.entityData.shipLocation)) < 25
 
 expandSlots :: [(Maybe String, WeaponSlot)] -> [(Maybe String, Quadrant)]
 expandSlots slots = concatMap expandSlot slots

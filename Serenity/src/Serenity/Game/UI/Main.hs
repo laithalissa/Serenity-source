@@ -14,12 +14,9 @@ import Serenity.Game.UI.Lobby
 import Serenity.Game.UI.Play
 import Serenity.Game.Client.ClientState
 import Serenity.External
-import Serenity.Model
 
 import Control.Lens
 import Control.Monad.State
-import Control.Concurrent
-import Control.Concurrent.STM
 import System.Exit
 
 data ApplicationController = ApplicationController
@@ -32,37 +29,35 @@ data ApplicationController = ApplicationController
 	,	_appJoinData    :: JoinData ApplicationController
 	,	_appLobbyData   :: LobbyData ApplicationController
 	,	_appPlayData    :: PlayData ApplicationController
-	,	_appGameData    :: TMVar (Maybe Game)
 	,	_appClientState :: Maybe ClientState
+	,	_appPort        :: String
 	}
 
 makeLenses ''ApplicationController
 
-initApplicationController gameRef assets = ApplicationController
+initApplicationController assets = ApplicationController
 	{	_appViewGlobals = initGlobals
 	,	_appMode        = Splash
 	,	_appAssets      = assets
 	,	_appSplashData  = initSplashData assets
 	,	_appMenuData    = initMenuData assets
-	,	_appHostData    = initHostData appHostData assets
-	,	_appJoinData    = initJoinData appJoinData assets
+	,	_appHostData    = initHostData appHostData appPort assets
+	,	_appJoinData    = initJoinData appJoinData appPort assets
 	,	_appLobbyData   = initLobbyData appLobbyData assets
 	,	_appPlayData    = initPlayData appPlayData assets
-	,	_appGameData    = gameRef
 	,	_appClientState = Nothing
+	,	_appPort        = "9900"
 	}
 
 appServerString   = appJoinData.joinAddress
-appServerPortJoin = appJoinData.joinPort
-appServerPortHost = appHostData.hostPort
 
 instance ViewController ApplicationController where
 	globals = appViewGlobals
 	getView app = case app^.appMode of 
 		Splash -> viewSplash app appSplashData appAssets appMode
 		Menu   -> viewMenu app appMenuData appAssets appMode
-		Host   -> viewHost app appHostData appAssets appMode
-		Join   -> viewJoin app appJoinData appAssets appMode
+		Host   -> viewHost app appHostData appPort appAssets appMode
+		Join   -> viewJoin app appJoinData appPort appAssets appMode
 		Lobby  -> viewLobby app appLobbyData appClientState appAssets appMode
 		Play   -> viewPlay app appPlayData appClientState appAssets appMode
 		Quit   -> (initView ((0, 0), (1024, 750)))
@@ -77,13 +72,11 @@ instance ViewController ApplicationController where
 
 gui = do
 	assets  <- initAssets
-	gameRef <- newTMVarIO Nothing
-	forkIO (forever $ serverThread gameRef)
 	playIOZero
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black
 		50
-		(initApplicationController gameRef assets)
+		(initApplicationController assets)
 		(\a -> return $ draw a)
 		(\event -> \a -> return $ handleEvent event a & correctFocus)
 		handleMainTime
@@ -97,16 +90,8 @@ handleMainTime dt = execStateT $ do
 	app <- get
 	modify $ updateTime dt
 	case (app^.appMode) of 
-		Host  -> timeHostIO appHostData appGameData dt
-		Lobby -> timeLobbyIO appLobbyData appClientState appServerString appServerPortJoin dt
+		Host  -> timeHostIO appHostData appPort dt
+		Lobby -> timeLobbyIO appLobbyData appClientState appServerString appPort dt
 		Play  -> timePlayIO appPlayData appClientState dt
 		Quit  -> liftIO exitSuccess
 		_     -> return ()
-
-serverThread :: TMVar (Maybe Game) -> IO ()
-serverThread ref = do
-	mGame <- atomically $ takeTMVar ref
-	case mGame of
-		Just game -> return ()
-		Nothing -> return ()
-	atomically $ putTMVar ref mGame

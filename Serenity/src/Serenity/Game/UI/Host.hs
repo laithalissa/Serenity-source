@@ -4,27 +4,28 @@ module Serenity.Game.UI.Host where
 
 import Serenity.Sheen
 import Serenity.Game.UI.Application
+import Serenity.Game.Server.Main
 import Serenity.External
 import Serenity.Model
 
 import Control.Lens
 import Control.Monad.State
+import Control.Concurrent
 import Control.Concurrent.STM
 import Data.Char
 
 data HostData a = HostData
 	{	_hostTitleLabel      :: Label a
 	,	_hostVersionLabel    :: Label a
-	,	_hostStartButton     :: Button a (ServerStatus Game)
-	,	_hostStopButton      :: Button a (ServerStatus Game)
+	,	_hostStartButton     :: Button a (ServerStatus ThreadId)
+	,	_hostStopButton      :: Button a (ServerStatus ThreadId)
 	,	_hostBackButton      :: Button a ApplicationMode
 	,	_hostPlayButton      :: Button a ApplicationMode
 	,	_hostNumPlayersBox   :: TextBoxLabel a
 	,	_hostNumPlayers      :: String
-	,	_hostServerGame      :: ServerStatus Game
+	,	_hostServerGame      :: ServerStatus ThreadId
 	,	_hostNickName        :: String
 	,	_hostNickNameBox     :: TextBoxLabel a
-	,	_hostPort            :: String
 	,	_hostPortBox         :: TextBoxLabel a
 	}
 
@@ -32,8 +33,8 @@ data ServerStatus g = Stopped | Starting | Running g | Stopping g
 
 makeLenses ''HostData
 
-initHostData :: Simple Lens a (HostData a) -> Assets -> HostData a
-initHostData aHost assets    = HostData
+initHostData :: Simple Lens a (HostData a) -> Simple Lens a String -> Assets -> HostData a
+initHostData aHost aPort assets    = HostData
 	{	_hostTitleLabel      = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
 	,	_hostVersionLabel    = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
 	,	_hostStartButton     = (initMenuButton "Start    >>" startServer) & (buttonEnabled .~ startButtonEnabled aHost)
@@ -44,13 +45,12 @@ initHostData aHost assets    = HostData
 			(initMenuTextBoxLabel "Players:" (aHost.hostNumPlayers)) 
 			& (tblPostEdit .~ numPlayersValidation) 
 			& (tblEnabled .~ not.serverRunning aHost)
-	,	_hostNumPlayers      = "2"
+	,	_hostNumPlayers      = "1"
 	,	_hostServerGame      = Stopped
 	,	_hostNickName        = ""
 	,	_hostNickNameBox     = (initMenuTextBoxLabel "Name:" (aHost.hostNickName)) & (tblPostEdit .~ nameValidation)
-	,	_hostPort            = "9050"
 	,	_hostPortBox         = 
-			(initMenuTextBoxLabel "Port:" (aHost.hostPort)) 
+			(initMenuTextBoxLabel "Port:" aPort) 
 			& (tblPostEdit .~ portValidation) 
 			& (tblEnabled .~ not.serverRunning aHost)
 	}
@@ -72,8 +72,8 @@ stopServer hostServer = case hostServer of
 	Running g  -> Stopping g
 	Stopping g -> Stopping g
 
-viewHost :: a -> Simple Lens a (HostData a) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
-viewHost a aHost aAssets aMode = (initView ((0, 0), (1024, 750))) 
+viewHost :: a -> Simple Lens a (HostData a) -> Simple Lens a String -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
+viewHost a aHost aPort aAssets aMode = (initView ((0, 0), (1024, 750))) 
 	{	_viewDepict = background (a^.aAssets)
 	}	<++
 	[	label a (aHost.hostTitleLabel) ((30,650),(220,30))
@@ -90,7 +90,7 @@ viewHost a aHost aAssets aMode = (initView ((0, 0), (1024, 750)))
 				then (button a (aHost.hostStopButton)  (aHost.hostServerGame) ((491,14),(145,28)))
 				else (button a (aHost.hostStartButton) (aHost.hostServerGame) ((491,14),(145,28)))
 		,	textBoxLabel a (aHost.hostNumPlayersBox) (aHost.hostNumPlayers) ((14,14),(108,28)) 85
-		,	textBoxLabel a (aHost.hostPortBox) (aHost.hostPort) ((236,14),(149,28)) 65
+		,	textBoxLabel a (aHost.hostPortBox) aPort ((236,14),(149,28)) 65
 		]
 	] ++ if serverRunning aHost a
 		then return (initBox ((20, 100), (650, 435)))
@@ -104,24 +104,21 @@ serverRunning aHost a = case a^.aHost.hostServerGame of
 timeHost :: Simple Lens a (HostData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
 timeHost aHost aMode dt = id
 
-timeHostIO :: Simple Lens a (HostData a) -> Simple Lens a (TMVar (Maybe Game)) -> Float -> StateT a IO ()
-timeHostIO aHost aGameData _ = do
+timeHostIO :: Simple Lens a (HostData a) -> Simple Lens a String -> Float -> StateT a IO ()
+timeHostIO aHost aPort _ = do
 	a <- get
-	gameRef <- use aGameData
 	case a^.aHost.hostServerGame of
-		Starting   -> runServer' gameRef
-		Stopping _ -> stopServer' gameRef
+		Starting -> runServer'
+		Stopping serverThreadID -> stopServer' serverThreadID
 		_          -> return ()
 	where
-	runServer' gameRef = do
-		gameBuilder <- liftIO makeDemoGameBuilder
-		status <- liftIO.atomically $ takeTMVar gameRef
-		g <- return $ case status of 
-			Nothing -> demoGame gameBuilder
-			Just  g -> g
-		aHost.hostServerGame .= (Running g)
-		liftIO.atomically $ putTMVar gameRef (Just g)
+	runServer' = do
+		serverPort <- use aPort
+		numPlayers <- use (aHost.hostNumPlayers)
+		serverThreadID <- liftIO.forkIO $ server (fromIntegral $ read serverPort) (read numPlayers)
+		aHost.hostServerGame .= (Running serverThreadID)
+		return ()
 
-	stopServer' gameRef = do
-		_ <- liftIO.atomically $ swapTMVar gameRef Nothing
+	stopServer' serverThreadID = do
+		liftIO $ killThread serverThreadID
 		aHost.hostServerGame .= Stopped

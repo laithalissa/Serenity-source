@@ -36,23 +36,11 @@ plan :: BaseWire (Game, Entity Ship, Goal) Plan
 plan = proc (game, entity, goal) -> case goal of
 	GoalNone -> id -< []
 	(GoalBeAt goalLoc mGoalDir) -> do
+		let sector = game^.gameMap'
+		let startPosition = (entity^.entityData.shipLocation, entity^.entityData.shipDirection)
+		let finishPosition = (goalLoc, if isJust mGoalDir then fromJust mGoalDir else makeDirection entity goalLoc)
 		let shipSpeed = (shipClass' entity game)^.shipClassSpeed
-		let shipStartLocation = entity^.entityData.shipLocation
-		let shipStartDirection = entity^.entityData.shipDirection
-		let shipStartPosition = (shipStartLocation, shipStartDirection)
-		let shipStartTime = game^.gameTime
-		let shipMidLocation = (100.0, 100.0)
-		let shipMidDirection = makeDirection entity shipMidLocation
-		let shipMidPosition = (shipMidLocation, shipMidDirection)
-		timeRemaining <- moveTimeRemaining -< (game^.gameTime, shipStartPosition, shipMidPosition, shipSpeed) 
-		let shipMidTime = shipStartTime + timeRemaining
-		let shipFinishLocation = goalLoc
-		let shipFinishDirection = if isJust mGoalDir then fromJust mGoalDir else makeDirection entity goalLoc
-		let shipFinishPosition = (shipFinishLocation, shipFinishDirection)
-		let action1 = ActionMove shipStartTime shipStartPosition shipMidPosition
-		let action2 = ActionMove shipMidTime shipMidPosition shipFinishPosition
-		let actionPlan = [action1, action2]
-		id -< actionPlan
+		makeWaypoints -< (sector, startPosition, finishPosition, shipSpeed) 
 
 	(GoalDestroyed target) -> id -< trace "goal destroyed" $ [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] 
 		where
@@ -69,9 +57,28 @@ makeDirection entity goalLoc = let
 	shipDir = entity^.entityData.shipDirection
 	in normalized (goalLoc - shipLoc)
 
-makeWaypoints :: BaseWire (Sector, Position, Position, Speed) [Location]
+makeWaypoints :: BaseWire (Sector, Position, Position, Speed) [ShipAction]
 makeWaypoints = proc (sector, start, finish, speed) -> do
-	id -< [fst start, fst finish]
+	id -< []
+		-- let shipSpeed = (shipClass' entity game)^.shipClassSpeed
+		-- let shipStartLocation = entity^.entityData.shipLocation
+		-- let shipStartDirection = entity^.entityData.shipDirection
+		-- let shipStartPosition = (shipStartLocation, shipStartDirection)
+		-- let shipStartTime = game^.gameTime
+		-- let shipMidLocation = (100.0, 100.0)
+		-- let shipMidDirection = makeDirection entity shipMidLocation
+		-- let shipMidPosition = (shipMidLocation, shipMidDirection)
+		-- timeRemaining <- moveTimeRemaining -< (game^.gameTime, shipStartPosition, shipMidPosition, shipSpeed) 
+		-- let shipMidTime = shipStartTime + timeRemaining
+		-- let shipFinishLocation = goalLoc
+		-- let shipFinishDirection = if isJust mGoalDir then fromJust mGoalDir else makeDirection entity goalLoc
+		-- let shipFinishPosition = (shipFinishLocation, shipFinishDirection)
+		-- let action1 = ActionMove shipStartTime shipStartPosition shipMidPosition
+		-- let action2 = ActionMove shipMidTime shipMidPosition shipFinishPosition
+		-- let actionPlan = [action1, action2]
+		-- id -< actionPlan
+
+--makeSectorGraph :: BaseWire (Sector, 
 
 evolveShipPlan :: UpdateWire (Entity Ship, Game)
 evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
@@ -88,7 +95,7 @@ evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 			else actt -< (entity, action, game)
 
 finishedAction :: Game -> Ship -> ShipAction -> Bool
-finishedAction _ ship ActionMove{endLocDir=(dest,dir)} = ((ship^.shipLocation) =~= dest) -- && ((ship^.shipDirection) =~= dir)
+finishedAction _ ship ActionMove{actionFinishPosition=(location,direction)} = ((ship^.shipLocation) =~= location) -- && ((ship^.shipDirection) =~= dir)
 finishedAction game ship (ActionAttack target) = True -- not ((game^.gameShips.contains target) && (inRange ship (fromJust $ game^.gameShips.at target)))
 finishedAction _ ship (ActionCapture a) = True
 finishedAction game ship (ActionMoveToEntity target _) = (not (game^.gameShips.contains target)) || ((ship^.shipLocation) =~= (game^.gameShips.(at target).(to fromJust).entityData.shipLocation))
@@ -112,7 +119,7 @@ x =~= y = magnitude (x-y) < 5
 actt :: UpdateWire (Entity Ship, ShipAction, Game)
 actt = proc (entity, action, game) -> do
 	case action of
-		ActionMove {startTime = t, startLocDir=start, endLocDir=end} -> move -< (entity, t, start, end, entitySpeed entity game)
+		ActionMove {actionStartTime=t, actionStartPosition=start, actionFinishPosition=end} -> move -< (entity, t, start, end, entitySpeed entity game)
 		(ActionMoveToEntity tID m) -> if isJust target
 			then moveToEntity -< (entity, fromJust target, m, game)
 			else id -< []
@@ -157,7 +164,7 @@ move = proc (entity, startTime, start, end, speed) -> do
 -- position of the target then the move is re-planned.
 moveToEntity :: UpdateWire (Entity Ship, Entity Ship, ShipAction, Game)
 moveToEntity = proc (entity, target, action, game) -> do
-	if magnitude ((fst $ endLocDir action) - (target^.entityData.shipLocation)) > 50
+	if magnitude ((fst $ actionFinishPosition action) - (target^.entityData.shipLocation)) > 50
 		|| finishedAction game (entity^.entityData) action
 		then id -< [UpdateShipPlan (entity^.entityID) []]
-		else move -< (entity, startTime action, startLocDir action, endLocDir action, entitySpeed entity game)
+		else move -< (entity, actionStartTime action, actionStartPosition action, actionFinishPosition action, entitySpeed entity game)

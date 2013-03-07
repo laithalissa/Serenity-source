@@ -89,9 +89,9 @@ data Goal =
 
 data ShipAction = 
 	ActionMove 
-	{	startTime :: Double
-	,	startLocDir :: (Location, Direction)
-	,	endLocDir   :: (Location, Direction)
+	{	actionStartTime 	:: Double
+	,	actionStartPosition 	:: Position
+	,	actionFinishPosition  	:: Position
 	}
 	| ActionAttack {targetID :: Int}
 	| ActionCapture Int

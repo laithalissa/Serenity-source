@@ -76,14 +76,14 @@ render game uiState assets = Pictures
 			shipIsSelected = entity^.(isSelected uiState)
 			selection      = 
 				if shipIsSelected 
-				then [drawSelectionArc 5 (double2Float time)] 
+				then [drawSelectionArc 6 (double2Float time)] 
 				else []
 			
 			shipAndHealth time = map (translate x y) $
 				selection ++ 
 				[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (getPictureSized "transparent" dim dim assets)]
-				,	(translate (-boundingBoxWidth / 2) 5 $ Pictures [boundingBox , healthMeter])
-				,	(translate (-boundingBoxWidth / 2) 5.6 $ Pictures [boundingBox, shieldMeter])
+				,	(translate (-boundingBoxWidth / 2) 7 $ Pictures [boundingBox , healthMeter])
+				,	(translate (-boundingBoxWidth / 2) 8 $ Pictures [boundingBox, shieldMeter])
 				] where
 
 			shipBridge = 
@@ -138,7 +138,7 @@ render game uiState assets = Pictures
 			lostShieldPercentage = fromIntegral lostShield / fromIntegral shipTotalShield
 			shieldPercentage     = fromIntegral currentShield / fromIntegral shipTotalShield
 			-- Colour for the shields
-			shieldBlue           = makeColor8 0 0 99 100
+			shieldBlue           = makeColor8 40 100 255 180
 
 drawSelectionArc :: Float -> Float -> Picture
 drawSelectionArc radius time = color (selectionColour time) $ rotate (time * 10) $ circle where
@@ -149,10 +149,10 @@ drawSelectionArc radius time = color (selectionColour time) $ rotate (time * 10)
 		arcThickness = 0.8
 		arcLength    = 10
 		greenBase    = (255 - (round oscLimit)) -- Minimum amount of green so the pulsing doesn't exceed max (255)
-		oscLimit     = 35
+		oscLimit     = 15
 		red          = 100
 		blue         = 100
-		alpha        = 75
+		alpha        = 180
 
 healthColor :: Float -> Color 
 healthColor health 
@@ -162,7 +162,7 @@ healthColor health
 	where
 		greenRatio health = floor ((health - rBoundary)/(yBoundary - rBoundary) * 255)
 		redRatio health   = 255 - floor ((health - yBoundary)/(gBoundary - yBoundary) * 255)
-		alpha             = 100
+		alpha             = 180
 		rBoundary         = 0.2
 		yBoundary         = 0.5
 		gBoundary         = 1

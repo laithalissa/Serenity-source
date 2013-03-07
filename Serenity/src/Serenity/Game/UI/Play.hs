@@ -95,8 +95,12 @@ continueSelect point = aPlay.playSelectBox.traverse._2 .~ point
 
 endSelect :: PlayState a => (Float, Float) -> a -> a
 endSelect point = execState $ do
-	overMaybe (aPlay.playSelectBox) (aClientState.traverse) (selectShips.boxToExtent)
-	aPlay.playSelectBox .= Nothing
+	overMaybe (aPlay.playSelectBox) (aClientState.traverse) (select.boxToExtent)
+	aPlay.playSelectBox .= Nothing where
+		select extent = execState $ do
+			clientState <- get
+			ids <- return $ selectShips extent clientState
+			clientUIState.uiStateSelected .= ids
 
 cancelSelect :: PlayState a => a -> a
 cancelSelect = aPlay.playSelectBox .~ Nothing

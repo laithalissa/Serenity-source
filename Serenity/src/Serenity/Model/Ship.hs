@@ -91,7 +91,7 @@ data ShipConfiguration = ShipConfiguration
 demoShipConfiguration :: ShipConfiguration
 demoShipConfiguration = ShipConfiguration
 	{	_shipConfigurationShipClass="Destroyer"
-	,	_shipConfigurationWeapons=[Just "Laser", Nothing]
+	,	_shipConfigurationWeapons=[Just "Laser", Just "Rockets"]
 	,	_shipConfigurationSystems=[Just "ShieldBoost"]
 	}
 

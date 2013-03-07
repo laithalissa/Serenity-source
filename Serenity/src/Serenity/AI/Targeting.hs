@@ -7,14 +7,14 @@ import Control.Lens
 import Data.List (findIndex, group, sort, sortBy)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe, isJust)
+import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.VectorSpace
 
 -- | Quadrants, relative to the ship, that a weapon can fire upon
 data Quadrant = LeftQuad | FrontQuad | RightQuad | AllQuads deriving Show
 
 type PartitionedShips = ([Entity Ship], [Entity Ship], [Entity Ship])
-type WeaponInfo = (Int, (Maybe String, Quadrant))
+type WeaponInfo = (Int, (Maybe Weapon, Quadrant))
 
 -- | Build a list of enemy ships to fire upon for each weapon of the
 -- given ship
@@ -28,8 +28,7 @@ findShipTargets entity@Entity{_entityData=ship} game = M.fromList targets
 		enemies = partition3 (target2Quadrant entity) (M.elems $ game^.gameShips)
 		compareTFreq a b = compare (fromMaybe 0 $ lookup a allTargets) (fromMaybe 0 $ lookup b allTargets)
 
-		weaponInfo = zip [0..] $ expandSlots weaponsAndSlots
-		weaponsAndSlots = zip (ship^.shipConfiguration.shipConfigurationWeapons) (ship^.shipWeaponSlots (game^.gameBuilder))
+		weaponInfo = zip [0..] $ expandSlots (ship^.shipWeapons (game^.gameBuilder))
 
 		shipAngle = (uncurry . flip) atan2 $ ship^.shipDirection
 
@@ -77,12 +76,12 @@ weaponTargets loc (l, f, r) (id, (weapon, quadrant)) = if isJust weapon
 	else (id, [])
 	where
 		getPotentialTargets enemies = map (_entityID) $ filter inRange enemies
-		inRange t = (magnitude $ loc ^-^ (t^.entityData.shipLocation)) < 25
+		inRange t = (magnitude $ loc ^-^ (t^.entityData.shipLocation)) < (fromIntegral $ weapon^.(to fromJust).weaponRange)
 
-expandSlots :: [(Maybe String, WeaponSlot)] -> [(Maybe String, Quadrant)]
+expandSlots :: [(Maybe Weapon, WeaponSlot)] -> [(Maybe Weapon, Quadrant)]
 expandSlots slots = concatMap expandSlot slots
 
-expandSlot :: (Maybe String, WeaponSlot) -> [(Maybe String, Quadrant)]
+expandSlot :: (Maybe Weapon, WeaponSlot) -> [(Maybe Weapon, Quadrant)]
 expandSlot (weapon, slot) = case slot^.weaponSlotType of
 	Front -> [(weapon, FrontQuad)]
 	Side -> [(weapon, LeftQuad), (weapon, RightQuad)]

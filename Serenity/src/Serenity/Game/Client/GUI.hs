@@ -35,16 +35,16 @@ render game uiState assets = Pictures
 	,	(drawWorldToWindow . renderInWorld) game
 	]
 	where
-		background         = getPicture "background" assets
-		drawWorldToWindow  = translateWorld . scaleWorld
-		scaleWorld         = scale (double2Float s) (double2Float s)
-		translateWorld     = translate (double2Float$ vpx*(1-s)) (double2Float$ vpy*(1-s))
+		background        = getPicture "background" assets
+		drawWorldToWindow = translateWorld . scaleWorld
+		scaleWorld        = scale (double2Float s) (double2Float s)
+		translateWorld    = translate (double2Float $ vpx*(1-s)) (double2Float$ vpy*(1-s))
 
-		(ww, wh)           = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
-		((vpx, vpy), vpz)  = uiState^.viewport
-		(gw, gh)           =  game^.gameBuilder^.gbSector.sectorSize
-		normScale          = ((min ww wh) / (max gw gh))
-		s                  = vpz * normScale
+		(ww, wh)          = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
+		((vpx, vpy), vpz) = uiState^.viewport
+		(gw, gh)          =  game^.gameBuilder^.gbSector.sectorSize
+		normScale         = ((min ww wh) / (max gw gh))
+		s                 = vpz * normScale
 
 		renderInWorld game = pictures
 			[	pictures $ map pictureSpaceLane $ game^.gameBuilder^.gbSector.sectorSpaceLanes
@@ -67,7 +67,8 @@ render game uiState assets = Pictures
 		pictureEntity time entity = pictures $ (shipAndHealth time) ++ beams where
 			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
 
-			pictureBeam target = case Map.lookup target (game^.gameShips) of
+			pictureBeam target =
+				case Map.lookup target (game^.gameShips) of
 				Just entity -> [color red $ line [(x, y + 2),
 					(pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []

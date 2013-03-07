@@ -55,7 +55,10 @@ data ClientState = ClientState
 	,	_clientAssets :: Assets
 	,	_clientOwnerID :: OwnerID
 	,	_clientChannels :: TransportInterface
+	,	_clientGameStatus :: GameStatus
 	}
+
+data GameStatus = Playing | Complete deriving (Show, Eq)
 
 data UIState a = UIState
 	{	_viewport :: ViewPort
@@ -79,6 +82,7 @@ initClientState assets gameBuilder ownerID channels = ClientState
 	,	_clientAssets = assets
 	,	_clientOwnerID = ownerID
 	,	_clientChannels = channels
+	,	_clientGameStatus = Playing
 	}
 	where
 		game = demoGame gameBuilder

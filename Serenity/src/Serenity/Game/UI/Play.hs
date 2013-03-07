@@ -62,7 +62,9 @@ timePlay _ = execState $ do
 	mClientState <- use aClientState
 	case mClientState of 
 		Nothing -> aMode .= Menu
-		Just _ -> return ()
+		Just clientState -> if (clientState^.clientGameStatus) == Complete
+			then aMode .= End
+			else return ()
 
 timePlayIO :: PlayState a => Float -> StateT a IO ()
 timePlayIO dt = do

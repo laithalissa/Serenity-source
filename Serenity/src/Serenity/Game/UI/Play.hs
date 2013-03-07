@@ -7,19 +7,14 @@ import Serenity.Game.UI.Application
 import Serenity.Game.UI.Minimap
 import Serenity.Game.Client.ClientState
 import Serenity.External
-import Serenity.Model
-import Serenity.Maths.Util
 import Serenity.Game.Client.GUI
 import Serenity.Game.Client.Main
-import Serenity.Network.Transport
 
 import Graphics.Gloss.Data.Extent
 import Control.Lens
 import Control.Monad.State
 import Data.Monoid
 import Data.Maybe
-
-import Debug.Trace
 
 data PlayData a = PlayData 
 	{	_playSelectBox :: Maybe ((Float, Float), (Float, Float))

@@ -9,8 +9,6 @@ import Serenity.Game.Client.Color
 
 import Control.Lens
 import Data.Maybe
-import Graphics.Gloss
-import GHC.Float
 
 import Data.Map (Map)
 import qualified Data.Map as Map

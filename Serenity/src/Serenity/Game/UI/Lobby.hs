@@ -7,7 +7,6 @@ import Serenity.Game.UI.Application
 import Serenity.Game.Client.ClientState
 import Serenity.External
 import Serenity.Network.Transport
-import Serenity.Network.Utility
 import Serenity.Network.Connection
 
 import Control.Lens

@@ -21,8 +21,6 @@ import qualified Data.Map as Map
 import Data.Maybe (catMaybes, fromJust)
 import GHC.Float
 
-import Control.Monad.State
-
 isSelected :: UIState ClientState -> Getter (Entity Ship) Bool
 isSelected uiState = to (\entity -> elem (entity^.entityID) (uiState^.uiStateSelected))
 
@@ -54,10 +52,10 @@ render game uiState assets = Pictures
 			,	pictures $ map (pictureEntity (game^.gameTime)) $ Map.elems $ game^.gameShips
 			]
 
-		picturePlanet planet = 
-			translate x y 
-			$ getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets where
-				(x,y) = pDouble2Float $ planet^.planetLocation
+		picturePlanet planet = translate x y $ Pictures [p, name] where
+			(x,y) = pDouble2Float $ planet^.planetLocation
+			p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets
+			name = color (greyN 0.7) $ translate (5.5) (-6.5) $ scale 0.011 0.011 $ Text (planet^.planetName)
 
 		pictureSpaceLane (p1, p2) = 
 			color (dark green) 

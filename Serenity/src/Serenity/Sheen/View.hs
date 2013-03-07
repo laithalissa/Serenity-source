@@ -10,7 +10,6 @@ import Control.Lens
 import Control.Monad.State
 import Data.List (sortBy)
 import Data.Ord (comparing)
-import Data.Maybe (catMaybes)
 import Data.Monoid
 
 import Graphics.Gloss

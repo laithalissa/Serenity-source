@@ -9,7 +9,6 @@ import Serenity.Sheen.UIEvent
 
 import Graphics.Gloss.Interface.IO.Game
 import Control.Lens
-import Control.Monad.State
 import Data.Char
 
 data TextBox a = TextBox

@@ -20,14 +20,17 @@ data JoinData a = JoinData
 	,	_joinNickName     :: String
 	,	_joinAddress      :: String
 	}
-
 makeLenses ''JoinData
 
-initJoinData :: Simple Lens a (JoinData a) -> Simple Lens a String -> Assets -> JoinData a
-initJoinData aJoin aPort assets = JoinData
+class AppState a => JoinState a where
+	aJoin :: Simple Lens a (JoinData a)
+	aPort :: Simple Lens a String
+
+initJoinData :: JoinState a => Assets -> JoinData a
+initJoinData assets = JoinData
 	{	_joinTitleLabel   = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
 	,	_joinVersionLabel = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
-	,	_joinPlayButton   = initMenuButton "Play      ->" (\_ -> Lobby) & (buttonEnabled .~ playButtonEnabled aJoin aPort)
+	,	_joinPlayButton   = initMenuButton "Play      ->" (\_ -> Lobby) & (buttonEnabled .~ playButtonEnabled)
 	,	_joinBackButton   = initMenuButton "<-      Back" (\_ -> Menu)
 	,	_joinAddressBox   = (initMenuTextBoxLabel "Server:" (aJoin.joinAddress))
 	,	_joinPortBox      = (initMenuTextBox aPort) & (tbPostEdit .~ portValidation)
@@ -36,11 +39,11 @@ initJoinData aJoin aPort assets = JoinData
 	,	_joinAddress      = "localhost"
 	}
 
-playButtonEnabled :: Simple Lens a (JoinData a) -> Simple Lens a String -> a -> Bool
-playButtonEnabled aJoin aPort a = all (/="") [a^.aJoin.joinNickName, a^.aJoin.joinAddress, a^.aPort]
+playButtonEnabled :: JoinState a => a -> Bool
+playButtonEnabled a = all (/="") [a^.aJoin.joinNickName, a^.aJoin.joinAddress, a^.aPort]
 
-viewJoin :: a -> Simple Lens a (JoinData a) -> Simple Lens a String -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
-viewJoin a aJoin aPort aAssets aMode = (initView ((0, 0), (1024, 750))) 
+viewJoin :: JoinState a => a -> View a
+viewJoin a = (initView ((0, 0), (1024, 750))) 
 	{	_viewDepict = background (a^.aAssets)
 	}	<++
 	[	label a (aJoin.joinTitleLabel) ((30,650),(220,30))
@@ -56,5 +59,5 @@ viewJoin a aJoin aPort aAssets aMode = (initView ((0, 0), (1024, 750)))
 		]
 	]
 
-timeJoin :: Simple Lens a (JoinData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
-timeJoin aJoin aMode dt = id
+timeJoin :: JoinState a =>  Float -> a -> a
+timeJoin dt = id

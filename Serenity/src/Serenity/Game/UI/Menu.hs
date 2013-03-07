@@ -15,10 +15,12 @@ data MenuData a = MenuData
 	,	_menuJoinButton   :: Button a ApplicationMode
 	,	_menuQuitButton   :: Button a ApplicationMode
 	}
-
 makeLenses ''MenuData
 
-initMenuData :: Assets -> MenuData a
+class AppState a => MenuState a where
+	aMenu :: Simple Lens a (MenuData a)
+
+initMenuData :: MenuState a => Assets -> MenuData a
 initMenuData assets = MenuData
 	{	_menuTitleLabel   = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
 	,	_menuVersionLabel = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
@@ -27,18 +29,18 @@ initMenuData assets = MenuData
 	,	_menuQuitButton   = initMenuButton "Quit      -<" (\_ -> Quit)
 	}
 
-viewMenu :: a -> Simple Lens a (MenuData a) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
-viewMenu a aData aAssets aMode = (initView ((0, 0), (1024, 750))) 
+viewMenu :: MenuState a => a -> View a
+viewMenu a = (initView ((0, 0), (1024, 750))) 
 	{	_viewDepict = background (a^.aAssets)
 	}	<++
-	[	label a (aData.menuTitleLabel) ((30,650),(220,30))
-	,	label a (aData.menuVersionLabel) ((0,0),(100,15))
+	[	label a (aMenu.menuTitleLabel) ((30,650),(220,30))
+	,	label a (aMenu.menuVersionLabel) ((0,0),(100,15))
 	,	(initBox ((680, 0), (345, 750))) <++
-		[	button a (aData.menuHostButton) aMode ((80,650),(185,28))
-		,	button a (aData.menuJoinButton) aMode ((80,550),(185,28))
-		,	button a (aData.menuQuitButton) aMode ((80, 50),(185,28))
+		[	button a (aMenu.menuHostButton) aMode ((80,650),(185,28))
+		,	button a (aMenu.menuJoinButton) aMode ((80,550),(185,28))
+		,	button a (aMenu.menuQuitButton) aMode ((80, 50),(185,28))
 		]
 	]
 
-timeMenu :: Simple Lens a (MenuData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
-timeMenu aData aMode dt a = a
+timeMenu :: MenuState a => Float -> a -> a
+timeMenu dt a = a

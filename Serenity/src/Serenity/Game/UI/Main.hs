@@ -40,34 +40,42 @@ initApplicationController assets = ApplicationController
 	,	_appMode        = Splash
 	,	_appAssets      = assets
 	,	_appSplashData  = initSplashData assets
-	,	_appMenuData    = initMenuData assets
-	,	_appHostData    = initHostData appHostData appPort assets
-	,	_appJoinData    = initJoinData appJoinData appPort assets
-	,	_appLobbyData   = initLobbyData appLobbyData assets
-	,	_appPlayData    = initPlayData appPlayData assets
+	,	_appMenuData    = initMenuData   assets
+	,	_appHostData    = initHostData   assets
+	,	_appJoinData    = initJoinData   assets
+	,	_appLobbyData   = initLobbyData  assets
+	,	_appPlayData    = initPlayData   assets
 	,	_appClientState = Nothing
 	,	_appPort        = "9900"
 	}
 
 appServerString   = appJoinData.joinAddress
 
+instance AppState    ApplicationController where {aMode=appMode; aAssets=appAssets}
+instance SplashState ApplicationController where {aSplash=appSplashData}
+instance MenuState   ApplicationController where {aMenu=appMenuData}
+instance HostState   ApplicationController where {aHost=appHostData; aPort=appPort}
+instance JoinState   ApplicationController where {aJoin=appJoinData; aPort=appPort}
+instance LobbyState  ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort}
+instance PlayState   ApplicationController where {aPlay=appPlayData; aClientState=appClientState}
+
 instance ViewController ApplicationController where
 	globals = appViewGlobals
 	getView app = case app^.appMode of 
-		Splash -> viewSplash app appSplashData appAssets appMode
-		Menu   -> viewMenu app appMenuData appAssets appMode
-		Host   -> viewHost app appHostData appPort appAssets appMode
-		Join   -> viewJoin app appJoinData appPort appAssets appMode
-		Lobby  -> viewLobby app appLobbyData appClientState appAssets appMode
-		Play   -> viewPlay app appPlayData appClientState appAssets appMode
+		Splash -> viewSplash app
+		Menu   -> viewMenu   app 
+		Host   -> viewHost   app
+		Join   -> viewJoin   app
+		Lobby  -> viewLobby  app
+		Play   -> viewPlay   app 
 		Quit   -> (initView ((0, 0), (1024, 750)))
 	updateTime dt app = case app^.appMode of 
-		Splash -> timeSplash appSplashData appMode dt app
-		Menu   -> timeMenu appMenuData appMode dt app
-		Host   -> timeHost appHostData appMode dt app
-		Join   -> timeJoin appJoinData appMode dt app
-		Lobby  -> timeLobby appLobbyData appClientState appMode dt app
-		Play   -> timePlay appPlayData appClientState appMode dt app
+		Splash -> timeSplash dt app
+		Menu   -> timeMenu   dt app
+		Host   -> timeHost   dt app
+		Join   -> timeJoin   dt app
+		Lobby  -> timeLobby  dt app
+		Play   -> timePlay   dt app
 		Quit   -> app -- Quit handled by handleMainTime below
 
 gui = do
@@ -90,8 +98,8 @@ handleMainTime dt = execStateT $ do
 	app <- get
 	modify $ updateTime dt
 	case (app^.appMode) of 
-		Host  -> timeHostIO appHostData appPort dt
-		Lobby -> timeLobbyIO appLobbyData appClientState appServerString appPort dt
-		Play  -> timePlayIO appPlayData appClientState dt
+		Host  -> timeHostIO  dt
+		Lobby -> timeLobbyIO dt
+		Play  -> timePlayIO  dt
 		Quit  -> liftIO exitSuccess
 		_     -> return ()

@@ -21,30 +21,33 @@ import Data.Maybe
 data PlayData a = PlayData 
 	{	_playSelectBox :: Maybe ((Float, Float), (Float, Float))
 	}
-
 makeLenses ''PlayData
 
-initPlayData :: Simple Lens a (PlayData a) -> Assets -> PlayData a
-initPlayData aPlay aAssets = PlayData
+class AppState a => PlayState a where
+	aPlay :: Simple Lens a (PlayData a)
+	aClientState :: Simple Lens a (Maybe ClientState)
+
+initPlayData :: PlayState a => Assets -> PlayData a
+initPlayData assets = PlayData
 	{	_playSelectBox = Nothing
 	}
 
-viewPlay :: a -> Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
-viewPlay a aPlay aClientState aAssets aMode = case (a^.aClientState) of
+viewPlay :: PlayState a => a -> View a
+viewPlay a = case (a^.aClientState) of
 	Just clientState -> (initView ((0,0),(1024, 750))) <++
-		[	mainView a aClientState clientState (a^.aAssets)
-		,	sidebarView a aClientState clientState (a^.aAssets)
+		[	mainView a clientState
+		,	sidebarView a clientState
 		]
 	Nothing -> mempty
 
-sidebarView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
-sidebarView a aClientState clientState assets = (initBox ((0,0),(200,750))) <++
+sidebarView :: PlayState a => a -> ClientState -> View a
+sidebarView a clientState = (initBox ((0,0),(200,750))) <++
 	[	minimap a (aClientState.(to fromJust).clientGame) (a^.aClientState.(to fromJust).clientOwnerID) & (viewOrigin .~ (0,550))
 	]
 
-mainView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
-mainView a aClientState clientState assets = (initView ((0,0),(1024, 750)))
-	& (viewDepict .~ (Just $ render (clientState^.clientGame) (clientState^.clientUIState) assets))
+mainView :: PlayState a => a -> ClientState -> View a
+mainView a clientState = (initView ((0,0),(1024, 750)))
+	& (viewDepict .~ (Just $ render (clientState^.clientGame) (clientState^.clientUIState) (a^.aAssets)))
 	& (viewEventHandler .~ (Just $ \event -> aClientState %~ handleGameEvent event $ a))
 
 handleGameEvent :: UIEvent -> Maybe ClientState -> Maybe ClientState
@@ -54,15 +57,15 @@ handleGameEvent event = case event of
 	UIEventKeyPress key keystate mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey key keystate mods (0,0))
 	_ -> fmap id
 
-timePlay :: Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a ApplicationMode -> Float -> a -> a
-timePlay _ aMClientState aMode _ = execState $ do
-	mClientState <- use aMClientState
+timePlay :: PlayState a => Float -> a -> a
+timePlay _ = execState $ do
+	mClientState <- use aClientState
 	case mClientState of 
 		Nothing -> aMode .= Menu
 		Just _ -> return ()
 
-timePlayIO :: Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Float -> StateT a IO ()
-timePlayIO aPlay aClientState dt = do
+timePlayIO :: PlayState a => Float -> StateT a IO ()
+timePlayIO dt = do
 	mClientState <- use aClientState
 	case mClientState of 
 		Just clientState -> do

@@ -8,6 +8,10 @@ import Serenity.External
 import Control.Lens
 import Data.Char
 
+class AppState a where
+	aMode :: Simple Lens a ApplicationMode
+	aAssets :: Simple Lens a Assets
+
 serenityVersionString = "Alpha 1.01"
 
 data ApplicationMode = Splash | Menu | Host| Join | Lobby | Play | Quit deriving Eq

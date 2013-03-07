@@ -13,6 +13,7 @@ module Serenity.Model.Time
 ) where
 
 import Serenity.AI.Plan
+import Serenity.AI.Targeting
 import Serenity.Maths.Util
 import Serenity.Model.Game
 import Serenity.Model.Entity
@@ -21,7 +22,7 @@ import Serenity.Model.Wire
 
 import Control.Lens
 import qualified Data.Map as M
-import Data.Maybe (catMaybes, fromJust, isJust)
+import Data.Maybe (catMaybes, fromJust)
 import Data.VectorSpace
 import Prelude hiding (id, (.))
 
@@ -142,55 +143,10 @@ evolveShipDamage = proc (entity, game) -> do
 
 evolveShipTargets :: UpdateWire (Entity Ship, Game)
 evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
-	let targets = M.fromList $ map (weaponTargets entity (game^.gameShips)) (zip [0..] $ expandSlots (weaponsAndSlots ship game))
+	let targets = findShipTargets entity game
 	if targets /= (ship^.shipTargets)
 		then id -< [UpdateShipTargets (entity^.entityID) targets]
 		else id -< []
-	where
-		weaponTargets entity ships (id, (weapon, quadrant)) = if isJust weapon
-			then (id, M.keys $ M.filter (otherInRange entity quadrant) ships)
-			else (id, [])
-		otherInRange e quad t = (e^.ownerID) /= (t^.ownerID) && inRange (e^.entityData) quad t
-
-		weaponsAndSlots ship game = zip (ship^.shipConfiguration.shipConfigurationWeapons) (ship^.shipWeaponSlots (game^.gameBuilder))
-
-		expandSlots slots = concatMap expandSlot slots
-		expandSlot (weapon, slot) = case slot^.weaponSlotType of
-			Front -> [(weapon, FrontQuad)]
-			Side -> [(weapon, LeftQuad), (weapon, RightQuad)]
-			Turret -> [(weapon, AllQuads)]
-
--- | Quadrants, relative to the ship, that a weapon can fire upon
-data Quadrant = LeftQuad | FrontQuad | RightQuad | AllQuads
-
--- | Check if the target ship is in range
-inRange
-	:: Ship -- ^ Ship
-	-> Quadrant -- ^ Quadrant of the weapon's firing arc
-	-> Entity Ship -- ^ Target
-	-> Bool
-inRange ship quadrant target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25
-	&& inFiringArc
-	where
-		-- Deal with discontinuous angles by using || if crossing boundary where signs flip
-		inFiringArc = if arcExtreme'' < arcExtreme'
-			then angle2Enemy >= arcExtreme' || angle2Enemy <= arcExtreme''
-			else angle2Enemy >= arcExtreme' && angle2Enemy <= arcExtreme''
-		shipAngle = (uncurry . flip) atan2 $ ship^.shipDirection
-		angle2Enemy = (uncurry . flip) atan2 $ (target^.entityData.shipLocation) ^-^ (ship^.shipLocation)
-		-- World angles marking the edge of the firing arc
-		arcExtreme' = if shipAngle + angle' < -pi
-			then shipAngle + angle' + (2 * pi)
-			else shipAngle + angle'
-		arcExtreme'' = if shipAngle + angle'' > pi
-			then shipAngle + angle'' - (2 * pi)
-			else shipAngle + angle''
-
-		(angle'', angle') = case quadrant of
-			LeftQuad -> (3.0 * pi / 4.0, pi / 4.0)
-			FrontQuad -> (pi / 4.0, - pi / 4.0)
-			RightQuad -> (- pi / 4.0, - 3.0 * pi / 4.0)
-			AllQuads -> (3.0 * pi / 4.0, - 3.0 * pi /4.0)
 
 checkGameEnd :: Game -> [Update]
 checkGameEnd game = case game^.gameGameMode of

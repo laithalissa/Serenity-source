@@ -19,34 +19,37 @@ import Prelude hiding (id, (.))
 
 import Control.Concurrent (threadDelay)
 import Control.Lens
+import Control.Monad (forever)
 import Control.Monad.State (runStateT)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
+import Network.Socket (Socket, close)
 
 -- | Run the server.
 server 
 	:: Int   -- ^ Port to listen on.
 	-> Int   -- ^ Number of clients to connect.
 	-> IO ()
-server port clientCount = do
+server port clientCount = forever $ do
 	print "server started"	
 	gameBuilder' <- makeDemoGameBuilder
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
-	clients <- connectionPhase (fromIntegral port) clientCount
+	(clients, socket) <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
 	play 5 clients (demoGame gameBuilder') commands evolve updates
+	close socket
 	print "server finished"
 
 -- | Wait for n clients to connect
 connectionPhase
 	:: PortNumber      -- ^ Port to listen on.
 	-> Int             -- ^ Number of clients to connect.
-	-> IO [ClientData] -- ^ Client connection information.
+	-> IO ([ClientData], Socket) -- ^ Client connection information.
 
 connectionPhase port clientLimit = do 
 	transport <- listen port
 	(clients, server) <- connectionPhase' clientLimit transport []
 	sendAndReceive server
-	return clients
+	return (clients, snd transport)
 	where
 		connectionPhase' limit transport clients = do
 			(channels, transport') <- runStateT acceptClient transport

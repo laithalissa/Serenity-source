@@ -29,16 +29,31 @@ goal _ (OrderGuardPlanet a)   = GoalGuardPlanet a
 goal _ (OrderGuardLocation a) = GoalGuardLocation a
 goal _ (OrderCapture a)       = GoalCaptured a
 
+uncurry3 :: (a -> b -> c -> d) -> (a,b,c) -> d
+uncurry3 f = (\(a,b,c) -> f a b c)
+
 plan :: BaseWire (Game, Entity Ship, Goal) Plan
 plan = proc (game, entity, goal) -> case goal of
 	GoalNone -> id -< []
-	(GoalBeAt goalLoc mGoalDir) -> id -< trace "goal planning" $ [actionMove1, actionMove2]
-		where
-		actionMove1 = ActionMove (game^.gameTime) (shipLoc, shipDir) ((100.0, 100.0), shipDir)
-		actionMove2 = ActionMove (game^.gameTime) ((100.0, 100.0), shipDir) (goalLoc,goalDir)
-		goalDir = case mGoalDir of {Just x -> x; Nothing -> normalized (goalLoc - shipLoc)}
-		shipLoc = entity^.entityData.shipLocation
-		shipDir = entity^.entityData.shipDirection
+	(GoalBeAt goalLoc mGoalDir) -> do
+		let shipSpeed = (shipClass' entity game)^.shipClassSpeed
+		let shipStartLocation = entity^.entityData.shipLocation
+		let shipStartDirection = entity^.entityData.shipDirection
+		let shipStartPosition = (shipStartLocation, shipStartDirection)
+		let shipStartTime = game^.gameTime
+		let shipMidLocation = (100.0, 100.0)
+		let shipMidDirection = makeDirection entity shipMidLocation
+		let shipMidPosition = (shipMidLocation, shipMidDirection)
+		timeRemaining <- moveTimeRemaining -< (game^.gameTime, shipStartPosition, shipMidPosition, shipSpeed) 
+		let shipMidTime = shipStartTime + timeRemaining
+		let shipFinishLocation = goalLoc
+		let shipFinishDirection = if isJust mGoalDir then fromJust mGoalDir else makeDirection entity goalLoc
+		let shipFinishPosition = (shipFinishLocation, shipFinishDirection)
+		let action1 = ActionMove shipStartTime shipStartPosition shipMidPosition
+		let action2 = ActionMove shipMidTime shipMidPosition shipFinishPosition
+		let actionPlan = [action1, action2]
+		id -< actionPlan
+
 	(GoalDestroyed target) -> id -< trace "goal destroyed" $ [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] 
 		where
 		goalLoc = case game^.gameShips.at target of {Just e -> e^.entityData.shipLocation; Nothing -> shipLoc}
@@ -48,7 +63,11 @@ plan = proc (game, entity, goal) -> case goal of
 	_ -> id -< []
 
 
-
+makeDirection :: Entity Ship -> Location -> Direction
+makeDirection entity goalLoc = let 
+	shipLoc = entity^.entityData.shipLocation
+	shipDir = entity^.entityData.shipDirection
+	in normalized (goalLoc - shipLoc)
 
 makeWaypoints :: BaseWire (Sector, Position, Position, Speed) [Location]
 makeWaypoints = proc (sector, start, finish, speed) -> do

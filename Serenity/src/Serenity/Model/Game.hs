@@ -93,7 +93,8 @@ demoGame gameBuilder = game' game
 	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game
 		where
 		f :: Entity Ship -> Entity Ship
-		f e = entityData.shipOrder .~ (OrderAttack $ (getEntity ((e^.ownerID + 1) `mod` 4))^.entityID) $ e
+		--f e = entityData.shipOrder .~ (OrderAttack $ (getEntity ((e^.ownerID + 1) `mod` 4))^.entityID) $ e
+		f = entityData.shipOrder .~ (makeOrderMove (190, 190))
 		getEntity :: OwnerID -> Entity Ship
 		getEntity oId = foldl1 (\x y -> if x^.ownerID == oId then x else y) $ Map.elems (game^.gameShips)
 

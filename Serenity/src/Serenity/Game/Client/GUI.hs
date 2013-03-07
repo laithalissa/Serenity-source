@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Serenity.Game.Client.GUI
 (	render
 ,	handleMessage
@@ -21,8 +23,8 @@ import GHC.Float
 
 import Control.Monad.State
 
-isSelected :: Simple Lens (Ship, Game) Bool
-isSelected = lens (\_ -> True) (\a _ -> a)
+isSelected :: UIState ClientState -> Getter (Entity Ship) Bool
+isSelected uiState = to (\entity -> elem (entity^.entityID) (uiState^.uiStateSelected))
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
 --handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewport=((x, y), z) } = uiState { viewport = ((x+dx, y+dy), z) }
@@ -41,7 +43,7 @@ render game uiState assets = Pictures
 		translateWorld     = translate (double2Float$ vpx*(1-s)) (double2Float$ vpy*(1-s))
 
 		(ww, wh)           = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
-		((vpx, vpy), vpz)  = uiState^.viewport
+		((vpx, vpy), vpz)  = uiState^.uiStateViewport
 		(gw, gh)           =  game^.gameBuilder^.gbSector.sectorSize
 		normScale          = ((min ww wh) / (max gw gh))
 		s                  = vpz * normScale
@@ -71,7 +73,7 @@ render game uiState assets = Pictures
 					(pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []
 
-			shipIsSelected = (entity^.entityData, game)^.isSelected
+			shipIsSelected = entity^.(isSelected uiState)
 			selection      = 
 				if shipIsSelected 
 				then [drawSelectionArc 5 (double2Float time)] 

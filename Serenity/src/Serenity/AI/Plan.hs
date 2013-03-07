@@ -9,6 +9,7 @@ import Serenity.Model.Message
 import Serenity.Model.Sector
 import Serenity.Model.Wire
 import Serenity.Maths.Util
+import Serenity.AI.Navigation
 import Serenity.AI.Path
 
 
@@ -19,6 +20,8 @@ import Data.VectorSpace
 import Prelude hiding (id, (.))
 
 import Debug.Trace(trace)
+
+arr' = arr . uncurry
 
 goal :: Game -> Order -> Goal
 goal _ (OrderNone{})           					= GoalNone
@@ -42,7 +45,7 @@ plan = proc (game, entity, goal) -> case goal of
 		let shipSpeed = (shipClass' entity game)^.shipClassSpeed
 		makeWaypoints -< (sector, startPosition, finishPosition, shipSpeed) 
 
-	(GoalDestroyed target) -> id -< trace "goal destroyed" $ [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir))] 
+	(GoalDestroyed target) -> id -< trace "goal destroyed" $ [ActionMoveToEntity target (ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir) False)] 
 		where
 		goalLoc = case game^.gameShips.at target of {Just e -> e^.entityData.shipLocation; Nothing -> shipLoc}
 		goalDir = normalized (goalLoc - shipLoc)
@@ -58,8 +61,11 @@ makeDirection entity goalLoc = let
 	in normalized (goalLoc - shipLoc)
 
 makeWaypoints :: BaseWire (Sector, Position, Position, Speed) [ShipAction]
-makeWaypoints = proc (sector, start, finish, speed) -> do
-	id -< []
+makeWaypoints = proc (sector, start@(startPos, startDir), finish@(finishPos, finishDir), speed) -> do
+	now <- time -< ()
+	(planetID, distance) <- nearestPlanet -< (sector, startPos)
+	planetLocation <- arr' planetLocation' -< (sector, planetID)
+	id -< [ActionMove now start (planetLocation, finishDir) False]
 		-- let shipSpeed = (shipClass' entity game)^.shipClassSpeed
 		-- let shipStartLocation = entity^.entityData.shipLocation
 		-- let shipStartDirection = entity^.entityData.shipDirection
@@ -78,7 +84,7 @@ makeWaypoints = proc (sector, start, finish, speed) -> do
 		-- let actionPlan = [action1, action2]
 		-- id -< actionPlan
 
---makeSectorGraph :: BaseWire (Sector, 
+
 
 evolveShipPlan :: UpdateWire (Entity Ship, Game)
 evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do

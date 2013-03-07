@@ -2,9 +2,12 @@
 
 module Serenity.Model.Sector where
 
+import Serenity.Model.Common
+
 import Control.Lens
 import Data.AdditiveGroup
 import Data.Map (Map)
+import Data.Maybe (fromJust)
 import qualified Data.Map as Map
 import Data.Binary
 import Data.DeriveTH
@@ -13,11 +16,12 @@ type SpaceLane = (PlanetID, PlanetID)
 type PlanetID = Int
 
 data Sector = Sector
-	{	_sectorName         :: String
-	,	_sectorSize         :: (Double, Double)
-	,	_sectorSpawnPoints  :: [(Double, Double)]
-	,	_sectorPlanets      :: Map PlanetID Planet
-	,	_sectorSpaceLanes   :: [SpaceLane]	
+	{	_sectorName         		:: String
+	,	_sectorSize         		:: (Double, Double)
+	,	_sectorSpawnPoints  		:: [Location]
+	,	_sectorPlanets      		:: Map PlanetID Planet
+	,	_sectorSpaceLanes   		:: [SpaceLane]	
+	,	_sectorSpaceLaneSpeedMultiplier :: Double
 	}
 	deriving (Show, Eq)
 
@@ -25,7 +29,7 @@ data Planet = Planet
 	{	_planetID        :: PlanetID
 	,	_planetName      :: String
 	,	_planetEcotype   :: Ecotype
-	,	_planetLocation  :: (Double, Double)
+	,	_planetLocation  :: Location
 	,	_planetResources :: Resources
 	}
 	deriving (Show, Eq)
@@ -82,4 +86,12 @@ sectorOne = Sector
 		,	(3, Planet {_planetID = 3, _planetName = "Qoruscant", _planetEcotype = Metal , _planetLocation  = (190, 190), _planetResources = res 10 0 10})
 		]
 	,	_sectorSpaceLanes  = [(1,2), (2,3)]
+	,	_sectorSpaceLaneSpeedMultiplier = 2.0
 	}
+
+
+planetLocation' :: Sector -> PlanetID -> Location
+planetLocation' sector planetID = (fromJust $ Map.lookup planetID (sector^.sectorPlanets))^.planetLocation
+
+sectorPlanets' :: Sector -> [Planet]
+sectorPlanets' sector = map snd $ Map.toList $ sector^.sectorPlanets

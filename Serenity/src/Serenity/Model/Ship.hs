@@ -92,6 +92,7 @@ data ShipAction =
 	{	actionStartTime 	:: Double
 	,	actionStartPosition 	:: Position
 	,	actionFinishPosition  	:: Position
+	,	actionUsingSpaceLane	:: Bool
 	}
 	| ActionAttack {targetID :: Int}
 	| ActionCapture Int

@@ -13,39 +13,72 @@ import Serenity.Game.Client.GUI
 import Serenity.Game.Client.Main
 import Serenity.Network.Transport
 
+import Graphics.Gloss.Data.Extent
 import Control.Lens
 import Control.Monad.State
 import Data.Monoid
 import Data.Maybe
 
+import Debug.Trace
+
 data PlayData a = PlayData 
 	{	_playSelectBox :: Maybe ((Float, Float), (Float, Float))
 	}
-
 makeLenses ''PlayData
 
-initPlayData :: Simple Lens a (PlayData a) -> Assets -> PlayData a
-initPlayData aPlay aAssets = PlayData
+class AppState a => PlayState a where
+	aPlay :: Simple Lens a (PlayData a)
+	aClientState :: Simple Lens a (Maybe ClientState)
+
+initPlayData :: PlayState a => Assets -> PlayData a
+initPlayData assets = PlayData
 	{	_playSelectBox = Nothing
 	}
 
-viewPlay :: a -> Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
-viewPlay a aPlay aClientState aAssets aMode = case (a^.aClientState) of
+viewPlay :: PlayState a => a -> View a
+viewPlay a = case (a^.aClientState) of
 	Just clientState -> (initView ((0,0),(1024, 750))) <++
-		[	mainView a aClientState clientState (a^.aAssets)
-		,	sidebarView a aClientState clientState (a^.aAssets)
+		[	mainView a clientState
+		,	sidebarView a clientState
 		]
 	Nothing -> mempty
 
-sidebarView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
-sidebarView a aClientState clientState assets = (initBox ((0,0),(200,750))) <++
-	[	minimap a (aClientState.(to fromJust).clientGame) & (viewOrigin .~ (0,550))
+sidebarView :: PlayState a => a -> ClientState -> View a
+sidebarView a clientState = (initBox ((0,0),(200,750))) <++
+	[	minimap a (aClientState.(to fromJust).clientGame) (a^.aClientState.(to fromJust).clientOwnerID) & (viewOrigin .~ (0,550))
 	]
 
-mainView :: a -> Simple Lens a (Maybe ClientState) -> ClientState -> Assets -> View a
-mainView a aClientState clientState assets = (initView ((0,0),(1024, 750)))
-	& (viewDepict .~ (Just $ render (clientState^.clientGame) (clientState^.clientUIState) assets))
-	& (viewEventHandler .~ (Just $ \event -> aClientState %~ handleGameEvent event $ a))
+mainView :: PlayState a => a -> ClientState -> View a
+mainView a clientState = (initView ((0,0),(1024, 750)))
+	& (viewSubviewMode .~ ViewSubviewModeKeep)
+	& (viewDepict .~ (Just $ render (clientState^.clientGame) (clientState^.clientUIState) (a^.aAssets)))
+	& (viewEventHandler .~ (Just $ \event -> handleMainEvent event a))
+	<++ catMaybes
+	[	selectionBox (a^.aPlay.playSelectBox)
+	]
+
+selectionBox Nothing = Nothing
+selectionBox (Just box@((x1,y1),(x2,y2))) = Just $ (initView $ fromExtent $ boxToExtent box)
+	& (viewBackground .~ (Just (changeAlpha (greyN 0.1) 0.4)))
+	& (viewDepict .~ (Just outline)) 
+	where
+		outline = color (changeAlpha white 0.4) $ lineLoop points
+		points = [(0, 0),(0, max y1 y2 - (min y1 y2)),(max x1 x2 - (min x1 x2), max y1 y2 -(min y1 y2)),(max x1 x2 - (min x1 x2), 0)]
+
+boxToExtent ((x1,y1),(x2,y2)) = makeExtent maxY minY maxX minX where
+	minX = floor $ min x1 x2
+	minY = floor $ min y1 y2
+	maxX = floor $ max x1 x2
+	maxY = floor $ max y1 y2
+
+handleMainEvent :: PlayState a => UIEvent -> a -> a
+handleMainEvent event = case event of
+	UIEventMouseDownInside LeftButton point mods -> startSelect point
+	UIEventMouseUpInside   LeftButton point mods -> endSelect point
+	UIEventMouseUpOutside  LeftButton point mods -> endSelect point
+	UIEventMotion                     point      -> continueSelect point
+	UIEventKeyPress _ _ _ -> aClientState %~ handleGameEvent event
+	_ -> id
 
 handleGameEvent :: UIEvent -> Maybe ClientState -> Maybe ClientState
 handleGameEvent event = case event of
@@ -54,15 +87,29 @@ handleGameEvent event = case event of
 	UIEventKeyPress key keystate mods -> fmap $ Serenity.Game.Client.Main.handleEvent (EventKey key keystate mods (0,0))
 	_ -> fmap id
 
-timePlay :: Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a ApplicationMode -> Float -> a -> a
-timePlay _ aMClientState aMode _ = execState $ do
-	mClientState <- use aMClientState
+startSelect :: PlayState a => (Float, Float) -> a -> a
+startSelect point =  aPlay.playSelectBox.~ Just (point, point)
+
+continueSelect :: PlayState a => (Float, Float) -> a -> a
+continueSelect point = aPlay.playSelectBox.traverse._2 .~ point
+
+endSelect :: PlayState a => (Float, Float) -> a -> a
+endSelect point = execState $ do
+	overMaybe (aPlay.playSelectBox) (aClientState.traverse) (selectShips.boxToExtent)
+	aPlay.playSelectBox .= Nothing
+
+cancelSelect :: PlayState a => a -> a
+cancelSelect = aPlay.playSelectBox .~ Nothing
+
+timePlay :: PlayState a => Float -> a -> a
+timePlay _ = execState $ do
+	mClientState <- use aClientState
 	case mClientState of 
 		Nothing -> aMode .= Menu
 		Just _ -> return ()
 
-timePlayIO :: Simple Lens a (PlayData a) -> Simple Lens a (Maybe ClientState) -> Float -> StateT a IO ()
-timePlayIO aPlay aClientState dt = do
+timePlayIO :: PlayState a => Float -> StateT a IO ()
+timePlayIO dt = do
 	mClientState <- use aClientState
 	case mClientState of 
 		Just clientState -> do

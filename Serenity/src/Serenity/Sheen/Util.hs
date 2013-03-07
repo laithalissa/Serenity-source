@@ -19,3 +19,9 @@ extentOrigin = lens (fst.fromExtent) (\ext org -> toExtent $ _1 .~ org $ fromExt
 
 extentSize :: Simple Lens Extent (Int, Int)
 extentSize = lens (fst.fromExtent) (\ext sze -> toExtent $ _2 .~ sze $ fromExtent ext)
+
+overMaybe getter setter f = do
+	x <- use getter
+	case x of
+		Just x' -> setter %= f x'
+		Nothing -> return ()

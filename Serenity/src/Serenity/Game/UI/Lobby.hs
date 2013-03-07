@@ -20,33 +20,39 @@ data LobbyData a = LobbyData
 	,	_lobbyLoadingLabel :: Label a
 	,	_lobbyTime :: Float
 	}
-
 makeLenses ''LobbyData
 
-initLobbyData :: Simple Lens a (LobbyData a) -> Assets -> LobbyData a
-initLobbyData aLobby assets = LobbyData
+class AppState a => LobbyState a where
+	aLobby :: Simple Lens a (LobbyData a)
+	aClientState :: Simple Lens a (Maybe ClientState)
+	aHostName :: Simple Lens a String
+	aPort :: Simple Lens a String
+
+initLobbyData :: LobbyState a => Assets -> LobbyData a
+initLobbyData assets = LobbyData
 	{	_lobbyTitleLabel   = (initLabel (StaticString "Project Serenity") (bright green) Nothing) & (labelScale .~ 6)
-	,	_lobbyLoadingLabel = (initLabel (StaticString "Loading...") buttonColor (Just buttonBackground)) & (labelScale .~ 3.7)
+	,	_lobbyLoadingLabel = (initLabel (StaticString "Connecting...") buttonColor (Just buttonBackground)) 
+			& (labelScale .~ 3.7) & (labelTextOffset .~ (15,18))
 	,	_lobbyTime = 0
 	}
 
-viewLobby :: a -> Simple Lens a (LobbyData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
-viewLobby a aLobby aClientState aAssets aMode = (initView ((0, 0), (1024, 750))) 
+viewLobby :: LobbyState a => a -> View a
+viewLobby a = (initView ((0, 0), (1024, 750))) 
 	& (viewDepict .~ background (a^.aAssets))
 	<++
 	[	label a (aLobby.lobbyTitleLabel) ((30,650),(220,30))
-	,	label a (aLobby.lobbyLoadingLabel) ((400,320),(220,50))
+	,	label a (aLobby.lobbyLoadingLabel) ((370,300),(300,70))
 	]
 
-timeLobby :: Simple Lens a (LobbyData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a ApplicationMode -> Float -> a -> a
-timeLobby _ aMClientState aMode _ = execState $ do
-	mClientState <- use aMClientState
+timeLobby :: LobbyState a => Float -> a -> a
+timeLobby _ = execState $ do
+	mClientState <- use aClientState
 	case mClientState of 
 		Nothing -> return ()
 		Just _ -> aMode .= Play
 
-timeLobbyIO :: Simple Lens a (LobbyData a) -> Simple Lens a (Maybe ClientState) -> Simple Lens a String -> Simple Lens a String -> Float -> StateT a IO ()
-timeLobbyIO aLobby aClientState aHostName aPort dt = do
+timeLobbyIO :: LobbyState a => Float -> StateT a IO ()
+timeLobbyIO dt = do
 	aLobby.lobbyTime += dt
 	time <- use $ aLobby.lobbyTime
 	when (time > 1) $ do
@@ -60,7 +66,7 @@ timeLobbyIO aLobby aClientState aHostName aPort dt = do
 			liftIO $ waitUntilConnected (channelConnection channels)
 			assets <- liftIO initAssets
 			gameBuilder <- liftIO makeDemoGameBuilder
-			ownerID <- return 1
+			ownerID <- return 0
 			return $ Just $ initClientState assets gameBuilder ownerID channels
 		loadClientState x = return x
 

@@ -127,3 +127,16 @@ shipHealth' entity game = (shipMaxHealth' entity game) - (shipCurrentDamage' ent
 
 gameEntity' :: EntityID -> Game -> Entity Ship
 gameEntity' eID game = fromJust $ Map.lookup eID (game^.gameShips)
+
+shipWeapons :: GameBuilder -> Getter Ship [(Maybe Weapon, WeaponSlot)]
+shipWeapons gameBuilder = to (weaponInfo gameBuilder)
+	where
+		shipClass gB ship = fromJust $ Map.lookup (ship^.shipConfiguration.shipConfigurationShipClass) (gB^.gbShipClasses)
+		weapons gB ship = map (fmap (\w -> fromJust $ Map.lookup w (gB^.gbWeapons))) (ship^.shipConfiguration.shipConfigurationWeapons)
+		weaponInfo gameBuilder ship = zip (weapons gameBuilder ship) ((shipClass gameBuilder ship)^.shipClassWeaponSlots)
+
+shipWeaponSlots :: GameBuilder -> Getter Ship [WeaponSlot]
+shipWeaponSlots gameBuilder = to (weaponSlots gameBuilder)
+	where
+		shipClass gB ship = fromJust $ Map.lookup (ship^.shipConfiguration.shipConfigurationShipClass) (gB^.gbShipClasses)
+		weaponSlots gB ship = (shipClass gB ship)^.shipClassWeaponSlots

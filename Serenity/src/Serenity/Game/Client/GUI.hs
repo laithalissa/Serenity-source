@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Serenity.Game.Client.GUI
 (	render
 ,	handleMessage
@@ -21,8 +23,8 @@ import GHC.Float
 
 import Control.Monad.State
 
-isSelected :: Simple Lens (Ship, Game) Bool
-isSelected = lens (\_ -> True) (\a _ -> a)
+isSelected :: UIState ClientState -> Getter (Entity Ship) Bool
+isSelected uiState = to (\entity -> elem (entity^.entityID) (uiState^.uiStateSelected))
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
 --handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewport=((x, y), z) } = uiState { viewport = ((x+dx, y+dy), z) }
@@ -40,11 +42,11 @@ render game uiState assets = Pictures
 		scaleWorld        = scale (double2Float s) (double2Float s)
 		translateWorld    = translate (double2Float $ vpx*(1-s)) (double2Float$ vpy*(1-s))
 
-		(ww, wh)          = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
-		((vpx, vpy), vpz) = uiState^.viewport
-		(gw, gh)          =  game^.gameBuilder^.gbSector.sectorSize
-		normScale         = ((min ww wh) / (max gw gh))
-		s                 = vpz * normScale
+		(ww, wh)           = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
+		((vpx, vpy), vpz)  = uiState^.uiStateViewport
+		(gw, gh)           =  game^.gameBuilder^.gbSector.sectorSize
+		normScale          = ((min ww wh) / (max gw gh))
+		s                  = vpz * normScale
 
 		renderInWorld game = pictures
 			[	pictures $ map pictureSpaceLane $ game^.gameBuilder^.gbSector.sectorSpaceLanes
@@ -65,15 +67,13 @@ render game uiState assets = Pictures
 
 		pictureEntity :: Double -> Entity Ship -> Picture
 		pictureEntity time entity = pictures $ (shipAndHealth time) ++ beams where
-			beams = concatMap pictureBeam (entity^.entityData.shipBeamTargets)
-
-			pictureBeam target =
-				case Map.lookup target (game^.gameShips) of
+			beams = concatMap pictureBeam (concat . Map.elems $ entity^.entityData.shipTargets)
+			pictureBeam target = case Map.lookup target (game^.gameShips) of
 				Just entity -> [color red $ line [(x, y + 2),
 					(pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []
 
-			shipIsSelected = (entity^.entityData, game)^.isSelected
+			shipIsSelected = entity^.(isSelected uiState)
 			selection      = 
 				if shipIsSelected 
 				then [drawSelectionArc 5 (double2Float time)] 

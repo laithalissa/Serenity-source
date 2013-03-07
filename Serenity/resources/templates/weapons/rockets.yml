@@ -1,0 +1,13 @@
+weaponName: Rockets
+fileName: background.bmp
+range: 50
+reloadTime: 1
+accuracy: 85.8
+damage:
+  shield: 1
+  hull: 5
+  penetration: 0
+useCost:
+  fuel: 1
+  metal: 1
+  antiMatter: 0

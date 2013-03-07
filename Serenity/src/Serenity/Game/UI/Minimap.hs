@@ -5,6 +5,7 @@ module Serenity.Game.UI.Minimap where
 import Serenity.Model
 import Serenity.Sheen
 import Serenity.Maths.Util
+import Serenity.Game.Client.Color
 
 import Control.Lens
 import Data.Maybe
@@ -14,8 +15,8 @@ import GHC.Float
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-minimap :: a -> Getter a Game -> View a
-minimap a aGame = (initView ((0,0),miniMapSize) )
+minimap :: a -> Getter a Game -> Int -> View a
+minimap a aGame oID = (initView ((0,0),miniMapSize) )
 	& (viewDepict .~ (Just $ Pictures $ spaceLanes ++ planets ++ ships))
 	& (viewBackground .~ (Just black))
 	where
@@ -23,7 +24,7 @@ minimap a aGame = (initView ((0,0),miniMapSize) )
 	sSize = sector^.sectorSize
 	planets = map (picturePlanet sSize) (Map.elems $ sector^.sectorPlanets)
 	spaceLanes = map (pictureSpaceLane sSize $ sector^.sectorPlanets) (sector^.sectorSpaceLanes)
-	ships = map (pictureShip sSize) (map _entityData (filter (\x -> x^.ownerID == 1) (Map.elems (a^.aGame.gameShips))))
+	ships = map (pictureShip sSize oID) (map _entityData (filter (\x -> x^.ownerID == oID) (Map.elems (a^.aGame.gameShips))))
 
 miniMapSize = (200,200)
 
@@ -46,8 +47,8 @@ pictureSpaceLane sSize planetsMap (p1, p2) = color (dark $ dark $ dark $ dark gr
 	lane = line $ map (\p -> scaleToFit sSize (p^.planetLocation)) planets
 	planets = catMaybes $ map (\k -> planetsMap^.(at k)) [p1, p2]
 
-pictureShip :: (Double, Double) -> Ship -> Picture
-pictureShip sSize ship = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ shipPicture where
+pictureShip :: (Double, Double) -> Int -> Ship -> Picture
+pictureShip sSize oID ship = translate x y $ rotate ((atan2 dx dy)/pi * 180) $ shipPicture where
 	(x,y) = scaleToFit sSize $ ship^.shipLocation
 	(dx,dy) = pDouble2Float $ ship^.shipDirection
-	shipPicture = color (bright green) $ polygon [(0,0),(3,8),(6,0)]
+	shipPicture = color (ownerIDColor oID) $ polygon [(0,0),(3,8),(6,0)]

@@ -110,7 +110,7 @@ updateFocus = updateGlobalsWith globalFocus UIEventFocusLost UIEventFocusGained
 updateMouseOver :: ViewController a => IndexPath -> State a ()
 updateMouseOver = updateGlobalsWith globalMouseOver UIEventMouseOverOutside UIEventMouseOverInside
 
-updateGlobalsWith :: ViewController a => SimpleLens (ViewGlobals a) IndexPath -> UIEvent -> UIEvent -> IndexPath -> State a ()
+updateGlobalsWith :: ViewController a => Simple Lens (ViewGlobals a) IndexPath -> UIEvent -> UIEvent -> IndexPath -> State a ()
 updateGlobalsWith globalIndexPathLens eventToOld eventToNew newIndexPath = do
 	oldIndexPath <- use $ globals.globalIndexPathLens
 	when  (oldIndexPath /= newIndexPath) $ do

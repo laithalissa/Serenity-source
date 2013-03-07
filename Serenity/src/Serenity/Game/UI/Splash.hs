@@ -26,11 +26,13 @@ data SplashData a = SplashData
 	,	_splashSquids :: [ObjectState (Double, Double)]
 	,	_splashTarget :: (Double, Double)
 	}
-
 makeLenses ''SplashData
 
+class AppState a => SplashState a where
+	aSplash :: Simple Lens a (SplashData a)
+
 -- | Initialise splash screen state.
-initSplashData :: Assets -> SplashData a
+initSplashData :: SplashState a => Assets -> SplashData a
 initSplashData assets = SplashData
 	{	_splashTime = 0
 	,	_splashWire = accelerateSquids
@@ -46,8 +48,8 @@ initSplashData assets = SplashData
 	}
 
 -- | Main view for splash screen, dependent on various lenses on the application state a.
-viewSplash :: a -> Simple Lens a (SplashData a) -> Simple Lens a Assets -> Simple Lens a ApplicationMode -> View a
-viewSplash a aSplash aAssets aMode = 
+viewSplash :: SplashState a => a -> View a
+viewSplash a = 
 	(initView ((0, 0), (1024, 768))) 
 	{	_viewDepict = depictSquids (getPicture "squid" (a^.aAssets)) (a^.aSplash.splashSquids)
 	,	_viewDepictMode = ViewDepictModeViewUppermost
@@ -64,8 +66,8 @@ viewSplash a aSplash aAssets aMode =
 	eventHandler a _ = a
 
 -- | Time evolution of splash screen, dependant on various lenses on the application state a.
-timeSplash :: Simple Lens a (SplashData a) -> Simple Lens a ApplicationMode -> Float -> a -> a
-timeSplash aSplash aMode dt = execState $ do
+timeSplash :: SplashState a => Float -> a -> a
+timeSplash dt = execState $ do
 	time <- aSplash.splashTime <+= dt
 	when (time > 12 ) $ aMode .= Menu
 	when (time > 5.5) $ aSplash %= runSplashWire dt

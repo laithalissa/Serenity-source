@@ -31,7 +31,8 @@ class AppState a => LobbyState a where
 initLobbyData :: LobbyState a => Assets -> LobbyData a
 initLobbyData assets = LobbyData
 	{	_lobbyTitleLabel   = (initLabel (StaticString "Project Serenity") (bright green) Nothing) & (labelScale .~ 6)
-	,	_lobbyLoadingLabel = (initLabel (StaticString "Connecting") buttonColor (Just buttonBackground)) & (labelScale .~ 3.7)
+	,	_lobbyLoadingLabel = (initLabel (StaticString "Connecting...") buttonColor (Just buttonBackground)) 
+			& (labelScale .~ 3.7) & (labelTextOffset .~ (15,15))
 	,	_lobbyTime = 0
 	}
 
@@ -40,7 +41,7 @@ viewLobby a = (initView ((0, 0), (1024, 750)))
 	& (viewDepict .~ background (a^.aAssets))
 	<++
 	[	label a (aLobby.lobbyTitleLabel) ((30,650),(220,30))
-	,	label a (aLobby.lobbyLoadingLabel) ((400,320),(220,50))
+	,	label a (aLobby.lobbyLoadingLabel) ((360,300),(320,70))
 	]
 
 timeLobby :: LobbyState a => Float -> a -> a

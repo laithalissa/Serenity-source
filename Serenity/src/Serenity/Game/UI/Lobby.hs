@@ -6,6 +6,7 @@ import Serenity.Sheen
 import Serenity.Game.UI.Application
 import Serenity.Game.Client.ClientState
 import Serenity.External
+import Serenity.Model.Message
 import Serenity.Network.Transport
 import Serenity.Network.Connection
 
@@ -26,6 +27,7 @@ class AppState a => LobbyState a where
 	aClientState :: Simple Lens a (Maybe ClientState)
 	aHostName :: Simple Lens a String
 	aPort :: Simple Lens a String
+	aName :: Simple Lens a String
 
 initLobbyData :: LobbyState a => Assets -> LobbyData a
 initLobbyData assets = LobbyData
@@ -61,16 +63,22 @@ timeLobbyIO dt = do
 		loadClientState Nothing = do
 			serverHost <- use aHostName
 			serverPort <- use aPort
-			channels <- liftIO $ connectTo serverHost (fromIntegral $ read serverPort)
-			liftIO $ waitUntilConnected (channelConnection channels)
+			nickName <- use aName
+			(channels, ownerID) <- liftIO $ connectToServer serverHost (fromIntegral $ read serverPort) nickName
 			assets <- liftIO initAssets
 			gameBuilder <- liftIO makeDemoGameBuilder
-			ownerID <- return 0
 			return $ Just $ initClientState assets gameBuilder ownerID channels
 		loadClientState x = return x
 
-waitUntilConnected connTVar = do
-	connection <- atomically $ readTVar connTVar
-	if isConnected connection
-		then return ()
-		else threadDelay 10000 >> waitUntilConnected connTVar
+connectToServer :: String -> PortNumber -> String -> IO (TransportInterface, Int)
+connectToServer host port name = do
+	channels <- connectTo host port
+	waitUntilConnected (channelConnection channels)
+	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlSetName name)
+	return (channels, 0)
+	where
+		waitUntilConnected connTVar = do
+			connection <- atomically $ readTVar connTVar
+			if isConnected connection
+				then return ()
+				else threadDelay 10000 >> waitUntilConnected connTVar

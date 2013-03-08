@@ -17,12 +17,12 @@ import Serenity.Network.Utility (readTChanUntilEmpty, sendMessages)
 
 import Prelude hiding (id, (.))
 
-import Control.Concurrent (threadDelay)
+import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad (forever)
-import Control.Monad.State (runStateT)
+import qualified Data.Map as M
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
-import Network.Socket (Socket, close)
 
 -- | Run the server.
 server 
@@ -33,30 +33,49 @@ server port clientCount = forever $ do
 	print "server started"	
 	gameBuilder' <- makeDemoGameBuilder
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
-	(clients, socket) <- connectionPhase (fromIntegral port) clientCount
+	(clients, transport) <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
 	play 5 clients (demoGame gameBuilder') commands evolve updates
-	close socket
+	closeTransport transport
 	print "server finished"
 
 -- | Wait for n clients to connect
 connectionPhase
 	:: PortNumber      -- ^ Port to listen on.
 	-> Int             -- ^ Number of clients to connect.
-	-> IO ([ClientData], Socket) -- ^ Client connection information.
+	-> IO ([ClientData], Transport) -- ^ Client connection information.
 
 connectionPhase port clientLimit = do 
 	transport <- listen port
-	(clients, server) <- connectionPhase' clientLimit transport []
-	sendAndReceive server
-	return (clients, snd transport)
+	clientChan <- atomically $ newTChan
+	transportVar <- atomically $ newTVar transport
+	sendAndReceive transportVar
+	forkIO $ acceptLoop clientLimit transportVar clientChan
+	clients <- connectionPhase' clientChan clientLimit []
+	transport' <- atomically $ readTVar transportVar
+	return (clients, transport')
 	where
-		connectionPhase' limit transport clients = do
-			(channels, transport') <- runStateT acceptClient transport
+		acceptLoop limit transportVar chan = do
+			channels <- acceptClient transportVar
+			atomically $ writeTChan chan channels
+			transport <- atomically $ readTVar transportVar
+			if M.size (transportConnectionMap transport) >= limit
+				then return ()
+				else acceptLoop limit transportVar chan
+
+		connectionPhase' chan limit clients = do
+			channels <- atomically $ readTChan chan
+			name <- getClientName (channelInbox channels)
 			let clients' = (ClientData{clientTransportInterface=channels}):clients
 			if length clients' >= limit
-				then return (clients', transport')
-				else connectionPhase' limit transport' clients'
+				then return clients'
+				else connectionPhase' chan limit clients'
+
+		getClientName chan = do
+			msg <- atomically $ readTChan chan
+			case msg of
+				ControlMessage (ControlSetName name) -> return name
+				_ -> getClientName chan
 
 -- | Run the server with given update functions.
 play :: forall world . (Show world, world ~ Game) 

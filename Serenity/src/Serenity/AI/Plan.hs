@@ -122,6 +122,7 @@ finishedAction = proc (game, entity, action) -> case action of
 
 finishedOrder :: Game -> Ship -> Order -> Bool
 finishedOrder _ _ OrderNone{} = False
+
 finishedOrder _ ship (OrderMove{orderLocation=dest, orderDirection=mDir}) = ((ship^.shipLocation) =~= dest) && x 
 	where
 	x = case mDir of

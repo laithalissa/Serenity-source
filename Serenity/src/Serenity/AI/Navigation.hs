@@ -99,9 +99,21 @@ instance Ord SectorEdge where
 
 graphNode' :: SectorGraph -> NodeID -> SectorNode
 graphNode' graph nodeID = 
-	let	results = Set.filter (\n -> n^.sectorNodeID == nodeID) (graph^.nodes)
+	let	results = Set.filter (\n -> (sectorNodeID n) == nodeID) (nodes graph)
 	in	(Set.toList results) !! 0
 
+
+addNode :: Sector -> SectorGraph -> SectorNode -> Location -> SectorGraph
+addNode sector graph node location =
+	let	newNodeID = NodeID $ (nextNodeID graph) + 1
+		newNodeNeighbours = Set.fromList [sectorNodeID node]
+		newNode = SectorNode newNodeID location newNodeNeighbours
+		newEdgeCost = calculateEdgeCost sector (sectorNodeLocation node) location False
+		newEdge = SectorEdge (sectorNodeID node) newNodeID newEdgeCost False
+		newGraphNextNodeID = (nextNodeID graph) + 1
+		newGraphNodes = Set.insert newNode (nodes graph)
+		newGraphEdges = Set.insert newEdge (edges graph)
+	in	graph{nextNodeID=newGraphNextNodeID, nodes=newGraphNodes, edges=newGraphEdges}
 
 -- | warning: the original edge is not removed, 2 edges are added
 splitEdge :: Sector -> SectorGraph -> SectorEdge -> Location -> SectorGraph
@@ -126,7 +138,7 @@ splitEdge sector graph edge location =
 						 isSpaceLane
 		newEdge2 = SectorEdge (sectorNodeID newNode) (sectorNodeID neighbour2) newEdge2Cost isSpaceLane	
 		-- graph --
-		newNextNodeID = newNodeID+1
+		newNextNodeID = (nextNodeID graph) + 1
 		newNodes = Set.insert newNode (nodes graph)
 		newEdges = Set.insert newEdge2 $ Set.insert newEdge1 (edges graph)
 	in	graph{nextNodeID=newNextNodeID, nodes=newNodes, edges=newEdges}
@@ -161,9 +173,10 @@ mapA f = proc things -> do
 
 makeNode :: Sector -> Planet -> SectorNode
 makeNode sector planet = 
-	let 	nodeID = NodePlanetID (planet^.planetID)
+	let 	pID = (planet^.planetID)
+		nodeID = NodePlanetID (planet^.planetID)
 		nodeLocation = planet^.planetLocation
-		planetEdgeIDs  = map (NodePlanetID $ f nodeID) (sector^.sectorSpaceLanes)
+		planetEdgeIDs  = map (NodePlanetID . f pID) (sector^.sectorSpaceLanes)
 	  	nodeNeighbours = Set.fromList planetEdgeIDs
 	in 	SectorNode nodeID nodeLocation nodeNeighbours
 

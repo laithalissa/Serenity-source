@@ -9,6 +9,7 @@ import Serenity.Model.Sector
 import Serenity.Model.Wire
 
 import Data.Graph.AStar(aStar)
+import Data.Maybe(fromJust)
 import Data.Set(Set)
 import qualified Data.Set as Set
 
@@ -89,12 +90,70 @@ data SectorEdge = SectorEdge
 	}
 
 instance Eq SectorEdge where
-	e1 == e2 = (((sectorEdgeNode1ID e1) == (sectorEdgeNode1ID e2)) && ((sectorEdgeNode2ID e1) == (sectorEdgeNode2ID e2))) ||
-		   (((sectorEdgeNode1ID e1) == (sectorEdgeNode2ID e2)) && ((sectorEdgeNode2ID e1) == (sectorEdgeNode1ID e2)))
+	(SectorEdge id1 id2 _ _) == (SectorEdge id3 id4 _ _) = setPairEqual (id1, id2) (id3, id4)
 
 instance Ord SectorEdge where
 	compare SectorEdge{sectorEdgeNode1ID=e1n1,sectorEdgeNode2ID=e1n2} 
 		SectorEdge{sectorEdgeNode1ID=e2n1,sectorEdgeNode2ID=e2n2} = compare (e1n1, e1n2) (e2n1, e2n2)
+
+
+-- planRoute 
+-- 	:: Sector 
+-- 	-> Entity Ship 
+-- 	-> Double 
+-- 	-> Position 
+-- 	-> Plan
+-- planRoute sector entity startTime end =
+-- 	let	entityLocation = entity^.entityData.shipLocation
+-- 		endLocation = fst end
+-- 		path = route sector entityLocation endLocation
+
+-- 	where
+-- 		estimateTime :: Location -> Location -> Bool -> Double
+-- 		estimateTime start end isSpaceLane = 
+-- 			let	multiplier = if isSpaceLane then (
+			
+	
+
+route :: Sector -> Location -> Location -> [(Location, Bool)]
+route sector start end =
+	let	graph = makeSectorGraph sector
+		startPlanet = nearestPlanet sector start
+		startPlanetNode = graphNode' graph (NodePlanetID (startPlanet^.planetID))
+		endPlanet = nearestPlanet sector end
+		endPlanetNode = graphNode' graph (NodePlanetID (endPlanet^.planetID))
+				
+		(graph', startNode) = addNode sector graph startPlanetNode start
+		(graph'', endNode) = addNode sector graph' endPlanetNode end
+
+		path = aStar' graph'' startNode endNode
+
+		-- helpers
+		nodeLoc index = sectorNodeLocation $ path !! index
+		isSpaceLane index = sectorEdgeIsSpaceLane $ graphEdge' graph'' (path !! index) (path !! (index+1))
+	in	[ (nodeLoc index, isSpaceLane index)  | index <- [0..((length path)-2)] ]
+
+		
+
+aStar' :: SectorGraph -> SectorNode -> SectorNode -> [SectorNode]
+aStar' graph start end =
+	let	-- | aStar argument 1
+		neighbour :: SectorNode -> Set SectorNode
+		neighbour node = Set.map (graphNode' graph) (sectorNodeNeighbours node)
+
+		weight :: SectorNode -> SectorNode -> Double
+		weight node1 node2 = sectorEdgeCost $ graphEdge' graph node1 node2
+
+		heuristic :: SectorNode -> Double
+		heuristic node = distance (sectorNodeLocation end) (sectorNodeLocation node)
+
+		isGoal :: SectorNode -> Bool
+		isGoal node = node == end
+
+	in	fromJust $ aStar neighbour weight heuristic isGoal start
+		
+		
+		
 
 
 graphNode' :: SectorGraph -> NodeID -> SectorNode
@@ -102,8 +161,18 @@ graphNode' graph nodeID =
 	let	results = Set.filter (\n -> (sectorNodeID n) == nodeID) (nodes graph)
 	in	(Set.toList results) !! 0
 
+graphEdge' :: SectorGraph -> SectorNode -> SectorNode -> SectorEdge
+graphEdge' graph node1 node2 = 
+	let	n1ID = sectorNodeID node1
+		n2ID = sectorNodeID node2
+		f e1@(SectorEdge id1 id2 _ _) e2@(SectorEdge id3 id4 _ _)  = 
+			if setPairEqual (n1ID, n2ID) (id1, id2)
+			then e1
+			else e2
+	in	foldl1 f (Set.toList $ edges graph)
 
-addNode :: Sector -> SectorGraph -> SectorNode -> Location -> SectorGraph
+
+addNode :: Sector -> SectorGraph -> SectorNode -> Location -> (SectorGraph, SectorNode)
 addNode sector graph node location =
 	let	newNodeID = NodeID $ (nextNodeID graph) + 1
 		newNodeNeighbours = Set.fromList [sectorNodeID node]
@@ -113,7 +182,7 @@ addNode sector graph node location =
 		newGraphNextNodeID = (nextNodeID graph) + 1
 		newGraphNodes = Set.insert newNode (nodes graph)
 		newGraphEdges = Set.insert newEdge (edges graph)
-	in	graph{nextNodeID=newGraphNextNodeID, nodes=newGraphNodes, edges=newGraphEdges}
+	in	(graph{nextNodeID=newGraphNextNodeID, nodes=newGraphNodes, edges=newGraphEdges}, newNode)
 
 -- | warning: the original edge is not removed, 2 edges are added
 splitEdge :: Sector -> SectorGraph -> SectorEdge -> Location -> SectorGraph
@@ -204,13 +273,13 @@ calculateEdgeCost sector start end isSpaceLane =
 
 
 -- | takes a sector and a location and returns the nearest planet and its distance
-nearestPlanet :: BaseWire (Sector, Location) (PlanetID, Double) 
-nearestPlanet = proc (sector, location) -> do
-	planets <- arr sectorPlanets' -< sector
-	let f = min' $ planetDistance location
-	closestPlanet <- arr $ uncurry foldl1 -< (f, planets)
-	id -< (closestPlanet^.planetID, planetDistance location closestPlanet)
-	
+
+nearestPlanet :: Sector -> Location -> Planet
+nearestPlanet sector location = 
+	let	planets = sectorPlanets' sector
+		f = min' $ planetDistance location
+	in	foldl1 f planets
+
 min' :: (a -> Double) -> a -> a -> a
 min' f a1 a2 = if (f a1) <= (f a2) then a1 else a2
 
@@ -219,3 +288,7 @@ planetDistance location planet = distance location (planet^.planetLocation)
 
 distance :: Location -> Location -> Double
 distance (x1, y1) (x2, y2) = sqrt ( (x1 - x2)^2 + (y1 - y2)^2 )
+
+
+setPairEqual :: (Eq a) => (a, a) -> (a, a) -> Bool
+setPairEqual (x1, y1) (x2, y2) = ((x1==x2)&&(y1==y2)) || ((x1==y2)&&(y1==x2))

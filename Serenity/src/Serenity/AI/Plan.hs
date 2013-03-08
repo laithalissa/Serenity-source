@@ -63,9 +63,7 @@ makeDirection entity goalLoc = let
 makeWaypoints :: BaseWire (Sector, Position, Position, Speed) [ShipAction]
 makeWaypoints = proc (sector, start@(startPos, startDir), finish@(finishPos, finishDir), speed) -> do
 	now <- time -< ()
-	(planetID, distance) <- nearestPlanet -< (sector, startPos)
-	planetLocation <- arr' planetLocation' -< (sector, planetID)
-	id -< [ActionMove now start (planetLocation, finishDir) False]
+	id -< [ActionMove now start finish False]
 		-- let shipSpeed = (shipClass' entity game)^.shipClassSpeed
 		-- let shipStartLocation = entity^.entityData.shipLocation
 		-- let shipStartDirection = entity^.entityData.shipDirection

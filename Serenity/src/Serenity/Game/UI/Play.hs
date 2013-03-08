@@ -9,6 +9,7 @@ import Serenity.Game.Client.ClientState
 import Serenity.External
 import Serenity.Game.Client.GUI
 import Serenity.Game.Client.Main
+import Serenity.Game.Client.Color
 
 import Graphics.Gloss.Data.Extent
 import Control.Lens
@@ -41,7 +42,10 @@ viewPlay a = case (a^.aClientState) of
 sidebarView :: PlayState a => a -> ClientState -> View a
 sidebarView a clientState = (initBox ((0,0),(200,750))) <++
 	[	minimap a (aClientState.(to fromJust).clientGame) (a^.aClientState.(to fromJust).clientOwnerID) & (viewOrigin .~ (0,550))
+	,	(initView ((0,460),(200,80))) & (viewBackground .~ (Just $ sidebarDarkColor))
 	]
+	where
+		sidebarDarkColor = changeAlpha (dark $ dark $ dark $ dark $ dark green) 0.5
 
 mainView :: PlayState a => a -> ClientState -> View a
 mainView a clientState = (initView ((0,0),(1024, 750)))
@@ -69,9 +73,10 @@ boxToExtent ((x1,y1),(x2,y2)) = makeExtent maxY minY maxX minX where
 handleMainEvent :: PlayState a => UIEvent -> a -> a
 handleMainEvent event = case event of
 	UIEventMouseDownInside LeftButton point mods -> startSelect point
-	UIEventMouseUpInside   LeftButton point mods -> endSelect point
-	UIEventMouseUpOutside  LeftButton point mods -> endSelect point
-	UIEventMotion                     point      -> continueSelect point
+	UIEventMouseUpInside   LeftButton point (Modifiers Up Up Up) -> endSelect False point
+	UIEventMouseUpInside   LeftButton point (Modifiers Down Up Up) -> endSelect True point
+	UIEventMouseUpOutside  LeftButton point mods -> endSelect False point
+	UIEventMotion point -> continueSelect point
 	UIEventKeyPress _ _ _ -> aClientState %~ handleGameEvent event
 	_ -> id
 
@@ -88,14 +93,19 @@ startSelect point =  aPlay.playSelectBox.~ Just (point, point)
 continueSelect :: PlayState a => (Float, Float) -> a -> a
 continueSelect point = aPlay.playSelectBox.traverse._2 .~ point
 
-endSelect :: PlayState a => (Float, Float) -> a -> a
-endSelect point = execState $ do
+endSelect :: PlayState a => Bool -> (Float, Float) -> a -> a
+endSelect deselect point = execState $ do
 	overMaybe (aPlay.playSelectBox) (aClientState.traverse) (select.boxToExtent)
 	aPlay.playSelectBox .= Nothing where
 		select extent = execState $ do
 			clientState <- get
-			ids <- return $ selectShips extent clientState
-			clientUIState.uiStateSelected .= ids
+			(friendly, enemy, planets, wasDrag) <- return $ lassoShips extent clientState
+			newSelection <- return $ shipSelection friendly enemy planets
+			when ((not $ selectionIsEmpty newSelection) || deselect) $ clientUIState.uiStateSelected .= newSelection
+
+shipSelection [] [] (p:_) = SelectionPlanet p
+shipSelection [] e  _     = SelectionEnemyShips e
+shipSelection f  _  _     = SelectionOwnShips f
 
 cancelSelect :: PlayState a => a -> a
 cancelSelect = aPlay.playSelectBox .~ Nothing

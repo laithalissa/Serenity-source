@@ -21,8 +21,16 @@ import qualified Data.Map as Map
 import Data.Maybe (catMaybes, fromJust)
 import GHC.Float
 
-isSelected :: UIState ClientState -> Getter (Entity Ship) Bool
-isSelected uiState = to (\entity -> elem (entity^.entityID) (uiState^.uiStateSelected))
+isSelectedShip :: UIState ClientState -> (Entity Ship) -> (Bool, Bool)
+isSelectedShip uiState entity = case uiState^.uiStateSelected of
+	SelectionOwnShips ids -> (elem (entity^.entityID) ids, True)
+	SelectionEnemyShips ids -> (elem (entity^.entityID) ids, False)
+	_ -> (False, False)
+
+isSelectedPlanet :: UIState ClientState -> Int -> Bool
+isSelectedPlanet uiState planetID = case uiState^.uiStateSelected of
+	SelectionPlanet p -> p == planetID
+	_ -> False
 
 handleMessage :: GUICommand -> UIState ClientState -> UIState ClientState
 --handleMessage (ClientScroll (dx, dy)) uiState@UIState{ viewport=((x, y), z) } = uiState { viewport = ((x+dx, y+dy), z) }
@@ -46,20 +54,24 @@ render game uiState assets = Pictures
 
 		(ww, wh)           = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
 		((vpx, vpy), vpz)  = uiState^.uiStateViewport
-		(gw, gh)           =  game^.gameBuilder^.gbSector.sectorSize
+		(gw, gh)           = game^.gameBuilder^.gbSector.sectorSize
 		normScale          = ((min ww wh) / (max gw gh))
 		s                  = vpz * normScale
 
 		renderInWorld game = pictures
 			[	pictures $ map pictureSpaceLane $ game^.gameBuilder^.gbSector.sectorSpaceLanes
-			,	pictures $ map picturePlanet $ Map.elems $ game^.gameBuilder^.gbSector.sectorPlanets
+			,	pictures $ map picturePlanet $ Map.toList $ game^.gameBuilder^.gbSector.sectorPlanets
 			,	pictures $ map (pictureEntity (game^.gameTime)) $ Map.elems $ game^.gameShips
 			]
 
-		picturePlanet planet = translate x y $ Pictures [p, name] where
+		picturePlanet (planetID, planet) = translate x y $ Pictures $ [p, name] ++ selectBox where
+			planetSelected = isSelectedPlanet uiState planetID
+			selectBox = if planetSelected then [planetSelectionArc 8.5 (double2Float (game^.gameTime))] else []
 			(x,y) = pDouble2Float $ planet^.planetLocation
 			p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets
-			name = color (greyN 0.7) $ translate (5.5) (-6.5) $ scale 0.011 0.011 $ Text (planet^.planetName)
+			name = if planetSelected
+				then color (greyN 0.7) $ translate (7) (-8) $ scale 0.016 0.016 $ Text (planet^.planetName)
+				else color (greyN 0.7) $ translate (5.5) (-6.5) $ scale 0.011 0.011 $ Text (planet^.planetName)
 
 		pictureSpaceLane (p1, p2) = 
 			color (dark green) 
@@ -75,10 +87,10 @@ render game uiState assets = Pictures
 					(pDouble2Float $ entity^.entityData.shipLocation)]]
 				Nothing -> []
 
-			shipIsSelected = entity^.(isSelected uiState)
+			(shipIsSelected, shipSelectedFriendly) = isSelectedShip uiState entity
 			selection      = 
 				if shipIsSelected 
-				then [drawSelectionArc 6 (double2Float time)] 
+				then [ (if shipSelectedFriendly then drawSelectionArcGreen else drawSelectionArcRed) 6 (double2Float time)] 
 				else []
 			
 			shipAndHealth time = map (translate x y) $
@@ -142,8 +154,8 @@ render game uiState assets = Pictures
 			-- Colour for the shields
 			shieldBlue           = makeColor8 40 100 255 180
 
-drawSelectionArc :: Float -> Float -> Picture
-drawSelectionArc radius time = color (selectionColour time) $ rotate (time * 10) $ circle where
+drawSelectionArcGreen :: Float -> Float -> Picture
+drawSelectionArcGreen radius time = color (selectionColour time) $ rotate (time * 10) $ circle where
 		circle = Pictures $ map (\x -> (ThickArc x (x + arcLength) radius) arcThickness) 
 			[0, arcLength*2..(360 - arcLength*2)]
 		selectionColour time    = (makeColor8 red (pulsingColour greenBase time) blue alpha)
@@ -155,6 +167,34 @@ drawSelectionArc radius time = color (selectionColour time) $ rotate (time * 10)
 		red          = 100
 		blue         = 100
 		alpha        = 180
+
+drawSelectionArcRed :: Float -> Float -> Picture
+drawSelectionArcRed radius time = color (selectionColour time) $ rotate (time * 10) $ circle where
+		circle = Pictures $ map (\x -> (ThickArc x (x + arcLength) radius) arcThickness) 
+			[0, arcLength*2..(360 - arcLength*2)]
+		selectionColour time    = (makeColor8 (pulsingColour redBase time) green blue alpha)
+		pulsingColour base time = (base + (round (oscLimit * (sin $ 2 * time))))
+		arcThickness = 0.8
+		arcLength    = 10
+		redBase      = (255 - (round oscLimit)) -- Minimum amount of green so the pulsing doesn't exceed max (255)
+		oscLimit     = 15
+		green        = 30
+		blue         = 30
+		alpha        = 220
+
+planetSelectionArc :: Float -> Float -> Picture
+planetSelectionArc radius time = color (selectionColour time) $ rotate (time * 10) $ circle where
+		circle = Pictures $ map (\x -> (ThickArc x (x + arcLength) radius) arcThickness) 
+			[0, arcLength*2..(360 - arcLength*2)]
+		selectionColour time    = (makeColor8 (pulsingColour redBase time) green blue alpha)
+		pulsingColour base time = (base + (round (oscLimit * (sin $ 2 * time))))
+		arcThickness = 0.8
+		arcLength    = 10
+		redBase      = (255 - (round oscLimit)) -- Minimum amount of green so the pulsing doesn't exceed max (255)
+		oscLimit     = 15
+		green        = 255
+		blue         = 255
+		alpha        = 220
 
 healthColor :: Float -> Color 
 healthColor health 

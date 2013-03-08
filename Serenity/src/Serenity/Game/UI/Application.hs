@@ -42,7 +42,7 @@ initMenuTextBoxLabel :: String -> Simple Lens a String -> TextBoxLabel a
 initMenuTextBoxLabel string lens = initTextBoxLabel string lens buttonColor (Just buttonBackground) buttonPressedBackground 1.6
 
 nameValidation :: String -> String
-nameValidation = filter (flip elem $ ['a'..'z']++['A'..'Z']++"_")
+nameValidation = filter (flip elem $ ['a'..'z']++['A'..'Z']++['0'..'9']++"_")
 
 portValidation :: String -> String
 portValidation = filter isDigit

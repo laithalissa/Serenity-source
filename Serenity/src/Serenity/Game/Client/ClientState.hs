@@ -15,6 +15,7 @@ import Control.Concurrent.STM
 import Control.Monad.State
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.List
 
 -- | The size of the Gloss window
 windowSize :: (Int, Int)
@@ -81,8 +82,14 @@ data GameStatus = Playing | Complete deriving (Show, Eq)
 
 data UIState a = UIState
 	{	_uiStateViewport :: ViewPort
-	,	_uiStateSelected :: [Int]
+	,	_uiStateSelected :: Selection
 	}
+
+data Selection = SelectionOwnShips [Int] | SelectionEnemyShips [Int] | SelectionPlanet Int
+
+selectionIsEmpty (SelectionOwnShips []) = True
+selectionIsEmpty (SelectionEnemyShips []) = True
+selectionIsEmpty _ = False
 
 makeLenses ''UIState
 makeLenses ''ClientState
@@ -105,36 +112,32 @@ initClientState assets gameBuilder ownerID channels = ClientState
 initUIState :: Game -> UIState ClientState
 initUIState game = UIState
 	{	_uiStateViewport = ((width/2, height/2), zoom)
-	,	_uiStateSelected = []
+	,	_uiStateSelected = SelectionOwnShips []
 	}
 	where
 		(width, height) = game^.gameBuilder^.gbSector.sectorSize
 		zoom = 1
 
-selectShips :: Extent -> ClientState -> [Int]
-selectShips extent = evalState $ do
-	viewPort   <- use (clientUIState.uiStateViewport)
-	mapSize    <- use (clientGame.gameBuilder.gbSector.sectorSize)
-	ships      <- use (clientGame.gameShips)
-	ownerID    <- use clientOwnerID
-	ext        <- return $ mapExtentFromView extent viewPort mapSize
-	underMouse <- return $ Map.filter (inBox (expand ext)) ships
-	selected   <- return $ filterShips wasDrag ownerID (Map.toList underMouse)
-	return $ map fst selected
+lassoShips :: Extent -> ClientState -> ([Int],[Int],[Int],Bool)
+lassoShips extent = evalState $ do
+	viewPort    <- use (clientUIState.uiStateViewport)
+	mapSize     <- use (clientGame.gameBuilder.gbSector.sectorSize)
+	ships       <- use (clientGame.gameShips)
+	oID         <- use clientOwnerID
+	ext         <- return $ mapExtentFromView extent viewPort mapSize
+	sUnderMouse <- return $ Map.filter (inBoxShip (expand ext)) ships
+	(friendly, enemy) <- return $ partition (\(_,ship) -> ship^.ownerID == oID) (Map.toList sUnderMouse)
+	planets     <- use (clientGame.gameBuilder.gbSector.sectorPlanets)
+	pUnderMouse <- return $ Map.filter (inBoxPlanet (expand ext)) planets
+	return $ (map fst friendly, map fst enemy, Map.keys pUnderMouse, wasDrag)
 	where
 		wasDrag = extentArea extent > 100
 		expand extent  = if wasDrag then extent else expand' extent
 		expand' extent = makeExtent (yMax+5) (yMin-5) (xMax+5) (xMin-5) where (yMax, yMin, xMax, xMin) = takeExtent extent
 
-inBox :: Extent -> Entity Ship -> Bool
-inBox extent ship = pointInExtent extent (pDouble2Float $ ship^.entityData.shipLocation)
+inBoxShip :: Extent -> Entity Ship -> Bool
+inBoxShip extent ship = pointInExtent extent (pDouble2Float $ ship^.entityData.shipLocation)
 
-extentArea extent = (yMax - yMin) * (xMax - xMin) where
-	(yMax, yMin, xMax, xMin) = takeExtent extent
+inBoxPlanet :: Extent -> Planet -> Bool
+inBoxPlanet extent planet = pointInExtent extent (pDouble2Float $ planet^.planetLocation)
 
-filterShips :: Bool -> Int -> [(Int, Entity Ship)] -> [(Int, Entity Ship)]
-filterShips _ _ [] = []
-filterShips False _ (s:ss) = [s]
-filterShips True oID ships = if friendly == [] then ships else friendly where
-	friendly = filter selectShip ships
-	selectShip (eID, entShip) = entShip^.ownerID == oID

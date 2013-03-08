@@ -25,3 +25,6 @@ overMaybe getter setter f = do
 	case x of
 		Just x' -> setter %= f x'
 		Nothing -> return ()
+
+extentArea extent = (yMax - yMin) * (xMax - xMin) where
+	(yMax, yMin, xMax, xMin) = takeExtent extent

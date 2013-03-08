@@ -86,7 +86,7 @@ sectorOne = Sector
 		,	(3, Planet {_planetID = 3, _planetName = "Qoruscant", _planetEcotype = Metal , _planetLocation  = (190, 190), _planetResources = res 10 0 10})
 		]
 	,	_sectorSpaceLanes  = [(1,2), (2,3)]
-	,	_sectorSpaceLaneSpeedMultiplier = 2.0
+	,	_sectorSpaceLaneSpeedMultiplier = 5.0
 	}
 
 
@@ -95,3 +95,6 @@ planetLocation' sector planetID = (fromJust $ Map.lookup planetID (sector^.secto
 
 sectorPlanets' :: Sector -> [Planet]
 sectorPlanets' sector = map snd $ Map.toList $ sector^.sectorPlanets
+
+sectorPlanet' :: Sector -> PlanetID -> Planet
+sectorPlanet' sector pID = foldl1 (\p1 p2 -> if p1^.planetID == pID then p1 else p2) (sectorPlanets' sector)

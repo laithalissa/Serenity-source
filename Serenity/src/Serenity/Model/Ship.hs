@@ -94,7 +94,7 @@ data ShipAction =
 	,	actionFinishPosition  	:: Position
 	,	actionUsingSpaceLane	:: Bool
 	}
-	| ActionAttack {targetID :: Int}
+	| ActionAttack {actionTargetID :: Int}
 	| ActionCapture Int
 	| ActionMoveToEntity Int ShipAction
 	deriving (Show, Eq)

@@ -107,6 +107,12 @@ demoGame gameBuilder = game' game
 
 ---------- Lens Helpers ----------
 
+shipSpeed' :: Game -> Entity Ship -> Double
+shipSpeed' game entity = (sectorSpeedLaneSpeed' game) * ((shipClass' entity game)^.shipClassSpeed)
+
+sectorSpeedLaneSpeed' :: Game -> Double
+sectorSpeedLaneSpeed' game = game^.gameBuilder.gbSector.sectorSpaceLaneSpeedMultiplier
+
 gameMap' :: Simple Lens Game Sector
 gameMap' = gameBuilder.gbSector
 

@@ -17,6 +17,12 @@ import Serenity.Model.Message
 import Serenity.Model.Entity
 import Serenity.Model.Sector
 import Data.Binary (Binary(..), encode, decode)
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Control.Monad (liftM)
+
+instance (Arbitrary k, Arbitrary v, Ord k) => Arbitrary (Map k v) where
+	arbitrary = Map.fromList `liftM` arbitrary
 
 derive makeArbitrary ''Command
 derive makeArbitrary ''Damage
@@ -31,7 +37,7 @@ derive makeArbitrary ''ShipConfiguration
 derive makeArbitrary ''ShipClass
 derive makeArbitrary ''WeaponSlot
 derive makeArbitrary ''SystemSlot
-derive makeArbitrary ''WeaponType
+derive makeArbitrary ''SlotType
 derive makeArbitrary ''System
 derive makeArbitrary ''Update
 derive makeArbitrary ''Weapon

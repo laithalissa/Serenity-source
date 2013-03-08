@@ -7,19 +7,14 @@ import Serenity.Game.UI.Application
 import Serenity.Game.UI.Minimap
 import Serenity.Game.Client.ClientState
 import Serenity.External
-import Serenity.Model
-import Serenity.Maths.Util
 import Serenity.Game.Client.GUI
 import Serenity.Game.Client.Main
-import Serenity.Network.Transport
 
 import Graphics.Gloss.Data.Extent
 import Control.Lens
 import Control.Monad.State
 import Data.Monoid
 import Data.Maybe
-
-import Debug.Trace
 
 data PlayData a = PlayData 
 	{	_playSelectBox :: Maybe ((Float, Float), (Float, Float))
@@ -95,8 +90,12 @@ continueSelect point = aPlay.playSelectBox.traverse._2 .~ point
 
 endSelect :: PlayState a => (Float, Float) -> a -> a
 endSelect point = execState $ do
-	overMaybe (aPlay.playSelectBox) (aClientState.traverse) (selectShips.boxToExtent)
-	aPlay.playSelectBox .= Nothing
+	overMaybe (aPlay.playSelectBox) (aClientState.traverse) (select.boxToExtent)
+	aPlay.playSelectBox .= Nothing where
+		select extent = execState $ do
+			clientState <- get
+			ids <- return $ selectShips extent clientState
+			clientUIState.uiStateSelected .= ids
 
 cancelSelect :: PlayState a => a -> a
 cancelSelect = aPlay.playSelectBox .~ Nothing

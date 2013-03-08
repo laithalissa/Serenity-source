@@ -90,7 +90,7 @@ instance ViewController ApplicationController where
 gui = do
 	assets    <- initAssets
 	userEntry <- getRealUserID >>= getUserEntryForID
-	username  <- return $ userName userEntry
+	username  <- return $ nameValidation $ userName userEntry
 	playIOZero
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black

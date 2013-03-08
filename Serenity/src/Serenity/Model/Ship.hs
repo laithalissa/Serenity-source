@@ -89,8 +89,7 @@ data Goal =
 
 data ShipAction = 
 	ActionMove 
-	{	actionStartTime 	:: Double
-	,	actionStartPosition 	:: Position
+	{	actionStartPosition 	:: Position
 	,	actionFinishPosition  	:: Position
 	,	actionUsingSpaceLane	:: Bool
 	}

@@ -107,11 +107,16 @@ demoGame gameBuilder = game' game
 
 ---------- Lens Helpers ----------
 
-shipSpeed' :: Game -> Entity Ship -> Double
-shipSpeed' game entity = (sectorSpeedLaneSpeed' game) * ((shipClass' entity game)^.shipClassSpeed)
+shipSpeed' :: Game -> Entity Ship -> Bool -> Double
+shipSpeed' game entity isUsingSpaceLane = 
+	let	multiplier = if isUsingSpaceLane then sectorSpaceLaneSpeed' game else 1.0
+		shipSpeed = (shipClass' entity game)^.shipClassSpeed
+	in	speed = multiplier * shipSpeed
 
-sectorSpeedLaneSpeed' :: Game -> Double
-sectorSpeedLaneSpeed' game = game^.gameBuilder.gbSector.sectorSpaceLaneSpeedMultiplier
+(sectorSpaceLaneSpeed' game) * 
+
+sectorSpaceLaneSpeed' :: Game -> Double
+sectorSpaceLaneSpeed' game = game^.gameBuilder.gbSector.sectorSpaceLaneSpeedMultiplier
 
 gameMap' :: Simple Lens Game Sector
 gameMap' = gameBuilder.gbSector

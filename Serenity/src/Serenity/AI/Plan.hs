@@ -101,20 +101,22 @@ evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 				else actt -< (entity, action, game)
 
 --moveTimeRemaining :: BaseWire (Game, Entity Ship, Position, Double) Double
-finishedAction :: BaseWire (Game, Entity Ship, ShipAction) Bool
-finishedAction = proc (game, entity, action) -> case action of
-	-- ActionMofve{actionFinishPosition=(location,direction)} -> do
-		
-	-- 	id -< ((ship^.shipLocation) =~= location)
-	ActionMove{actionFinishPosition=finish, actionStartTime=time} -> do
-		remainingTime <- moveTimeRemaining -< (game, entity, finish, time)
-		id -< (remainingTime < 0.5)
-	ActionAttack{actionTargetID=target} -> id -< True
-	ActionCapture{} -> id -< True	
-	(ActionMoveToEntity target _) -> do
-		hasTarget <- id -< (not (game^.gameShips.contains target))
-		atTarget <- id -< ((entity^.entityData.shipLocation) =~= (game^.gameShips.(at target).(to fromJust).entityData.shipLocation))
-		id -< hasTarget || atTarget
+
+finishedAction 
+	:: Game 
+	-> Entity Ship
+	-> ShipAction
+	-> Bool
+
+finishedAction game entity ActionMove{actionFinishPosition=(end,_)} =
+	let	current = entity^.entityData.shipLocation
+	in	current =~= end
+finishedAction game entity ActionAttack{} = True
+finishedAction game entity ActionCapture{} = True
+finishedAction game entity (ActionMoveToEntity target _) =
+	let	hasTarget = (not (game^.gameShips.contains target))
+		atTarget = ((entity^.entityData.shipLocation) =~= (game^.gameShips.(at target).(to fromJust).entityData.shipLocation))
+	in	hasTarget || atTarget
 
 
 
@@ -132,7 +134,7 @@ finishedOrder _ ship (OrderGuardPlanet a)   = True
 finishedOrder _ ship (OrderGuardLocation a) = True
 finishedOrder _ ship (OrderCapture a)       = True
 
-(=~=) :: (Double, Double) -> (Double, Double) -> Bool
+(=~=) :: Location -> Location -> Bool
 x =~= y = magnitude (x-y) < 5
 
 actt :: UpdateWire (Entity Ship, ShipAction, Game)
@@ -153,34 +155,100 @@ actt = proc (entity, action, game) -> do
 
 radiusOfCurvature = 15
 
-moveTimeRemaining :: BaseWire (Game, Entity Ship, Position, Double) Double
-moveTimeRemaining = proc (game, entity, end, startTime)  -> do
-	speed <- arr' shipSpeed' -< (game, entity)
-	start <- arr (\e-> (e^.entityData.shipLocation, e^.entityData.shipDirection)) -< entity
-	timeNow <- time -< ()
-	let (curve, curveLength) = makePath radiusOfCurvature start end
-	timeConsumed <- id -< (timeNow - startTime)
-	totalTime <- id -< (curveLength / speed)
-	timeRemaining <- id -< (totalTime - timeConsumed)
-	id -< timeRemaining
+-- moveTimeRemaining :: BaseWire (Game, Entity Ship, Position, Double) Double
+-- moveTimeRemaining = proc (game, entity, end, startTime)  -> do
+-- 	speed <- arr' shipSpeed' -< (game, entity)
+-- 	start <- arr (\e-> (e^.entityData.shipLocation, e^.entityData.shipDirection)) -< entity
+-- 	timeNow <- time -< ()
+-- 	let (curve, curveLength) = makePath radiusOfCurvature start end
+-- 	timeConsumed <- id -< (timeNow - startTime)
+-- 	totalTime <- id -< (curveLength / speed)
+-- 	timeRemaining <- id -< (totalTime - timeConsumed)
+-- 	id -< timeRemaining
 
-move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)), Double)
-move = proc (entity, startTime, start, end, speed) -> do
-	timeNow <- time -< ()
-	let (curve, curveLength) = makePath radiusOfCurvature start end
-	let s = ((timeNow-startTime)/(curveLength)) * speed -- * speed
-	let position = curve s
-	let position' = differentiate (curve, s)
-	id -< return UpdateEntityLocationDirection
-		{	updateEntityID = entity^.entityID
-		,	updateEntityLocation = pDouble2Float position
-		,	updateEntityDirection = pDouble2Float position'
-		}
+
+moveTotalTime 
+	:: Position -- ^ start position
+	-> Position -- ^ end position
+	-> Double -- ^ ship speed
+	-> Double -- ^ time
+moveTotalTime start end speed =
+	let	(curve, curveLength) = makePath radiusOfCurvature start end
+	in	curveLength - speed
+
+
+move 
+	:: Double -- ^ start time
+	-> Game 
+	-> Entity Ship 
+	-> ShipAction
+	-> [Update]
+
+move startTime game entity (ActionMove start end isSpaceLane) =
+	let	timeNow = game^.gameTime
+		speed = shipSpeed' game entity isSpaceLane
+		(curve, curveLength) = makePath radiusOfCurvature start end
+		s = ((timeNow-startTime)/(curveLength)) * speed -- * speed
+		s' = if s > 1.0 then 1.0 else s
+		position = curve s'
+		position' = differentiate (curve, s')
+	in	[	UpdateEntityLocationDirection
+			{	updateEntityID = entity^.entityID
+			,	updateEntityLocation = pDouble2Float position
+			,	updateEntityDirection = pDouble2Float position'
+			}
+		]
+
+-- move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)), Double)
+-- move = proc (entity, startTime, start, end, speed) -> do
+-- 	timeNow <- time -< ()
+-- 	let (curve, curveLength) = makePath radiusOfCurvature start end
+-- 	let s = ((timeNow-startTime)/(curveLength)) * speed -- * speed
+-- 	let position = curve s
+-- 	let position' = differentiate (curve, s)
+-- 	id -< return UpdateEntityLocationDirection
+-- 		{	updateEntityID = entity^.entityID
+-- 		,	updateEntityLocation = pDouble2Float position
+-- 		,	updateEntityDirection = pDouble2Float position'
+-- 		}
 
 -- | UpdateWire to move a ship towards another, possibly moving, entity.
 --
 -- If the currently planned end location is too far away from the current
 -- position of the target then the move is re-planned.
+
+finishedAction 
+	:: Game 
+	-> Entity Ship
+	-> ShipAction
+	-> Bool
+
+
+move 
+	:: Double -- ^ start time
+	-> Game 
+	-> Entity Ship 
+	-> ShipAction 
+	-> [Update]
+
+
+moveToEntity 
+	:: Double
+	-> Entity Ship
+	-> Entity Ship
+	-> ShipAction
+	-> Game
+	-> [Update]
+moveToEntity startTime entity target action game = 
+	let	
+
+		isCloseToTarget = magnitude ((fst $ actionFinishPosition action) - (target^.entityData.shipLocation)) > 50
+		isActionDone = finishedAction game entity action
+		isPlanOutdated = isCloseToTarget || isActionDone
+	in	if isPlanOutdated
+		then [UpdateShipPlan (entity^.entityID) []]
+		else move startTime game entity action
+
 moveToEntity :: UpdateWire (Entity Ship, Entity Ship, ShipAction, Game)
 moveToEntity = proc (entity, target, action, game) -> do
 	isCloseToTarget <- id -< magnitude ((fst $ actionFinishPosition action) - (target^.entityData.shipLocation)) > 50

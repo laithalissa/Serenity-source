@@ -16,7 +16,6 @@ data JoinData a = JoinData
 	,	_joinAddressBox   :: TextBoxLabel a
 	,	_joinPortBox      :: TextBox a
 	,	_joinNickNameBox  :: TextBoxLabel a
-	,	_joinNickName     :: String
 	,	_joinAddress      :: String
 	}
 makeLenses ''JoinData
@@ -24,6 +23,7 @@ makeLenses ''JoinData
 class AppState a => JoinState a where
 	aJoin :: Simple Lens a (JoinData a)
 	aPort :: Simple Lens a String
+	aName :: Simple Lens a String
 
 initJoinData :: JoinState a => Assets -> JoinData a
 initJoinData assets = JoinData
@@ -33,13 +33,12 @@ initJoinData assets = JoinData
 	,	_joinBackButton   = initMenuButton "<-      Back" (\_ -> Menu)
 	,	_joinAddressBox   = (initMenuTextBoxLabel "Server:" (aJoin.joinAddress))
 	,	_joinPortBox      = (initMenuTextBox aPort) & (tbPostEdit .~ portValidation)
-	,	_joinNickNameBox  = (initMenuTextBoxLabel "Name:" (aJoin.joinNickName)) & (tblPostEdit .~ nameValidation)
-	,	_joinNickName     = ""
+	,	_joinNickNameBox  = (initMenuTextBoxLabel "Name:" aName) & (tblPostEdit .~ nameValidation)
 	,	_joinAddress      = "localhost"
 	}
 
 playButtonEnabled :: JoinState a => a -> Bool
-playButtonEnabled a = all (/="") [a^.aJoin.joinNickName, a^.aJoin.joinAddress, a^.aPort]
+playButtonEnabled a = all (/="") [a^.aName, a^.aJoin.joinAddress, a^.aPort]
 
 viewJoin :: JoinState a => a -> View a
 viewJoin a = (initView ((0, 0), (1024, 750))) 
@@ -52,7 +51,7 @@ viewJoin a = (initView ((0, 0), (1024, 750)))
 		,	button a (aJoin.joinBackButton) aMode ((80, 50),(185,28))
 		]
 	,	(initBox ((20, 35), (650, 565))) <++ -- Main
-		[	textBoxLabel a (aJoin.joinNickNameBox) (aJoin.joinNickName) ((14,520),(620,28)) 80
+		[	textBoxLabel a (aJoin.joinNickNameBox) aName ((14,520),(620,28)) 80
 		,	textBoxLabel a (aJoin.joinAddressBox) (aJoin.joinAddress) ((14,470),(540,28)) 80
 		,	textBox a (aJoin.joinPortBox) aPort ((555,470),(80,28))
 		]

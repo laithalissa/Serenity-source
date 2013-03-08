@@ -21,7 +21,6 @@ data HostData a = HostData
 	,	_hostNumPlayersBox   :: TextBoxLabel a
 	,	_hostNumPlayers      :: String
 	,	_hostServerGame      :: ServerStatus ThreadId
-	,	_hostNickName        :: String
 	,	_hostNickNameBox     :: TextBoxLabel a
 	,	_hostPortBox         :: TextBoxLabel a
 	}
@@ -33,6 +32,7 @@ makeLenses ''HostData
 class AppState a => HostState a where
 	aHost :: Simple Lens a (HostData a)
 	aPort :: Simple Lens a String
+	aName :: Simple Lens a String
 
 initHostData :: HostState a => Assets -> HostData a
 initHostData assets    = HostData
@@ -48,8 +48,7 @@ initHostData assets    = HostData
 			& (tblEnabled .~ not.serverRunning)
 	,	_hostNumPlayers      = "1"
 	,	_hostServerGame      = Stopped
-	,	_hostNickName        = ""
-	,	_hostNickNameBox     = (initMenuTextBoxLabel "Name:" (aHost.hostNickName)) & (tblPostEdit .~ nameValidation)
+	,	_hostNickNameBox     = (initMenuTextBoxLabel "Name:" aName) & (tblPostEdit .~ nameValidation)
 	,	_hostPortBox         = 
 			(initMenuTextBoxLabel "Port:" aPort) 
 			& (tblPostEdit .~ portValidation) 
@@ -59,7 +58,7 @@ initHostData assets    = HostData
 startButtonEnabled aHost a = a^.aHost.hostNumPlayers `notElem` ["", "0"]
 
 playButtonEnabled :: HostState a => a -> Bool
-playButtonEnabled a = (serverRunning a) && ((a^.aHost.hostNickName) /= "")
+playButtonEnabled a = (serverRunning a) && ((a^.aName) /= "")
 
 startServer hostServer = case hostServer of
 	Stopped    -> Starting
@@ -84,7 +83,7 @@ viewHost a = (initView ((0, 0), (1024, 750)))
 		,	button a (aHost.hostBackButton) aMode ((80, 50),(185,28))
 		]
 	,	(initBox ((20, 545), (650, 56))) <++ -- Name Field
-		[	textBoxLabel a (aHost.hostNickNameBox) (aHost.hostNickName) ((14,14),(620,28)) 80
+		[	textBoxLabel a (aHost.hostNickNameBox) aName ((14,14),(620,28)) 80
 		]
 	,	(initBox ((20, 35), (650, 56))) <++ -- Server Buttons
 		[	if serverRunning a

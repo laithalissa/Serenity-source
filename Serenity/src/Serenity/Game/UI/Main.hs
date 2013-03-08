@@ -18,6 +18,7 @@ import Serenity.External
 import Control.Lens
 import Control.Monad.State
 import System.Exit
+import System.Posix.User
 
 data ApplicationController = ApplicationController
 	{	_appViewGlobals :: ViewGlobals ApplicationController
@@ -31,6 +32,7 @@ data ApplicationController = ApplicationController
 	,	_appPlayData    :: PlayData ApplicationController
 	,	_appClientState :: Maybe ClientState
 	,	_appPort        :: String
+	,	_appNickName    :: String
 	}
 
 makeLenses ''ApplicationController
@@ -47,6 +49,7 @@ initApplicationController assets = ApplicationController
 	,	_appPlayData    = initPlayData   assets
 	,	_appClientState = Nothing
 	,	_appPort        = "9900"
+	,	_appNickName    = ""
 	}
 
 appServerString   = appJoinData.joinAddress
@@ -54,8 +57,8 @@ appServerString   = appJoinData.joinAddress
 instance AppState    ApplicationController where {aMode=appMode; aAssets=appAssets}
 instance SplashState ApplicationController where {aSplash=appSplashData}
 instance MenuState   ApplicationController where {aMenu=appMenuData}
-instance HostState   ApplicationController where {aHost=appHostData; aPort=appPort}
-instance JoinState   ApplicationController where {aJoin=appJoinData; aPort=appPort}
+instance HostState   ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
+instance JoinState   ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
 instance LobbyState  ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort}
 instance PlayState   ApplicationController where {aPlay=appPlayData; aClientState=appClientState}
 
@@ -79,12 +82,14 @@ instance ViewController ApplicationController where
 		Quit   -> app -- Quit handled by handleMainTime below
 
 gui = do
-	assets  <- initAssets
+	assets    <- initAssets
+	userEntry <- getRealUserID >>= getUserEntryForID
+	username  <- return $ userName userEntry
 	playIOZero
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black
 		50
-		(initApplicationController assets)
+		((initApplicationController assets) & (appNickName .~ username))
 		(\a -> return $ draw a)
 		(\event -> \a -> return $ handleEvent event a & correctFocus)
 		handleMainTime

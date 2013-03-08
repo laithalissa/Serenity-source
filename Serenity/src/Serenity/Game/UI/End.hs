@@ -14,7 +14,7 @@ import Data.List (sortBy)
 import Data.Maybe (fromJust, isJust)
 
 data EndData a = EndData
-	{	_endWinnerLabel :: Label a
+	{	_endRankingsTable :: Table a
 	,	_endContinueButton :: Button a a
 	}
 makeLenses ''EndData
@@ -25,7 +25,7 @@ class AppState a => EndState a where
 
 initEndData :: EndState a => Assets -> EndData a
 initEndData assets = EndData
-	{	_endWinnerLabel = (initLabel (StaticString "Winner:") (bright green) Nothing) {_labelScale = 4}
+	{	_endRankingsTable = initTable 50 Nothing
 	,	_endContinueButton = initMenuButton "Continue" continueAction
 	}
 
@@ -39,11 +39,12 @@ viewEnd a = (initView ((0, 0), (1024, 750)))
 	{	_viewDepict = background (a^.aAssets)
 	}	<++
 	[	(initBox ((25, 625), (630, 75))) <++ -- Winner box
-		[	label a (aEnd.endWinnerLabel) ((10,10), (40,45))
-		]
-	,	(initBox ((25, 50), (630, 550))) <++ -- Rank table
 		if isJust $ a^.aClientState
-			then concatMap rankLabel $ zip [0..] $ sortBy rankCompare $ game^.gameRanks
+			then [labelStatic a (StaticString $ "Winner: " ++ (show (game^.gameRanks.to head._1))) (bright green) Nothing 4 ((10,10), (40,45))]
+			else []
+	,	(initBox ((25, 50), (630, 550))) <++ -- Rankings table
+		if isJust $ a^.aClientState
+			then [table a (aEnd.endRankingsTable) (to rankings) rankLabel ((25, 25), (580, 500))]
 			else []
 	,	(initBox ((680, 0), (345, 750))) <++ -- Sidebar
 		[	button a (aEnd.endContinueButton) id ((80,50),(185,28))
@@ -51,13 +52,11 @@ viewEnd a = (initView ((0, 0), (1024, 750)))
 	]
 	where
 		game = a^.aClientState.(to fromJust).clientGame
+		rankings _ = sortBy rankCompare (game^.gameRanks)
 		rankCompare (_, r) (_, r') = case game^.gameGameMode of
 			_ -> compare r r'
-		rankLabel (i, (player, rank)) =
-			[	label a ((to (\_ -> rank)).(to myLabel)) ((25, 525 - (25 + i * 50)), (25, 25))
-			,	label a ((to (\_ -> player)).(to myLabel)) ((50, 525 - (25 + i * 50)), (550, 25))
-			]
-		myLabel n = (initLabel (StaticString $ show n) (bright green) Nothing) {_labelScale = 2}
+		rankLabel (player, rank) = case game^.gameGameMode of
+			_ -> labelStatic a (StaticString $ (show rank) ++ ". " ++ (show player)) (bright green) Nothing 2 ((0,0), (580,25))
 
 timeEnd :: EndState a => Float -> a -> a
 timeEnd _ = id

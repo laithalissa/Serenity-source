@@ -77,11 +77,11 @@ handleStep delta clientState = do
 	-- Apply the updates to the game state
 	gameState' <- return $ gameTime +~ (float2Double delta) $ updates us (clientState^.clientGame)
 
-	if UpdateGameOver `elem` us
-		then print $ "Game over! " ++ (show $ gameState'^.gameRanks)
-		else return ()
+	let clientState' = if UpdateGameOver `elem` us
+		then clientGameStatus .~ Complete $ clientState
+		else clientState
 
-	return $ (clientUIState.uiStateViewport .~ newViewPort $ clientState) {_clientGame = gameState', _clientCommands = []}
+	return $ (clientUIState.uiStateViewport .~ newViewPort $ clientState') {_clientGame = gameState', _clientCommands = []}
 
 	where
 		getUpdate (UpdateMessage update _) = [update]

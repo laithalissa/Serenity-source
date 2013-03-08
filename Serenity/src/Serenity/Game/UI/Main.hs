@@ -12,6 +12,7 @@ import Serenity.Game.UI.Host
 import Serenity.Game.UI.Join
 import Serenity.Game.UI.Lobby
 import Serenity.Game.UI.Play
+import Serenity.Game.UI.End
 import Serenity.Game.Client.ClientState
 import Serenity.External
 
@@ -30,6 +31,7 @@ data ApplicationController = ApplicationController
 	,	_appJoinData    :: JoinData ApplicationController
 	,	_appLobbyData   :: LobbyData ApplicationController
 	,	_appPlayData    :: PlayData ApplicationController
+	,	_appEndData     :: EndData ApplicationController
 	,	_appClientState :: Maybe ClientState
 	,	_appPort        :: String
 	,	_appNickName    :: String
@@ -47,6 +49,7 @@ initApplicationController assets = ApplicationController
 	,	_appJoinData    = initJoinData   assets
 	,	_appLobbyData   = initLobbyData  assets
 	,	_appPlayData    = initPlayData   assets
+	,	_appEndData     = initEndData    assets
 	,	_appClientState = Nothing
 	,	_appPort        = "9900"
 	,	_appNickName    = ""
@@ -61,6 +64,7 @@ instance HostState   ApplicationController where {aHost=appHostData; aPort=appPo
 instance JoinState   ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
 instance LobbyState  ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort}
 instance PlayState   ApplicationController where {aPlay=appPlayData; aClientState=appClientState}
+instance EndState    ApplicationController where {aEnd=appEndData; aClientState=appClientState}
 
 instance ViewController ApplicationController where
 	globals = appViewGlobals
@@ -71,6 +75,7 @@ instance ViewController ApplicationController where
 		Join   -> viewJoin   app
 		Lobby  -> viewLobby  app
 		Play   -> viewPlay   app 
+		End    -> viewEnd    app
 		Quit   -> (initView ((0, 0), (1024, 750)))
 	updateTime dt app = case app^.appMode of 
 		Splash -> timeSplash dt app
@@ -79,6 +84,7 @@ instance ViewController ApplicationController where
 		Join   -> timeJoin   dt app
 		Lobby  -> timeLobby  dt app
 		Play   -> timePlay   dt app
+		End    -> timeEnd    dt app
 		Quit   -> app -- Quit handled by handleMainTime below
 
 gui = do

@@ -7,7 +7,6 @@ import Serenity.Game.UI.Application
 import Serenity.Game.Client.ClientState
 import Serenity.External
 import Serenity.Network.Transport
-import Serenity.Network.Utility
 import Serenity.Network.Connection
 
 import Control.Lens
@@ -32,7 +31,7 @@ initLobbyData :: LobbyState a => Assets -> LobbyData a
 initLobbyData assets = LobbyData
 	{	_lobbyTitleLabel   = (initLabel (StaticString "Project Serenity") (bright green) Nothing) & (labelScale .~ 6)
 	,	_lobbyLoadingLabel = (initLabel (StaticString "Connecting...") buttonColor (Just buttonBackground)) 
-			& (labelScale .~ 3.7) & (labelTextOffset .~ (15,15))
+			& (labelScale .~ 3.7) & (labelTextOffset .~ (15,18))
 	,	_lobbyTime = 0
 	}
 
@@ -41,7 +40,7 @@ viewLobby a = (initView ((0, 0), (1024, 750)))
 	& (viewDepict .~ background (a^.aAssets))
 	<++
 	[	label a (aLobby.lobbyTitleLabel) ((30,650),(220,30))
-	,	label a (aLobby.lobbyLoadingLabel) ((360,300),(320,70))
+	,	label a (aLobby.lobbyLoadingLabel) ((370,300),(300,70))
 	]
 
 timeLobby :: LobbyState a => Float -> a -> a

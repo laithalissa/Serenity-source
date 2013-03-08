@@ -46,6 +46,9 @@ label a label bounds = (initView bounds)
 			DynamicString lens -> Just $ (showFix.show) (a^.lens)
 			NoString -> Nothing
 
+labelStatic :: a -> LabelValue a -> Color -> Maybe Color -> ((Int, Int), (Int, Int)) -> View a
+labelStatic a value color backg bounds = label a (to (\_ -> initLabel value color backg)) bounds
+
 -- This is a bit of a hack
 showFix :: String -> String
 showFix [] = []

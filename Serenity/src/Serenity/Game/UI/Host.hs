@@ -6,13 +6,10 @@ import Serenity.Sheen
 import Serenity.Game.UI.Application
 import Serenity.Game.Server.Main
 import Serenity.External
-import Serenity.Model
 
 import Control.Lens
 import Control.Monad.State
 import Control.Concurrent
-import Control.Concurrent.STM
-import Data.Char
 
 data HostData a = HostData
 	{	_hostTitleLabel      :: Label a

@@ -7,7 +7,6 @@ import Serenity.Game.UI.Application
 import Serenity.External
 
 import Control.Lens
-import Control.Monad.State
 
 data JoinData a = JoinData
 	{	_joinTitleLabel   :: Label a

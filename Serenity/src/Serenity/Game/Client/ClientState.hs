@@ -6,14 +6,19 @@ import Serenity.External
 import Serenity.Game.Client.KeyboardState
 import Serenity.Model hiding(Location, Direction)
 import Serenity.Sheen 
+import Serenity.Maths.Util 
 import Serenity.Network.Transport
 
+import Graphics.Gloss.Data.Extent
 import Control.Lens
 import Control.Concurrent.STM
+import Control.Monad.State
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 -- | The size of the Gloss window
 windowSize :: (Int, Int)
-windowSize = (1024, 768)
+windowSize = (1024, 750)
 
 -- | The view port is the area of the game world that is being viewed
 -- by the client. ((x, y), zoom)
@@ -35,15 +40,29 @@ mapLocationFromView
 	-> Size     -- ^ Size of the map
 	-> Location
 
+translatePoint (x, y) = (x + wx, y + wy)
+translatePoint2 (x, y) = (x - wx, y - wy)
+
+translateEvent (EventKey key state modifiers point) = EventKey key state modifiers (translatePoint point)
+translateEvent (EventMotion point) = EventMotion (translatePoint point)
+wx = fromIntegral $ (fst windowSize) `div` 2
+wy = fromIntegral $ (snd windowSize) `div` 2
+
 mapLocationFromView (x, y) ((vx, vy), vz) (w, h) = (mapX, mapY)
 	where
 		mapX = (-(vx*(1-s)) - (ww/2) + x)/s
 		mapY = (-(vy*(1-s)) - (wh/2) + y)/s
-
 		ww = fromIntegral $ fst windowSize
 		wh = fromIntegral $ snd windowSize
 		normScale = ((min ww wh) / (max w h))
 		s = vz * normScale
+
+mapExtentFromView :: Extent -> ViewPort -> Size -> Extent
+mapExtentFromView extent viewPort mapSize = makeExtent (floor yMax') (floor yMin') (floor xMax') (floor xMin') where
+	mapLocation x = mapLocationFromView x viewPort mapSize
+	(xMin', yMin') = mapLocation $ pFloat2Double $ translatePoint $ (fromIntegral xMin, fromIntegral yMin)
+	(xMax', yMax') = mapLocation $ pFloat2Double $ translatePoint $ (fromIntegral xMax, fromIntegral yMax)
+	(yMax, yMin, xMax, xMin) = takeExtent extent
 
 -- | Represents the state of the client including the current game state
 -- and GUI's state
@@ -61,19 +80,15 @@ data ClientState = ClientState
 data GameStatus = Playing | Complete deriving (Show, Eq)
 
 data UIState a = UIState
-	{	_viewport :: ViewPort
+	{	_uiStateViewport :: ViewPort
+	,	_uiStateSelected :: [Int]
 	}
 
 makeLenses ''UIState
 makeLenses ''ClientState
 
 -- | Create the initial client state
-initClientState
-	:: Assets	 	-- ^ Assets
-	-> GameBuilder		-- ^ addons
-	-> OwnerID     		-- ^ Player's id
-	-> TransportInterface
-	-> ClientState
+initClientState :: Assets -> GameBuilder -> OwnerID -> TransportInterface -> ClientState
 initClientState assets gameBuilder ownerID channels = ClientState
 	{	_clientGame = game
 	,	_clientUIState = initUIState game
@@ -89,11 +104,37 @@ initClientState assets gameBuilder ownerID channels = ClientState
 
 initUIState :: Game -> UIState ClientState
 initUIState game = UIState
-	{	_viewport = ((width/2, height/2), zoom)
+	{	_uiStateViewport = ((width/2, height/2), zoom)
+	,	_uiStateSelected = []
 	}
 	where
 		(width, height) = game^.gameBuilder^.gbSector.sectorSize
 		zoom = 1
 
---mainView :: View ClientState
---mainView = initView ((0, 0), (fst windowSize, snd windowSize))
+selectShips :: Extent -> ClientState -> [Int]
+selectShips extent = evalState $ do
+	viewPort   <- use (clientUIState.uiStateViewport)
+	mapSize    <- use (clientGame.gameBuilder.gbSector.sectorSize)
+	ships      <- use (clientGame.gameShips)
+	ownerID    <- use clientOwnerID
+	ext        <- return $ mapExtentFromView extent viewPort mapSize
+	underMouse <- return $ Map.filter (inBox (expand ext)) ships
+	selected   <- return $ filterShips wasDrag ownerID (Map.toList underMouse)
+	return $ map fst selected
+	where
+		wasDrag = extentArea extent > 100
+		expand extent  = if wasDrag then extent else expand' extent
+		expand' extent = makeExtent (yMax+5) (yMin-5) (xMax+5) (xMin-5) where (yMax, yMin, xMax, xMin) = takeExtent extent
+
+inBox :: Extent -> Entity Ship -> Bool
+inBox extent ship = pointInExtent extent (pDouble2Float $ ship^.entityData.shipLocation)
+
+extentArea extent = (yMax - yMin) * (xMax - xMin) where
+	(yMax, yMin, xMax, xMin) = takeExtent extent
+
+filterShips :: Bool -> Int -> [(Int, Entity Ship)] -> [(Int, Entity Ship)]
+filterShips _ _ [] = []
+filterShips False _ (s:ss) = [s]
+filterShips True oID ships = if friendly == [] then ships else friendly where
+	friendly = filter selectShip ships
+	selectShip (eID, entShip) = entShip^.ownerID == oID

@@ -36,7 +36,7 @@ executable serenity
         QuickCheck,
         yaml-light == 0.1.4
     hs-source-dirs: src
-    ghc-options:    -W -threaded -rtsopts
+    ghc-options:    -threaded -rtsopts -fwarn-incomplete-patterns -fwarn-dodgy-exports -fwarn-dodgy-imports -fwarn-unused-imports
     extensions: TemplateHaskell
 
 Test-Suite test-serenity

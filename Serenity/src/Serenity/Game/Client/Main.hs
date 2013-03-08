@@ -55,12 +55,6 @@ handleEvent event = execState $ do
 	id %= handleInput (translateEvent event)
 	clientKeyboardState %= getNewKeyboardState event 
 	where
-		translateEvent (EventKey key state modifiers (x, y)) = EventKey key state modifiers (x + wx, y + wy)
-		translateEvent (EventMotion (x, y)) = EventMotion (x + wx, y + wy)
-
-		wx = fromIntegral $ (fst windowSize) `div` 2
-		wy = fromIntegral $ (snd windowSize) `div` 2
-
 		getNewKeyboardState (EventKey key keystate _ _) = handleKeyEvent key keystate
 		getNewKeyboardState _ = id
 
@@ -87,7 +81,7 @@ handleStep delta clientState = do
 		then clientGameStatus .~ Complete $ clientState
 		else clientState
 
-	return $ (clientUIState.viewport .~ newViewPort $ clientState') {_clientGame = gameState', _clientCommands = []}
+	return $ (clientUIState.uiStateViewport .~ newViewPort $ clientState') {_clientGame = gameState', _clientCommands = []}
 
 	where
 		getUpdate (UpdateMessage update _) = [update]
@@ -111,4 +105,4 @@ handleStep delta clientState = do
 		zoomIn     = if inn   then modify (\((x,y), z) -> ((x,y), z+b) ) else return ()
 		zoomOut    = if out   then modify (\((x,y), z) -> ((x,y), z-b) ) else return ()
 		allUpdates = do moveLeft; moveRight; moveUp; moveDown; zoomIn; zoomOut
-		newViewPort = execState allUpdates $ clientState^.clientUIState.viewport
+		newViewPort = execState allUpdates $ clientState^.clientUIState.uiStateViewport

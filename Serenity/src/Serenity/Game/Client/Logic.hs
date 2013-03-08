@@ -14,7 +14,7 @@ handleClick :: (Double, Double) -> ClientState -> [ClientMessage]
 handleClick click clientState = if clickInSector then map f (playersShips clientState) else [] where
 	f entity = ClientMessageCommand $ GiveOrder (entity^.entityID) order
 
-	clickMapped = mapLocationFromView click (clientState^.clientUIState.viewport) (sX, sY)
+	clickMapped = mapLocationFromView click (clientState^.clientUIState.uiStateViewport) (sX, sY)
 
 	(sX,sY) = clientState^.clientGame.gameBuilder.gbSector.sectorSize
 	(cX,cY) = clickMapped

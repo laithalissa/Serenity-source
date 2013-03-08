@@ -9,8 +9,6 @@ import Serenity.Game.Client.Color
 
 import Control.Lens
 import Data.Maybe
-import Graphics.Gloss
-import GHC.Float
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -38,9 +36,10 @@ picturePlanet sSize p = translate x y (color planetColor $ circleSolid 4) where
 	(x,y) = scaleToFit sSize (p^.planetLocation)
 	planetColor = case p^.planetEcotype of
 		Blue   -> dark $ dark green
-		Desert -> dark yellow
+		Desert -> dark orange
 		Metal  -> greyN 0.7
 		Ocean  -> blue
+		Star   -> bright yellow
 
 pictureSpaceLane :: (Double, Double) -> (Map Int Planet) -> SpaceLane -> Picture
 pictureSpaceLane sSize planetsMap (p1, p2) = color (dark $ dark $ dark $ dark green) $ lane where

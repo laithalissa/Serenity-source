@@ -33,11 +33,15 @@ handleMessage _ uiState = uiState
 
 render :: Game -> UIState ClientState -> Assets -> Picture
 render game uiState assets = Pictures
-	[	background
+	[	stars
+	,   blueNebula
+	,   greenNebula
 	,	(drawWorldToWindow . renderInWorld) game
 	]
 	where
-		background        = getPicture "background" assets
+		greenNebula       = getPicture "greenNebulaLayer" assets
+		blueNebula        = getPicture "blueNebulaLayer" assets
+		stars             = getPicture "starBackdropLayer" assets 
 		drawWorldToWindow = translateWorld . scaleWorld
 		scaleWorld        = scale (double2Float s) (double2Float s)
 		translateWorld    = translate (double2Float $ vpx*(1-s)) (double2Float$ vpy*(1-s))

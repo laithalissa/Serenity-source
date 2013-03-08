@@ -111,9 +111,8 @@ shipSpeed' :: Game -> Entity Ship -> Bool -> Double
 shipSpeed' game entity isUsingSpaceLane = 
 	let	multiplier = if isUsingSpaceLane then sectorSpaceLaneSpeed' game else 1.0
 		shipSpeed = (shipClass' entity game)^.shipClassSpeed
-	in	speed = multiplier * shipSpeed
+	in	multiplier * shipSpeed
 
-(sectorSpaceLaneSpeed' game) * 
 
 sectorSpaceLaneSpeed' :: Game -> Double
 sectorSpaceLaneSpeed' game = game^.gameBuilder.gbSector.sectorSpaceLaneSpeedMultiplier

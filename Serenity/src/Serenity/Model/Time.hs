@@ -59,13 +59,18 @@ instance Updateable Game where
 	update UpdateShipOrder{updateEntityID=eID, updateShipOrder=order} game = 
 		gameShips.(at eID).traverse.entityData.shipOrder .~ order $ 
 		gameShips.(at eID).traverse.entityData.shipPlan .~ [] $ 
+		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ 0.0 $ 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ GoalNone $ game
+	
 
 	update UpdateShipPlan{updateEntityID=eID, updateShipPlan=plan} game = 
-		gameShips.(at eID).traverse.entityData.shipPlan .~ plan $ game
+		gameShips.(at eID).traverse.entityData.shipPlan .~ plan $ 
+		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ 0.0 $ game
 
 	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
-		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ game
+		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ 
+		gameShips.(at eID).traverse.entityData.shipPlan .~ [] $ 
+		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ 0.0 $ game
 
 	update UpdateShipDamage{updateEntityID=eID, updateShipDamage=damage} game =
 		gameShips.(at eID).traverse.entityData.shipDamage .~ damage $ game

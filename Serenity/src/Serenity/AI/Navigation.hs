@@ -2,6 +2,7 @@
 
 module Serenity.AI.Navigation
 (	nearestPlanet
+,	distance
 )  where
 
 import Serenity.Model.Common

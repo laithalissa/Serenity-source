@@ -326,6 +326,5 @@ planetDistance location planet = distance location (planet^.planetLocation)
 distance :: Location -> Location -> Double
 distance (x1, y1) (x2, y2) = sqrt ( (x1 - x2)^2 + (y1 - y2)^2 )
 
-
 setPairEqual :: (Eq a) => (a, a) -> (a, a) -> Bool
 setPairEqual (x1, y1) (x2, y2) = ((x1==x2)&&(y1==y2)) || ((x1==y2)&&(y1==x2))

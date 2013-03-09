@@ -20,6 +20,7 @@ import qualified Data.Set as Set
 
 import Text.Show.Pretty(ppShow)
 
+import Text.Printf
 import Debug.Trace(trace)
 import Serenity.Debug(trace')
 
@@ -156,7 +157,7 @@ route sector start end =
 		isSpaceLane index = sectorEdgeIsSpaceLane $ graphEdge' graph'' (path !! index) (path !! (index+1))
 
 		route' = [ (nodeLoc index, nodeLoc (index+1), isSpaceLane index)  | index <- [0..((length path)-2)] ]
-	in	route' -- trace ("route for " ++ (show start) ++ "is : " ++ ppShow route') route'
+	in	trace ("route for (" ++ (show start) ++ ", " ++ (show end) ++ ") is : " ++ (ppShow route') ++ "\n\n endroute") route'
 
 
 	where	
@@ -193,7 +194,12 @@ aStar' graph start end =
 
 	in	if (isJust mPath) 
 		then (start : (fromJust mPath))
-		else trace ("a star no path found, graph: " ++ (ppShow graph)) (start : (fromJust mPath))
+		else 
+			let msg = printf "a star no path found, start:\n%s\n end:\n%s\n graph:\n%s\n" 
+					(ppShow start) 
+					(ppShow end)
+					(ppShow graph)
+			in trace msg (start : (fromJust mPath))
 		
 		
 
@@ -224,7 +230,11 @@ addNode sector graph node location =
 		newGraphNextNodeID = (nextNodeID graph) + 1
 		newGraphNodes = Set.insert newNode (nodes graph)
 		newGraphEdges = Set.insert newEdge (edges graph)
-	in	(graph{nextNodeID=newGraphNextNodeID, nodes=newGraphNodes, edges=newGraphEdges}, newNode)
+		replaceNode n = if n == node then node{sectorNodeNeighbours=Set.insert newNodeID (sectorNodeNeighbours node)} else n
+		newGraphNodes' = Set.map replaceNode newGraphNodes
+	in	(graph{nextNodeID=newGraphNextNodeID, nodes=newGraphNodes', edges=newGraphEdges}, newNode)
+
+		
 
 -- | warning: the original edge is not removed, 2 edges are added
 splitEdge :: Sector -> SectorGraph -> SectorEdge -> Location -> SectorGraph
@@ -287,13 +297,16 @@ makeNode sector planet =
 	let 	pID = (planet^.planetID)
 		nodeID = NodePlanetID (planet^.planetID)
 		nodeLocation = planet^.planetLocation
-		planetEdgeIDs  = map (NodePlanetID . f pID) (sector^.sectorSpaceLanes)
+		planetEdgeIDs  = map (NodePlanetID . f pID) $ filter (f' pID) (sector^.sectorSpaceLanes)
 	  	nodeNeighbours = Set.fromList planetEdgeIDs
 	in 	SectorNode nodeID nodeLocation nodeNeighbours
 
 	where
 	f :: PlanetID -> SpaceLane -> PlanetID
 	f pID (p1, p2) = if p1 == pID then p2 else p1	
+
+	f' :: PlanetID -> SpaceLane -> Bool
+	f' pID (p1, p2) = (pID == p1) || (pID == p2)
 
 
 makeEdge :: Sector -> (Planet, Planet) -> SectorEdge

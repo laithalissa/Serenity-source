@@ -11,7 +11,7 @@ import Serenity.Sheen
 import Control.Lens
 import Control.Monad.State
 import Data.List (sortBy)
-import Data.Maybe (fromJust, isJust)
+import Data.Maybe (fromJust, fromMaybe, isJust)
 
 data EndData a = EndData
 	{	_endRankingsTable :: Table a
@@ -40,7 +40,7 @@ viewEnd a = (initView ((0, 0), (1024, 750)))
 	}	<++
 	[	(initBox ((25, 625), (630, 75))) <++ -- Winner box
 		if isJust $ a^.aClientState
-			then [labelStatic a (StaticString $ "Winner: " ++ (show (game^.gameRanks.to head._1))) (bright green) Nothing 4 ((10,10), (40,45))]
+			then [labelStatic a (StaticString $ "Winner: " ++ winner) (bright green) Nothing 4 ((10,10), (40,45))]
 			else []
 	,	(initBox ((25, 50), (630, 550))) <++ -- Rankings table
 		if isJust $ a^.aClientState
@@ -56,7 +56,8 @@ viewEnd a = (initView ((0, 0), (1024, 750)))
 		rankCompare (_, r) (_, r') = case game^.gameGameMode of
 			_ -> compare r r'
 		rankLabel (player, rank) = case game^.gameGameMode of
-			_ -> labelStatic a (StaticString $ (show rank) ++ ". " ++ (show player)) (bright green) Nothing 2 ((0,0), (580,25))
+			_ -> labelStatic a (StaticString $ (show rank) ++ ". " ++ (fromMaybe "" $ lookup player (game^.gamePlayers))) (bright green) Nothing 2 ((0,0), (580,25))
+		winner = fromMaybe "" $ (flip lookup) (game^.gamePlayers) $ fst $ head $ sortBy rankCompare (game^.gameRanks)
 
 timeEnd :: EndState a => Float -> a -> a
 timeEnd _ = id

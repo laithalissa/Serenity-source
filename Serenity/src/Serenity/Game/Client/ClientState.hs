@@ -100,7 +100,7 @@ makeLenses ''UIState
 makeLenses ''ClientState
 
 -- | Create the initial client state
-initClientState :: Assets -> GameBuilder -> OwnerID -> [OwnerID] -> TransportInterface -> ClientState
+initClientState :: Assets -> GameBuilder -> OwnerID -> [(OwnerID, String)] -> TransportInterface -> ClientState
 initClientState assets gameBuilder ownerID players channels = ClientState
 	{	_clientGame = game
 	,	_clientUIState = initUIState game

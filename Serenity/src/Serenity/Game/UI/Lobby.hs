@@ -71,7 +71,7 @@ timeLobbyIO dt = do
 			connected <- liftIO $ waitForStarting (channelInbox channels) []
 			assets <- liftIO initAssets
 			gameBuilder <- liftIO $ createGameBuilder connected
-			return $ Just $ initClientState assets gameBuilder ownerID (map fst connected) channels
+			return $ Just $ initClientState assets gameBuilder ownerID connected channels
 		loadClientState x = return x
 
 		waitForStarting inbox connected = do

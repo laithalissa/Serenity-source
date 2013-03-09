@@ -36,7 +36,7 @@ data Game = Game
 	,	_gameShips  :: Map EntityID (Entity Ship)
 	,	_gameBuilder :: GameBuilder
 	,	_gameGameMode :: GameMode
-	,	_gamePlayers :: [OwnerID]
+	,	_gamePlayers :: [(OwnerID, String)]
 	,	_gameRanks :: [(OwnerID, Int)]
 	}
 	deriving Show
@@ -55,7 +55,7 @@ addShip ownerId ship game = game'
 		,	_entityData=ship
 		}
 
-initGame :: [OwnerID] -> GameBuilder -> Game
+initGame :: [(OwnerID, String)] -> GameBuilder -> Game
 initGame players gameBuilder = game'
 	where 
 	fleetsList :: [(OwnerID, Fleet)]
@@ -86,7 +86,7 @@ initGame players gameBuilder = game'
 
 
 
-demoGame :: [OwnerID] -> GameBuilder -> Game
+demoGame :: [(OwnerID, String)] -> GameBuilder -> Game
 demoGame players gameBuilder = game
 	where 
 	game = initGame players gameBuilder

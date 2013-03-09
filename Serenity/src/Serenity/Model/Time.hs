@@ -159,5 +159,5 @@ checkGameEnd game = case game^.gameGameMode of
 	_ -> []
 	where
 		playersLeft = map _ownerID (M.elems $ game^.gameShips)
-		deadPlayers = filter (\p -> p `notElem` playersLeft && p `notElem` (map fst $ game^.gameRanks)) (game^.gamePlayers)
+		deadPlayers = filter (\p -> p `notElem` playersLeft && p `notElem` (map fst $ game^.gameRanks)) (map fst $ game^.gamePlayers)
 		updateRanks = (game^.gameRanks) ++ (map (\p -> (p, (length (game^.gamePlayers)) - (length (game^.gameRanks)))) deadPlayers)

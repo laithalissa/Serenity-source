@@ -36,7 +36,7 @@ client serverHost serverPort ownerId = do
 		(InWindow "Project Serenity" windowSize (0, 0))
 		black
 		30
-		(initClientState assets gameBuilder ownerId [ownerId] channels)
+		(initClientState assets gameBuilder ownerId [(ownerId, "")] channels)
 		(return . render)
 		(\e c -> return $ handleEvent e c)
 		(handleStep)

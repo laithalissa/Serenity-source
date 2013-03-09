@@ -21,6 +21,7 @@ import Serenity.Model.Message
 import Serenity.Model.Wire
 
 import Control.Lens
+import Data.List (nub)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, fromJust)
 import Data.VectorSpace
@@ -150,14 +151,14 @@ evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
 
 checkGameEnd :: Game -> [Update]
 checkGameEnd game = case game^.gameGameMode of
-	DeathMatch ->
-		if all (== head playersLeft) (tail playersLeft)
-			then [UpdateGameRanks $ (head playersLeft, 1):(updateRanks), UpdateGameOver]
-			else if not $ null deadPlayers
-				then [UpdateGameRanks updateRanks]
-				else []
+	DeathMatch -> case length playersLeft of
+		0 -> [UpdateGameRanks updateRanks, UpdateGameOver]
+		1 -> [UpdateGameRanks $ (head playersLeft, 1):updateRanks, UpdateGameOver]
+		_ -> if not $ null deadPlayers
+			then [UpdateGameRanks updateRanks]
+			else []
 	_ -> []
 	where
-		playersLeft = map _ownerID (M.elems $ game^.gameShips)
+		playersLeft = nub $ map _ownerID (M.elems $ game^.gameShips)
 		deadPlayers = filter (\p -> p `notElem` playersLeft && p `notElem` (map fst $ game^.gameRanks)) (map fst $ game^.gamePlayers)
-		updateRanks = (game^.gameRanks) ++ (map (\p -> (p, (length (game^.gamePlayers)) - (length (game^.gameRanks)))) deadPlayers)
+		updateRanks = (map (\p -> (p, (length playersLeft) + 1)) deadPlayers) ++ (game^.gameRanks)

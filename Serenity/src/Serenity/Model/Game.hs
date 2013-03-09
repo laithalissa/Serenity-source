@@ -87,7 +87,7 @@ initGame players gameBuilder = game'
 
 
 demoGame :: [OwnerID] -> GameBuilder -> Game
-demoGame players gameBuilder = game' game
+demoGame players gameBuilder = game
 	where 
 	game = initGame players gameBuilder
 	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game

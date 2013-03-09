@@ -42,22 +42,23 @@ viewEnd a = (initView ((0, 0), (1024, 750)))
 		if isJust $ a^.aClientState
 			then [labelStatic a (StaticString $ "Winner: " ++ winner) (bright green) Nothing 4 ((10,10), (40,45))]
 			else []
-	,	(initBox ((25, 50), (630, 550))) <++ -- Rankings table
-		if isJust $ a^.aClientState
-			then [table a (aEnd.endRankingsTable) (to rankings) rankLabel ((25, 25), (580, 500))]
-			else []
 	,	(initBox ((680, 0), (345, 750))) <++ -- Sidebar
 		[	button a (aEnd.endContinueButton) id ((80,50),(185,28))
 		]
-	]
+	] 
+	++ if isJust $ a^.aClientState -- Ranking table
+		then [table a (aEnd.endRankingsTable) (to rankings) rankLabel ((25, 25), (580, 560))]
+		else []
 	where
 		game = a^.aClientState.(to fromJust).clientGame
-		rankings _ = sortBy rankCompare (game^.gameRanks)
-		rankCompare (_, r) (_, r') = case game^.gameGameMode of
-			_ -> compare r r'
-		rankLabel (player, rank) = case game^.gameGameMode of
-			_ -> labelStatic a (StaticString $ (show rank) ++ ". " ++ (fromMaybe "" $ lookup player (game^.gamePlayers))) (bright green) Nothing 2 ((0,0), (580,25))
 		winner = fromMaybe "" $ (flip lookup) (game^.gamePlayers) $ fst $ head $ sortBy rankCompare (game^.gameRanks)
+		rankings _ = sortBy rankCompare (game^.gameRanks)
+		rankCompare (_, r) (_, r') = compare r r'
+		rankLabel (player, rank) = (initBox ((0, 50), (630, 40))) <++ 
+			[	labelStatic a 
+					(StaticString $ (show rank) ++ ". " ++ (fromMaybe "" $ lookup player (game^.gamePlayers))) 
+					(bright green) Nothing 2 ((5,5), (580,25))
+			]
 
 timeEnd :: EndState a => Float -> a -> a
 timeEnd _ = id

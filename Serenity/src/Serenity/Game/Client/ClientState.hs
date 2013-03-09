@@ -61,8 +61,8 @@ mapLocationFromView (x, y) ((vx, vy), vz) (w, h) = (mapX, mapY)
 mapExtentFromView :: Extent -> ViewPort -> Size -> Extent
 mapExtentFromView extent viewPort mapSize = makeExtent (floor yMax') (floor yMin') (floor xMax') (floor xMin') where
 	mapLocation x = mapLocationFromView x viewPort mapSize
-	(xMin', yMin') = mapLocation $ pFloat2Double $ translatePoint $ (fromIntegral xMin, fromIntegral yMin)
-	(xMax', yMax') = mapLocation $ pFloat2Double $ translatePoint $ (fromIntegral xMax, fromIntegral yMax)
+	(xMin', yMin') = mapLocation $ pFloat2Double $ (fromIntegral xMin, fromIntegral yMin)
+	(xMax', yMax') = mapLocation $ pFloat2Double $ (fromIntegral xMax, fromIntegral yMax)
 	(yMax, yMin, xMax, xMin) = takeExtent extent
 
 -- | Represents the state of the client including the current game state

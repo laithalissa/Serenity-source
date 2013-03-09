@@ -125,7 +125,7 @@ endSelectRight point = execState $ do
 			(friendly, enemy, planets, wasDrag) <- return $ lassoShips (boxToExtent box) clientState
 			(f,e,p)  <- return $ selectionToTriple (clientState^.clientUIState.uiStateSelected)
 			newOrder <- return $ chooseOrder friendly enemy planets (translatePoint clientState $ pFloat2Double $ fst $ box)
-			clientCommands %= (++[GiveOrder (head f) newOrder])
+			clientCommands %= (++ if f == [] then [] else [GiveOrder (head f) newOrder])
 
 		translatePoint clientState point = mapLocationFromView point (clientState^.clientUIState.uiStateViewport) (sX, sY) where
 			(sX,sY) = clientState^.clientGame.gameBuilder.gbSector.sectorSize

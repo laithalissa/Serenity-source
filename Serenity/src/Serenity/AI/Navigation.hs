@@ -21,6 +21,7 @@ import qualified Data.Set as Set
 import Text.Show.Pretty(ppShow)
 
 import Debug.Trace(trace)
+import Serenity.Debug(trace')
 
 import Control.Lens
 import Prelude hiding (id, (.))
@@ -153,7 +154,9 @@ route sector start end =
 		-- helpers
 		nodeLoc index = sectorNodeLocation $ path !! index
 		isSpaceLane index = sectorEdgeIsSpaceLane $ graphEdge' graph'' (path !! index) (path !! (index+1))
-	in	[ (nodeLoc index, nodeLoc (index+1), isSpaceLane index)  | index <- [0..((length path)-2)] ]
+
+		route' = [ (nodeLoc index, nodeLoc (index+1), isSpaceLane index)  | index <- [0..((length path)-2)] ]
+	in	route' -- trace ("route for " ++ (show start) ++ "is : " ++ ppShow route') route'
 
 
 	where	
@@ -189,8 +192,8 @@ aStar' graph start end =
 		mPath = aStar neighbour weight heuristic isGoal start
 
 	in	if (isJust mPath) 
-		then (fromJust mPath) 
-		else trace ("a star no path found, graph: " ++ (ppShow graph)) (fromJust mPath)		
+		then (start : (fromJust mPath))
+		else trace ("a star no path found, graph: " ++ (ppShow graph)) (start : (fromJust mPath))
 		
 		
 

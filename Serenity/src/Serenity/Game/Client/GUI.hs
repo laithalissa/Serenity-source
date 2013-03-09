@@ -40,9 +40,8 @@ handleMessage _ uiState = uiState
 render :: Game -> UIState ClientState -> Assets -> Picture
 render game uiState assets = Pictures
 	[	stars
-	,   blueNebula
-	,   greenNebula
-	,	(drawWorldToWindow . renderInWorld) game
+	,	paralaxShift $ Pictures[ blueNebula, greenNebula]
+	,	(drawWorldToWindow. renderInWorld) game
 	]
 	where
 		greenNebula       = getPicture "greenNebulaLayer" assets
@@ -52,11 +51,15 @@ render game uiState assets = Pictures
 		scaleWorld        = scale (double2Float s) (double2Float s)
 		translateWorld    = translate (double2Float $ vpx*(1-s)) (double2Float$ vpy*(1-s))
 
-		(ww, wh)           = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
-		((vpx, vpy), vpz)  = uiState^.uiStateViewport
-		(gw, gh)           = game^.gameBuilder^.gbSector.sectorSize
-		normScale          = ((min ww wh) / (max gw gh))
-		s                  = vpz * normScale
+		(ww, wh)          = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
+		((vpx, vpy), vpz) = uiState^.uiStateViewport
+		(gw, gh)          =  game^.gameBuilder^.gbSector.sectorSize
+		normScale         = ((min ww wh) / (max gw gh))
+		s                 = vpz * normScale	
+		paralaxShift	  = translate 
+								(-(double2Float vpx) + (paralaxDirection $ double2Float vpz) * 2) 
+								(-(double2Float vpy) + (paralaxDirection $ double2Float vpz) * 2) 
+		paralaxDirection zl = if zl >= 1 then zl else ( -1 / zl )
 
 		renderInWorld game = pictures
 			[	pictures $ map pictureSpaceLane $ game^.gameBuilder^.gbSector.sectorSpaceLanes

@@ -34,12 +34,6 @@ type ViewPortZoom = Double
 type Location = (Double, Double)
 type Size = (Double, Double)
 
--- | Convert a view port location into an in-game map location
-mapLocationFromView
-	:: Location -- ^ Location within the view port
-	-> ViewPort -- ^ View port
-	-> Size     -- ^ Size of the map
-	-> Location
 
 translatePoint (x, y) = (x + wx, y + wy)
 translatePoint2 (x, y) = (x - wx, y - wy)
@@ -49,6 +43,12 @@ translateEvent (EventMotion point) = EventMotion (translatePoint point)
 wx = fromIntegral $ (fst windowSize) `div` 2
 wy = fromIntegral $ (snd windowSize) `div` 2
 
+-- | Convert a view port location into an in-game map location
+mapLocationFromView
+	:: Location -- ^ Location within the view port
+	-> ViewPort -- ^ View port
+	-> Size     -- ^ Size of the map
+	-> Location
 mapLocationFromView (x, y) ((vx, vy), vz) (w, h) = (mapX, mapY)
 	where
 		mapX = (-(vx*(1-s)) - (ww/2) + x)/s

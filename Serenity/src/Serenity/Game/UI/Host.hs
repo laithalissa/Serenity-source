@@ -46,7 +46,7 @@ initHostData assets    = HostData
 			(initMenuTextBoxLabel "Players:" (aHost.hostNumPlayers)) 
 			& (tblPostEdit .~ numPlayersValidation) 
 			& (tblEnabled .~ not.serverRunning)
-	,	_hostNumPlayers      = "1"
+	,	_hostNumPlayers      = "2"
 	,	_hostServerGame      = Stopped
 	,	_hostNickNameBox     = (initMenuTextBoxLabel "Name:" aName) & (tblPostEdit .~ nameValidation)
 	,	_hostPortBox         = 

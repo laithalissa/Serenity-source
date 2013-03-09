@@ -1,6 +1,9 @@
 {-# LANGUAGE RankNTypes #-}
 
-module Serenity.Game.UI.Minimap where
+module Serenity.Game.UI.Minimap
+(	minimap
+,	miniMapSize
+) where
 
 import Serenity.Model
 import Serenity.Sheen

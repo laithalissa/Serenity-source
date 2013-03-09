@@ -18,6 +18,7 @@ import Serenity.External
 
 import Control.Lens
 import Control.Monad.State
+import Data.Char
 import System.Exit
 import System.Posix.User
 
@@ -63,7 +64,7 @@ instance MenuState   ApplicationController where {aMenu=appMenuData}
 instance HostState   ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
 instance JoinState   ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
 instance LobbyState  ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName}
-instance PlayState   ApplicationController where {aPlay=appPlayData; aClientState=appClientState}
+instance PlayState   ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
 instance EndState    ApplicationController where {aEnd=appEndData; aClientState=appClientState}
 
 instance ViewController ApplicationController where
@@ -90,7 +91,7 @@ instance ViewController ApplicationController where
 gui = do
 	assets    <- initAssets
 	userEntry <- getRealUserID >>= getUserEntryForID
-	username  <- return $ nameValidation $ userName userEntry
+	username  <- return $ _head %~ toUpper $ nameValidation $ userName userEntry
 	playIOZero
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black

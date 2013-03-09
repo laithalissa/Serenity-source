@@ -28,6 +28,7 @@ makeLenses ''PlayData
 class AppState a => PlayState a where
 	aPlay :: Simple Lens a (PlayData a)
 	aClientState :: Simple Lens a (Maybe ClientState)
+	aName :: Simple Lens a String
 
 initPlayData :: PlayState a => Assets -> PlayData a
 initPlayData assets = PlayData
@@ -44,11 +45,38 @@ viewPlay a = case (a^.aClientState) of
 
 sidebarView :: PlayState a => a -> ClientState -> View a
 sidebarView a clientState = (initBox ((0,0),(200,750))) <++
-	[	minimap a (aClientState.(to fromJust).clientGame) (a^.aClientState.(to fromJust).clientOwnerID) & (viewOrigin .~ (0,550))
-	,	(initView ((0,460),(200,80))) & (viewBackground .~ (Just $ sidebarDarkColor))
-	]
-	where
-		sidebarDarkColor = changeAlpha (dark $ dark $ dark $ dark $ dark green) 0.5
+	[	minimap a (aClientState.(to fromJust).clientGame) (a^.aClientState.(to fromJust).clientOwnerID) & (viewOrigin .~ (0,25))
+	,	(initView ((0,0),(200,35))) & (viewBackground .~ (Just black)) <++
+		[	labelStatic a ((initLabel (DynamicString aName) (bright myColor) Nothing) & (labelScale .~ 1)) ((5,5), (200,25))
+		]
+	,	(initView ((0,600),(200,150))) 
+			& (viewBackground .~ (Just $ black))
+			& (viewDepictMode .~ ViewDepictModeViewUppermost)
+			& (viewDepict .~ (Just $ translate 100 75 $ pictures [background, scale s s $ foreground]))
+	,	(initBox ((0,550),(200,50))) <++
+		[	labelStatic a ((initLabel (StaticString name) (bright textColor) Nothing) & (labelScale .~ 1.2)) ((10,15), (200,50))
+		]
+	] where
+		(game, uiState, assets) = (clientState^.clientGame, clientState^.clientUIState, a^.aAssets)
+		background = getPictureSized "starBackdropSidebar" 200 150 assets
+
+		((foreground, name), textColor, s) = case (clientState^.clientUIState.uiStateSelected) of
+			SelectionOwnShips   (shipID:_) -> (lookupShip shipID, bright green, 12)
+			SelectionEnemyShips (shipID:_) -> (lookupShip shipID, bright red, 12)
+			SelectionPlanet     planetID   -> (lookupPlanet planetID, dark white, 9)
+			_                              -> ((pictures [], ""), black, 12)
+		
+		lookupShip shipID = case game^.gameShips.(at shipID) of
+			Just ship -> (pictureEntity game uiState assets 0 ship, ship^.shipName)
+			Nothing -> (pictures [], "")
+
+		lookupPlanet planetID = case game^.gameBuilder.gbSector.sectorPlanets.(at planetID) of
+			Just planet -> (picturePlanet game uiState assets (planetID, planet), planet^.planetName)
+			Nothing -> (pictures [], "")
+
+		shipName = entityData.shipConfiguration.shipConfigurationShipClass
+
+		myColor = (ownerIDColor (clientState^.clientOwnerID))
 
 mainView :: PlayState a => a -> ClientState -> View a
 mainView a clientState = (initView ((0,0),(1024, 750)))
@@ -103,7 +131,8 @@ cancelSelect = aPlay.playSelectBox .~ Nothing
 endSelect :: PlayState a => Bool -> (Float, Float) -> a -> a
 endSelect deselect point = execState $ do
 	overMaybe (aPlay.playSelectBox) (aClientState.traverse) (select.boxToExtent)
-	aPlay.playSelectBox .= Nothing where
+	aPlay.playSelectBox .= Nothing 
+	where
 		select extent = execState $ do
 			clientState <- get
 			(friendly, enemy, planets, wasDrag) <- return $ lassoShips extent clientState
@@ -118,8 +147,8 @@ endSelectRight :: PlayState a => (Float, Float) -> a -> a
 endSelectRight point = execState $ do
 	overMaybe (aPlay.playSelectBox) (aClientState.traverse) order
 	meh2 <- use $ aClientState
-	aPlay.playSelectBox .= Nothing where
-		order :: ((Float, Float), (Float, Float)) -> ClientState -> ClientState
+	aPlay.playSelectBox .= Nothing 
+	where
 		order box = execState $ do
 			clientState <- get
 			(friendly, enemy, planets, wasDrag) <- return $ lassoShips (boxToExtent box) clientState
@@ -134,7 +163,6 @@ chooseOrder [] [] []    loc = OrderMove loc Nothing
 chooseOrder [] [] (p:_) loc = OrderCapture p
 chooseOrder [] (e:_)  _ loc = OrderAttack e
 chooseOrder (f:_)  _  _ loc = OrderGuardShip f
-chooseOrder _      _  _ loc = OrderNone
 
 timePlay :: PlayState a => Float -> a -> a
 timePlay _ = execState $ do
@@ -153,3 +181,18 @@ timePlayIO dt = do
 			newClientState <- liftIO $ handleStep dt clientState
 			aClientState .= Just newClientState
 		Nothing -> return ()
+
+
+
+picturePlanet :: Game -> UIState ClientState -> Assets -> (Int, Planet) -> Picture
+picturePlanet game uiState assets (planetID, planet) = Pictures $ [p] where
+	p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets
+
+pictureEntity :: Game -> UIState ClientState -> Assets -> Double -> Entity Ship -> Picture
+pictureEntity game uiState assets time entity = rotate 90 $ Pictures [shipBridge, (getPictureSized "transparent" dim dim assets)] where	
+	shipBridge = 
+		translate (-0.052 * dim) (-0.47 * dim) 
+		$ scale (0.105 * dim) (0.96 * dim) 
+		$ color (ownerIDColor (entity^.ownerID)) 
+		$ polygon [(0,0), (0,0.95), (0.5, 1), (1, 0.95), (1, 0)]
+	dim     = 10

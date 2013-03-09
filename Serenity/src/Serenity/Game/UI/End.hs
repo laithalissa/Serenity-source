@@ -40,7 +40,7 @@ viewEnd a = (initView ((0, 0), (1024, 750)))
 	}	<++
 	[	(initBox ((25, 625), (630, 75))) <++ -- Winner box
 		if isJust $ a^.aClientState
-			then [labelStatic a (StaticString $ "Winner: " ++ winner) (bright green) Nothing 4 ((10,10), (40,45))]
+			then [labelStatic a ((initLabel (StaticString $ "Winner: " ++ winner) (bright green) Nothing) & (labelScale .~ 4)) ((10,10), (40,45))]
 			else []
 	,	(initBox ((680, 0), (345, 750))) <++ -- Sidebar
 		[	button a (aEnd.endContinueButton) id ((80,50),(185,28))
@@ -54,11 +54,9 @@ viewEnd a = (initView ((0, 0), (1024, 750)))
 		winner = fromMaybe "" $ (flip lookup) (game^.gamePlayers) $ fst $ head $ sortBy rankCompare (game^.gameRanks)
 		rankings _ = sortBy rankCompare (game^.gameRanks)
 		rankCompare (_, r) (_, r') = compare r r'
-		rankLabel (player, rank) = (initBox ((0, 50), (630, 40))) <++ 
-			[	labelStatic a 
-					(StaticString $ (show rank) ++ ". " ++ (fromMaybe "" $ lookup player (game^.gamePlayers))) 
-					(bright green) Nothing 2 ((5,5), (580,25))
-			]
+		rankLabel (player, rank) = (initBox ((0, 50), (630, 40))) <++ [labelStatic a lab ((5,5), (580,25))] where
+			lab = (initLabel (StaticString $ (show rank) ++ ". " ++ (fromMaybe "" $ lookup player (game^.gamePlayers))) (bright green) Nothing)
+				& (labelScale .~ 2)
 
 timeEnd :: EndState a => Float -> a -> a
 timeEnd _ = id

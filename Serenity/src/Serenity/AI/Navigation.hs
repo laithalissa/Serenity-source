@@ -284,43 +284,33 @@ makeSectorGraph sector =
 	
 	makeNodes = map $ makeNode sector
 	makeEdges = map $ makeEdge sector
- 
 
-mapA f = proc things -> do
-	case things of 
-		(x:xs) -> do
-			x' <- f -< x
-			xs' <- mapA f -< xs
-			id -< x' : xs'
-		[] -> id -< []
-
-
-makeNode :: Sector -> Planet -> SectorNode
-makeNode sector planet = 
-	let 	pID = (planet^.planetID)
-		nodeID = NodePlanetID (planet^.planetID)
-		nodeLocation = planet^.planetLocation
-		planetEdgeIDs  = map (NodePlanetID . f pID) $ filter (f' pID) (sector^.sectorSpaceLanes)
-	  	nodeNeighbours = Set.fromList planetEdgeIDs
-	in 	SectorNode nodeID nodeLocation nodeNeighbours
-
-	where
-	f :: PlanetID -> SpaceLane -> PlanetID
-	f pID (p1, p2) = if p1 == pID then p2 else p1	
-
-	f' :: PlanetID -> SpaceLane -> Bool
-	f' pID (p1, p2) = (pID == p1) || (pID == p2)
-
-
-makeEdge :: Sector -> (Planet, Planet) -> SectorEdge
-makeEdge sector (planet1, planet2) = 
-	let	node1ID = NodePlanetID (planet1^.planetID)
-		node2ID = NodePlanetID (planet2^.planetID)
-		node1Location = planet1^.planetLocation
-		node2Location = planet2^.planetLocation
-		cost = calculateEdgeCost sector node1Location node2Location True
-	in	SectorEdge node1ID node2ID cost True
+	makeNode :: Sector -> Planet -> SectorNode
+	makeNode sector planet = 
+		let 	pID = (planet^.planetID)
+			nodeID = NodePlanetID (planet^.planetID)
+			nodeLocation = planet^.planetLocation
+			planetEdgeIDs  = map (NodePlanetID . f pID) $ filter (f' pID) (sector^.sectorSpaceLanes)
+		  	nodeNeighbours = Set.fromList planetEdgeIDs
+		in 	SectorNode nodeID nodeLocation nodeNeighbours
 	
+		where
+		f :: PlanetID -> SpaceLane -> PlanetID
+		f pID (p1, p2) = if p1 == pID then p2 else p1	
+	
+		f' :: PlanetID -> SpaceLane -> Bool
+		f' pID (p1, p2) = (pID == p1) || (pID == p2)
+
+
+	makeEdge :: Sector -> (Planet, Planet) -> SectorEdge
+	makeEdge sector (planet1, planet2) = 
+		let	node1ID = NodePlanetID (planet1^.planetID)
+			node2ID = NodePlanetID (planet2^.planetID)
+			node1Location = planet1^.planetLocation
+			node2Location = planet2^.planetLocation
+			cost = calculateEdgeCost sector node1Location node2Location True
+		in	SectorEdge node1ID node2ID cost True
+ 
 
 
 calculateEdgeCost :: Sector -> Location -> Location -> Bool -> Double

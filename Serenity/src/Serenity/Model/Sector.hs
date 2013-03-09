@@ -86,7 +86,7 @@ sectorOne = Sector
 		,	(3, Planet {_planetID = 3, _planetName = "Qoruscant", _planetEcotype = Metal , _planetLocation  = (190, 190), _planetResources = res 10 0 10})
 		]
 	,	_sectorSpaceLanes  = [(1,2), (2,3)]
-	,	_sectorSpaceLaneSpeedMultiplier = 1.2
+	,	_sectorSpaceLaneSpeedMultiplier = 3.0
 	}
 
 

@@ -6,7 +6,9 @@ import Serenity.Sheen
 import Serenity.Game.UI.Application
 import Serenity.Game.Client.ClientState
 import Serenity.External
+import Serenity.Model.Fleet
 import Serenity.Model.Message
+import Serenity.Model.Sector
 import Serenity.Network.Transport
 import Serenity.Network.Connection
 
@@ -14,6 +16,7 @@ import Control.Lens
 import Control.Monad.State
 import Control.Concurrent.STM
 import Control.Concurrent (threadDelay)
+import qualified Data.Map as M (fromList)
 
 data LobbyData a = LobbyData
 	{	_lobbyTitleLabel   :: Label a
@@ -65,10 +68,21 @@ timeLobbyIO dt = do
 			serverPort <- use aPort
 			nickName <- use aName
 			(channels, ownerID) <- liftIO $ connectToServer serverHost (fromIntegral $ read serverPort) nickName
+			connected <- liftIO $ waitForStarting (channelInbox channels) []
 			assets <- liftIO initAssets
-			gameBuilder <- liftIO makeDemoGameBuilder
-			return $ Just $ initClientState assets gameBuilder ownerID channels
+			gameBuilder <- liftIO $ createGameBuilder connected
+			return $ Just $ initClientState assets gameBuilder ownerID (map fst connected) channels
 		loadClientState x = return x
+
+		waitForStarting inbox connected = do
+			m <- atomically $ readTChan inbox
+			case m of
+				ControlMessage (ControlSetConnected c) -> waitForStarting inbox c
+				ControlMessage ControlStarting -> return connected
+				_ -> waitForStarting inbox connected
+
+		createGameBuilder clients = makeGameBuilder sectorOne $
+			M.fromList $ map (\c -> (fst c, demoFleet)) clients
 
 connectToServer :: String -> PortNumber -> String -> IO (TransportInterface, Int)
 connectToServer host port name = do

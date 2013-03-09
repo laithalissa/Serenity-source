@@ -97,7 +97,8 @@ data CtlMsg =
 	|	ControlSetConnected
 	{	controlConnected :: [(Int, String)]
 	}
-	| ControlReady
+	|	ControlReady
+	|	ControlStarting
 	deriving (Show, Eq)
 
 -- Derive binary instances using deep magic.

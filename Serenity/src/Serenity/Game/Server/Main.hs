@@ -31,13 +31,16 @@ server
 	-> IO ()
 server port clientCount = forever $ do
 	print "server started"	
-	gameBuilder' <- makeDemoGameBuilder
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	(clients, transport) <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
-	play 5 clients (demoGame gameBuilder') commands evolve updates
+	gameBuilder' <- createGameBuilder clients
+	play 5 clients (demoGame (map clientID clients) gameBuilder') commands evolve updates
 	closeTransport transport
 	print "server finished"
+	where
+		createGameBuilder clients = makeGameBuilder sectorOne $
+			M.fromList $ map (\c -> (clientID c, demoFleet)) clients
 
 -- | Wait for n clients to connect
 connectionPhase
@@ -74,7 +77,7 @@ connectionPhase port clientLimit = do
 				,	clientTransportInterface = channels
 				}):clients
 			atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlYourID newID)
-			sendToClients [(ControlMessage $ ControlSetConnected $ map (\c -> (clientID c, clientName c)) clients')] clients'
+			sendToClients [ControlMessage $ ControlSetConnected $ map (\c -> (clientID c, clientName c)) clients'] clients'
 			if length clients' >= limit
 				then return clients'
 				else connectionPhase' chan limit clients'
@@ -89,7 +92,7 @@ connectionPhase port clientLimit = do
 			messages <- mapM readTChanUntilEmpty $ map (channelInbox . clientTransportInterface) clients
 			let messages' = readies ++ (filter (\m -> case m of ControlMessage ControlReady -> True; _ -> False) $ concat messages)
 			if length messages' == length clients
-				then return ()
+				then sendToClients [ControlMessage ControlStarting] clients
 				else waitForReadies clients messages'
 
 -- | Run the server with given update functions.

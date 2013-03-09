@@ -43,7 +43,7 @@ plan = proc (game, entity, goal) -> case goal of
 		let startPosition = (entity^.entityData.shipLocation, entity^.entityData.shipDirection)
 		let finishPosition = (goalLoc, if isJust mGoalDir then fromJust mGoalDir else makeDirection entity goalLoc)
 		let shipSpeed = (shipClass' entity game)^.shipClassSpeed
-		makeWaypoints -< (sector, startPosition, finishPosition, shipSpeed) 
+		makeWaypoints -< (sector, entity, finishPosition, shipSpeed) 
 
 	(GoalDestroyed target) -> id -< trace "goal destroyed" $ [ActionMoveToEntity target (ActionMove (shipLoc,shipDir) (goalLoc,goalDir) False)]
 		where
@@ -60,9 +60,10 @@ makeDirection entity goalLoc = let
 	shipDir = entity^.entityData.shipDirection
 	in normalized (goalLoc - shipLoc)
 
-makeWaypoints :: BaseWire (Sector, Position, Position, Speed) [ShipAction]
-makeWaypoints = proc (sector, start@(startPos, startDir), finish@(finishPos, finishDir), speed) -> do
-	id -< [ActionMove start finish False]
+makeWaypoints :: BaseWire (Sector, Entity Ship, Position, Speed) [ShipAction]
+makeWaypoints = proc (sector, entity, finish@(finishPos, finishDir), speed) -> do
+	id -< planRoute sector entity finish
+		-- [ActionMove start finish False]
 		-- let shipSpeed = (shipClass' entity game)^.shipClassSpeed
 		-- let shipStartLocation = entity^.entityData.shipLocation
 		-- let shipStartDirection = entity^.entityData.shipDirection
@@ -91,7 +92,7 @@ evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 			id -< if finishedOrder game ship (ship^.shipOrder)
 				then [UpdateShipOrder (entity^.entityID) makeOrderNone]
 				else if p == [] 
-					then trace "no plan" [] 
+					then [] 
 					else trace (show p) [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] 
 
 		(action:rest) -> do

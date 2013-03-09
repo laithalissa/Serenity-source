@@ -1,18 +1,26 @@
 {-# LANGUAGE Arrows #-}
 
 module Serenity.AI.Navigation
-(	nearestPlanet
+(	planRoute
+,	nearestPlanet
 ,	distance
 )  where
 
 import Serenity.Model.Common
+import Serenity.Model.Entity
 import Serenity.Model.Sector
+import Serenity.Model.Ship
 import Serenity.Model.Wire
 
+import Data.VectorSpace
 import Data.Graph.AStar(aStar)
-import Data.Maybe(fromJust)
+import Data.Maybe(fromJust, isJust)
 import Data.Set(Set)
 import qualified Data.Set as Set
+
+import Text.Show.Pretty(ppShow)
+
+import Debug.Trace(trace)
 
 import Control.Lens
 import Prelude hiding (id, (.))
@@ -55,10 +63,10 @@ data SectorGraph = SectorGraph
 	{	nextNodeID 	:: Int
 	,	nodes 		:: Set SectorNode
 	,	edges 		:: Set SectorEdge
-	}
+	} deriving(Show)
 
 
-data NodeID = NodePlanetID Int | NodeID Int
+data NodeID = NodePlanetID Int | NodeID Int deriving(Show)
 
 instance Eq NodeID where
 	(NodePlanetID id1) == (NodePlanetID id2) = (id1 == id2)
@@ -75,7 +83,7 @@ data SectorNode = SectorNode
 	{	sectorNodeID :: NodeID
 	,	sectorNodeLocation :: Location
 	,	sectorNodeNeighbours :: Set NodeID
-	}
+	} deriving(Show)
 
 instance Eq SectorNode where
 	n1 == n2 = (sectorNodeID n1) == (sectorNodeID n2)
@@ -88,7 +96,7 @@ data SectorEdge = SectorEdge
 	,	sectorEdgeNode2ID :: NodeID
 	,	sectorEdgeCost :: Double
 	,	sectorEdgeIsSpaceLane :: Bool
-	}
+	} deriving(Show)
 
 instance Eq SectorEdge where
 	(SectorEdge id1 id2 _ _) == (SectorEdge id3 id4 _ _) = setPairEqual (id1, id2) (id3, id4)
@@ -98,25 +106,38 @@ instance Ord SectorEdge where
 		SectorEdge{sectorEdgeNode1ID=e2n1,sectorEdgeNode2ID=e2n2} = compare (e1n1, e1n2) (e2n1, e2n2)
 
 
--- planRoute 
--- 	:: Sector 
--- 	-> Entity Ship 
--- 	-> Double 
--- 	-> Position 
--- 	-> Plan
--- planRoute sector entity startTime end =
--- 	let	entityLocation = entity^.entityData.shipLocation
--- 		endLocation = fst end
--- 		path = route sector entityLocation endLocation
+planRoute 
+	:: Sector 
+	-> Entity Ship 
+	-> Position 
+	-> Plan
+planRoute sector entity (endLocation, endDirection) =
+	let	
+		path = route sector entityLocation endLocation
+		indexes = [0..((length path)-1)]
+	in	map (makeAction path) indexes
 
--- 	where
--- 		estimateTime :: Location -> Location -> Bool -> Double
--- 		estimateTime start end isSpaceLane = 
--- 			let	multiplier = if isSpaceLane then (
-			
+	where
+	entityLocation = entity^.entityData.shipLocation
+	entityDirection = entity^.entityData.shipDirection
+
+	makeAction :: [(Location, Location, Bool)] -> Int -> ShipAction
+	makeAction path index 
+		| (index == 0) = ActionMove (l1, entityDirection) (l2, makeDirection l1 l2) l3
+		| (index+1 == length path) = ActionMove (l1, makeDirection m1 m2) (l2, endDirection) l3
+		| True = ActionMove (l1, makeDirection m1 m2) (l2, makeDirection l1 l2) l3
+		
+		where
+			(m1, m2, m3) = path!!(index-1)
+			(l1, l2, l3) = path!!index
+			(k1, k2, k3) = path!!(index+1)
+
+		
+makeDirection :: Location -> Location -> Direction
+makeDirection start end = normalized (end - start)
 	
 
-route :: Sector -> Location -> Location -> [(Location, Bool)]
+route :: Sector -> Location -> Location -> [(Location, Location, Bool)]
 route sector start end =
 	let	graph = makeSectorGraph sector
 		startPlanet = nearestPlanet sector start
@@ -124,15 +145,29 @@ route sector start end =
 		endPlanet = nearestPlanet sector end
 		endPlanetNode = graphNode' graph (NodePlanetID (endPlanet^.planetID))
 				
-		(graph', startNode) = addNode sector graph startPlanetNode start
-		(graph'', endNode) = addNode sector graph' endPlanetNode end
+		(graph', startNode) = addNode' sector graph startPlanetNode start
+		(graph'', endNode) = addNode' sector graph' endPlanetNode end
 
 		path = aStar' graph'' startNode endNode
 
 		-- helpers
 		nodeLoc index = sectorNodeLocation $ path !! index
 		isSpaceLane index = sectorEdgeIsSpaceLane $ graphEdge' graph'' (path !! index) (path !! (index+1))
-	in	[ (nodeLoc index, isSpaceLane index)  | index <- [0..((length path)-2)] ]
+	in	[ (nodeLoc index, nodeLoc (index+1), isSpaceLane index)  | index <- [0..((length path)-2)] ]
+
+
+	where	
+		addNode' sector graph node location = 
+			let	result = nodeAtLocation location graph
+			in	if (isJust result)
+				then (graph, fromJust result)
+				else addNode sector graph node location
+
+
+		f location n = (distance location (sectorNodeLocation n)) <= 5
+		nodeAtLocation location graph = 
+			let 	result = filter (f location) $ Set.toList (nodes graph)
+			in	if (length result) == 0 then Nothing else Just (result !! 0)
 
 		
 
@@ -151,8 +186,11 @@ aStar' graph start end =
 		isGoal :: SectorNode -> Bool
 		isGoal node = node == end
 
-	in	fromJust $ aStar neighbour weight heuristic isGoal start
-		
+		mPath = aStar neighbour weight heuristic isGoal start
+
+	in	if (isJust mPath) 
+		then (fromJust mPath) 
+		else trace ("a star no path found, graph: " ++ (ppShow graph)) (fromJust mPath)		
 		
 		
 

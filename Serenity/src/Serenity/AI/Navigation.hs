@@ -143,14 +143,14 @@ route :: Sector -> Location -> Location -> [(Location, Location, Bool)]
 route sector start end =
 	let	graph = makeSectorGraph sector
 		startPlanet = nearestPlanet sector start
-		startPlanetNode = graphNode' graph (NodePlanetID (startPlanet^.planetID))
+		startPlanetNodeID = sectorNodeID $ graphNode' graph (NodePlanetID (startPlanet^.planetID))
 		endPlanet = nearestPlanet sector end
-		endPlanetNode = graphNode' graph (NodePlanetID (endPlanet^.planetID))
+		endPlanetNodeID = sectorNodeID $ graphNode' graph (NodePlanetID (endPlanet^.planetID))
 				
-		(graph', startNode) = addNode' sector graph startPlanetNode start
-		(graph'', endNode) = addNode' sector graph' endPlanetNode end
+		(graph', startNodeID) = addNode' sector graph (graphNode' graph startPlanetNodeID) start
+		(graph'', endNodeID) = addNode' sector graph' (graphNode' graph' endPlanetNodeID) end
 
-		path = aStar' graph'' startNode endNode
+		path = aStar' graph'' startNodeID endNodeID
 
 		-- helpers
 		nodeLoc index = sectorNodeLocation $ path !! index
@@ -164,7 +164,7 @@ route sector start end =
 		addNode' sector graph node location = 
 			let	result = nodeAtLocation location graph
 			in	if (isJust result)
-				then (graph, fromJust result)
+				then (graph, sectorNodeID $ fromJust result)
 				else addNode sector graph node location
 
 
@@ -175,9 +175,12 @@ route sector start end =
 
 		
 
-aStar' :: SectorGraph -> SectorNode -> SectorNode -> [SectorNode]
-aStar' graph start end =
+aStar' :: SectorGraph -> NodeID -> NodeID -> [SectorNode]
+aStar' graph startID endID =
 	let	-- | aStar argument 1
+		end = graphNode' graph endID
+		start = graphNode' graph startID
+
 		neighbour :: SectorNode -> Set SectorNode
 		neighbour node = Set.map (graphNode' graph) (sectorNodeNeighbours node)
 
@@ -188,7 +191,7 @@ aStar' graph start end =
 		heuristic node = distance (sectorNodeLocation end) (sectorNodeLocation node)
 
 		isGoal :: SectorNode -> Bool
-		isGoal node = node == end
+		isGoal node = (sectorNodeID node) == endID
 
 		mPath = aStar neighbour weight heuristic isGoal start
 
@@ -220,9 +223,9 @@ graphEdge' graph node1 node2 =
 	in	foldl1 f (Set.toList $ edges graph)
 
 
-addNode :: Sector -> SectorGraph -> SectorNode -> Location -> (SectorGraph, SectorNode)
+addNode :: Sector -> SectorGraph -> SectorNode -> Location -> (SectorGraph, NodeID)
 addNode sector graph node location =
-	let	newNodeID = NodeID $ (nextNodeID graph) + 1
+	let	newNodeID = NodeID $ (nextNodeID graph) 
 		newNodeNeighbours = Set.fromList [sectorNodeID node]
 		newNode = SectorNode newNodeID location newNodeNeighbours
 		newEdgeCost = calculateEdgeCost sector (sectorNodeLocation node) location False
@@ -232,7 +235,7 @@ addNode sector graph node location =
 		newGraphEdges = Set.insert newEdge (edges graph)
 		replaceNode n = if n == node then node{sectorNodeNeighbours=Set.insert newNodeID (sectorNodeNeighbours node)} else n
 		newGraphNodes' = Set.map replaceNode newGraphNodes
-	in	(graph{nextNodeID=newGraphNextNodeID, nodes=newGraphNodes', edges=newGraphEdges}, newNode)
+	in	(graph{nextNodeID=newGraphNextNodeID, nodes=newGraphNodes', edges=newGraphEdges}, sectorNodeID newNode)
 
 		
 

@@ -150,7 +150,6 @@ timePlayIO dt = do
 	mClientState <- use aClientState
 	case mClientState of 
 		Just clientState -> do
-			channels <- return $ clientState^.clientChannels
 			newClientState <- liftIO $ handleStep dt clientState
 			aClientState .= Just newClientState
 		Nothing -> return ()

@@ -6,6 +6,9 @@ import Serenity.Sheen
 import Serenity.Game.UI.Application
 import Serenity.Game.Client.ClientState
 import Serenity.External
+import Serenity.Model.Fleet
+import Serenity.Model.Message
+import Serenity.Model.Sector
 import Serenity.Network.Transport
 import Serenity.Network.Connection
 
@@ -13,6 +16,7 @@ import Control.Lens
 import Control.Monad.State
 import Control.Concurrent.STM
 import Control.Concurrent (threadDelay)
+import qualified Data.Map as M (fromList)
 
 data LobbyData a = LobbyData
 	{	_lobbyTitleLabel   :: Label a
@@ -26,6 +30,7 @@ class AppState a => LobbyState a where
 	aClientState :: Simple Lens a (Maybe ClientState)
 	aHostName :: Simple Lens a String
 	aPort :: Simple Lens a String
+	aName :: Simple Lens a String
 
 initLobbyData :: LobbyState a => Assets -> LobbyData a
 initLobbyData assets = LobbyData
@@ -61,16 +66,50 @@ timeLobbyIO dt = do
 		loadClientState Nothing = do
 			serverHost <- use aHostName
 			serverPort <- use aPort
-			channels <- liftIO $ connectTo serverHost (fromIntegral $ read serverPort)
-			liftIO $ waitUntilConnected (channelConnection channels)
+			nickName <- use aName
+			(channels, ownerID) <- liftIO $ connectToServer serverHost (fromIntegral $ read serverPort) nickName
+			connected <- liftIO $ waitForStarting (channelInbox channels) []
 			assets <- liftIO initAssets
-			gameBuilder <- liftIO makeDemoGameBuilder
-			ownerID <- return 0
-			return $ Just $ initClientState assets gameBuilder ownerID channels
+			gameBuilder <- liftIO $ createGameBuilder connected
+			return $ Just $ initClientState assets gameBuilder ownerID (map fst connected) channels
 		loadClientState x = return x
 
-waitUntilConnected connTVar = do
-	connection <- atomically $ readTVar connTVar
-	if isConnected connection
-		then return ()
-		else threadDelay 10000 >> waitUntilConnected connTVar
+		waitForStarting inbox connected = do
+			m <- atomically $ readTChan inbox
+			case m of
+				ControlMessage (ControlSetConnected c) -> waitForStarting inbox c
+				ControlMessage ControlStarting -> return connected
+				_ -> waitForStarting inbox connected
+
+		createGameBuilder clients = makeGameBuilder sectorOne $
+			M.fromList $ map (\c -> (fst c, demoFleet)) clients
+
+connectToServer :: String -> PortNumber -> String -> IO (TransportInterface, Int)
+connectToServer host port name = do
+	channels <- connectTo host port
+	waitUntilConnected (channelConnection channels)
+	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlSetName name)
+	(myID, connected) <- waitForID (channelInbox channels)
+	print $ "My ID: " ++ (show myID) ++ ", Connected: " ++ (show connected)
+	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlReady)
+	return (channels, myID)
+	where
+		waitUntilConnected connTVar = do
+			connection <- atomically $ readTVar connTVar
+			if isConnected connection
+				then return ()
+				else threadDelay 10000 >> waitUntilConnected connTVar
+
+		waitForID inbox = do
+			ctl <- getMsg inbox
+			case ctl of
+				ControlYourID myID -> return (myID, [])
+				_ -> do
+					ctl' <- getMsg inbox
+					return (controlID ctl', controlConnected ctl)
+
+		getMsg inbox = do
+			msg <- atomically $ readTChan inbox
+			case msg of
+				ControlMessage m -> return m
+				_ -> getMsg inbox

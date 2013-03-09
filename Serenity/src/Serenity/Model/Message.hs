@@ -4,6 +4,7 @@ module Serenity.Model.Message
 (	Message(..)
 ,	Update(..)
 ,	Command(..)
+,	CtlMsg(..)
 ,	Entity(..)
 ,	Ship(..)
 )
@@ -23,6 +24,7 @@ type Time = Int
 data Message = 
 	  UpdateMessage Update Time            -- ^ Updates are messages containing GameState information to be sent from the server to the clients.
 	| CommandMessage Command ClientID Time -- ^ Commands are intention notifications sent from a specific client to the server.
+	| ControlMessage CtlMsg
 	| Empty                                -- ^ An empty message (for networking and testing purposes).
 	deriving (Show, Eq)
 
@@ -85,6 +87,20 @@ data Command =
 	}
 	deriving (Show, Eq)
 
+data CtlMsg =
+	ControlSetName
+	{	controlName :: String
+	}
+	| ControlYourID
+	{	controlID :: Int
+	}
+	|	ControlSetConnected
+	{	controlConnected :: [(Int, String)]
+	}
+	|	ControlReady
+	|	ControlStarting
+	deriving (Show, Eq)
+
 -- Derive binary instances using deep magic.
 -- $(derive makeBinary ''ShipOrder)
 -- $(derive makeBinary ''ShipOrderState)
@@ -106,4 +122,5 @@ derive makeBinary ''ShipAction
 derive makeBinary ''Order
 derive makeBinary ''Update
 derive makeBinary ''Command
+derive makeBinary ''CtlMsg
 derive makeBinary ''Message

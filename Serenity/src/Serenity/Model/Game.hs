@@ -55,8 +55,8 @@ addShip ownerId ship game = game'
 		,	_entityData=ship
 		}
 
-initGame :: GameBuilder -> Game
-initGame gameBuilder = game'
+initGame :: [OwnerID] -> GameBuilder -> Game
+initGame players gameBuilder = game'
 	where 
 	fleetsList :: [(OwnerID, Fleet)]
 	fleetsList = Map.toList (gameBuilder^.gbPlayerFleets)
@@ -80,16 +80,16 @@ initGame gameBuilder = game'
 		,	_gameShips  = Map.empty
 		,	_gameBuilder = gameBuilder
 		,	_gameGameMode = DeathMatch
-		,	_gamePlayers = [0, 1, 2, 3] -- XXX
+		,	_gamePlayers = players
 		,	_gameRanks = []
 		}
 
 
 
-demoGame :: GameBuilder -> Game
-demoGame gameBuilder = game' game
+demoGame :: [OwnerID] -> GameBuilder -> Game
+demoGame players gameBuilder = game' game
 	where 
-	game = initGame gameBuilder
+	game = initGame players gameBuilder
 	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game
 		where
 		f :: Entity Ship -> Entity Ship

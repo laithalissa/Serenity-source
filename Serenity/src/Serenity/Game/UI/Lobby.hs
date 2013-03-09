@@ -75,10 +75,27 @@ connectToServer host port name = do
 	channels <- connectTo host port
 	waitUntilConnected (channelConnection channels)
 	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlSetName name)
-	return (channels, 0)
+	(myID, connected) <- waitForID (channelInbox channels)
+	print $ "My ID: " ++ (show myID) ++ ", Connected: " ++ (show connected)
+	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlReady)
+	return (channels, myID)
 	where
 		waitUntilConnected connTVar = do
 			connection <- atomically $ readTVar connTVar
 			if isConnected connection
 				then return ()
 				else threadDelay 10000 >> waitUntilConnected connTVar
+
+		waitForID inbox = do
+			ctl <- getMsg inbox
+			case ctl of
+				ControlYourID myID -> return (myID, [])
+				_ -> do
+					ctl' <- getMsg inbox
+					return (controlID ctl', controlConnected ctl)
+
+		getMsg inbox = do
+			msg <- atomically $ readTChan inbox
+			case msg of
+				ControlMessage m -> return m
+				_ -> getMsg inbox

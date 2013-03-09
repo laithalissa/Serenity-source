@@ -52,6 +52,7 @@ connectionPhase port clientLimit = do
 	sendAndReceive transportVar
 	forkIO $ acceptLoop clientLimit transportVar clientChan
 	clients <- connectionPhase' clientChan clientLimit []
+	waitForReadies clients []
 	transport' <- atomically $ readTVar transportVar
 	return (clients, transport')
 	where
@@ -66,7 +67,14 @@ connectionPhase port clientLimit = do
 		connectionPhase' chan limit clients = do
 			channels <- atomically $ readTChan chan
 			name <- getClientName (channelInbox channels)
-			let clients' = (ClientData{clientTransportInterface=channels}):clients
+			let newID = length clients
+			let clients' = (ClientData
+				{	clientID = newID
+				,	clientName = name
+				,	clientTransportInterface = channels
+				}):clients
+			atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlYourID newID)
+			sendToClients [(ControlMessage $ ControlSetConnected $ map (\c -> (clientID c, clientName c)) clients')] clients'
 			if length clients' >= limit
 				then return clients'
 				else connectionPhase' chan limit clients'
@@ -76,6 +84,13 @@ connectionPhase port clientLimit = do
 			case msg of
 				ControlMessage (ControlSetName name) -> return name
 				_ -> getClientName chan
+
+		waitForReadies clients readies = do
+			messages <- mapM readTChanUntilEmpty $ map (channelInbox . clientTransportInterface) clients
+			let messages' = readies ++ (filter (\m -> case m of ControlMessage ControlReady -> True; _ -> False) $ concat messages)
+			if length messages' == length clients
+				then return ()
+				else waitForReadies clients messages'
 
 -- | Run the server with given update functions.
 play :: forall world . (Show world, world ~ Game) 
@@ -101,7 +116,7 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 			(updatesT, wire') <- return $ runWire wire (fromRational time) (game', game')
 			game''            <- return $ gameTime +~ (fromRational time) $ updateWorld updatesT game'
 			game'''           <- return $ gameRandom %~ (snd.next) $ game''
-			sendToClients (filteredUpdates' ++ updatesT) clientDataList
+			sendToClients (map (\u -> UpdateMessage u 0) (filteredUpdates' ++ updatesT)) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
 			if UpdateGameOver `elem` updatesT
 				then return ()
@@ -118,9 +133,8 @@ getCommands clientDataList = do
 		getCommands _ = []
 
 -- | Send updates to all clients
-sendToClients :: [Update] -> [ClientData] -> IO ()
-sendToClients updates clientDataList = mapM_ (\outbox -> sendMessages outbox messages) outboxes
+sendToClients :: [Message] -> [ClientData] -> IO ()
+sendToClients messages clientDataList = mapM_ (\outbox -> sendMessages outbox messages) outboxes
 		where
 			outboxes = map (channelOutbox . clientTransportInterface) clientDataList
-			messages = map (\u -> UpdateMessage u 0) updates
 

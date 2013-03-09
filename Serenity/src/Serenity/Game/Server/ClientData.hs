@@ -6,5 +6,7 @@ where
 import Serenity.Network.Transport (TransportInterface)
 
 data ClientData = ClientData
-	{	clientTransportInterface :: TransportInterface
+	{	clientID :: Int
+	,	clientName :: String
+	,	clientTransportInterface :: TransportInterface
 	}

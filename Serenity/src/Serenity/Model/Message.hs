@@ -91,6 +91,13 @@ data CtlMsg =
 	ControlSetName
 	{	controlName :: String
 	}
+	| ControlYourID
+	{	controlID :: Int
+	}
+	|	ControlSetConnected
+	{	controlConnected :: [(Int, String)]
+	}
+	| ControlReady
 	deriving (Show, Eq)
 
 -- Derive binary instances using deep magic.

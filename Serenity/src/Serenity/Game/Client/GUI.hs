@@ -62,100 +62,102 @@ render game uiState assets = Pictures
 		paralaxDirection zl = if zl >= 1 then zl else ( -1 / zl )
 
 		renderInWorld game = pictures
-			[	pictures $ map pictureSpaceLane $ game^.gameBuilder^.gbSector.sectorSpaceLanes
-			,	pictures $ map picturePlanet $ Map.toList $ game^.gameBuilder^.gbSector.sectorPlanets
-			,	pictures $ map (pictureEntity (game^.gameTime)) $ Map.elems $ game^.gameShips
+			[	pictures $ map (pictureSpaceLane game uiState assets) $ game^.gameBuilder^.gbSector.sectorSpaceLanes
+			,	pictures $ map (picturePlanet  game uiState assets) $ Map.toList $ game^.gameBuilder^.gbSector.sectorPlanets
+			,	pictures $ map (pictureEntity game uiState assets (game^.gameTime)) $ Map.elems $ game^.gameShips
 			]
 
-		picturePlanet (planetID, planet) = translate x y $ Pictures $ [p, name] ++ selectBox where
-			planetSelected = isSelectedPlanet uiState planetID
-			selectBox = if planetSelected then [planetSelectionArc 8.5 (double2Float (game^.gameTime))] else []
-			(x,y) = pDouble2Float $ planet^.planetLocation
-			p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets
-			name = if planetSelected
-				then color (greyN 0.7) $ translate (7) (-8) $ scale 0.016 0.016 $ Text (planet^.planetName)
-				else color (greyN 0.7) $ translate (5.5) (-6.5) $ scale 0.011 0.011 $ Text (planet^.planetName)
+picturePlanet :: Game -> UIState ClientState -> Assets -> (Int, Planet) -> Picture
+picturePlanet game uiState assets (planetID, planet) = translate x y $ Pictures $ [p, name] ++ selectBox where
+	planetSelected = isSelectedPlanet uiState planetID
+	selectBox = if planetSelected then [planetSelectionArc 8.5 (double2Float (game^.gameTime))] else []
+	(x,y) = pDouble2Float $ planet^.planetLocation
+	p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets
+	name = if planetSelected
+		then color (greyN 0.7) $ translate (7) (-8) $ scale 0.016 0.016 $ Text (planet^.planetName)
+		else color (greyN 0.7) $ translate (5.5) (-6.5) $ scale 0.011 0.011 $ Text (planet^.planetName)
 
-		pictureSpaceLane (p1, p2) = 
-			color (dark green) 
-			$ line $ map (\p -> pDouble2Float $ p^.planetLocation) planets where
-				planets    = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
-				planetsMap = game^.gameBuilder^.gbSector.sectorPlanets
+pictureSpaceLane :: Game -> UIState ClientState -> Assets -> (Int, Int) -> Picture
+pictureSpaceLane game uiState assets (p1, p2) = 
+	color (dark green) 
+	$ line $ map (\p -> pDouble2Float $ p^.planetLocation) planets where
+		planets    = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
+		planetsMap = game^.gameBuilder^.gbSector.sectorPlanets
 
-		pictureEntity :: Double -> Entity Ship -> Picture
-		pictureEntity time entity = pictures $ (shipAndHealth time) ++ beams where
-			beams = concatMap pictureBeam (concat . Map.elems $ entity^.entityData.shipTargets)
-			pictureBeam target = case Map.lookup target (game^.gameShips) of
-				Just entity -> [color red $ line [(x, y + 2),
-					(pDouble2Float $ entity^.entityData.shipLocation)]]
-				Nothing -> []
+pictureEntity :: Game -> UIState ClientState -> Assets -> Double -> Entity Ship -> Picture
+pictureEntity game uiState assets time entity = pictures $ (shipAndHealth time) ++ beams where
+	beams = concatMap pictureBeam (concat . Map.elems $ entity^.entityData.shipTargets)
+	pictureBeam target = case Map.lookup target (game^.gameShips) of
+		Just entity -> [color red $ line [(x, y + 2),
+			(pDouble2Float $ entity^.entityData.shipLocation)]]
+		Nothing -> []
 
-			(shipIsSelected, shipSelectedFriendly) = isSelectedShip uiState entity
-			selection      = 
-				if shipIsSelected 
-				then [ (if shipSelectedFriendly then drawSelectionArcGreen else drawSelectionArcRed) 6 (double2Float time)] 
-				else []
+	(shipIsSelected, shipSelectedFriendly) = isSelectedShip uiState entity
+	selection      = 
+		if shipIsSelected 
+		then [ (if shipSelectedFriendly then drawSelectionArcGreen else drawSelectionArcRed) 6 (double2Float time)] 
+		else []
+	
+	shipAndHealth time = map (translate x y) $
+		selection ++ 
+		[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (getPictureSized "transparent" dim dim assets)]
+		,	(translate (-boundingBoxWidth / 2) 7 $ Pictures [boundingBox , healthMeter])
+		,	(translate (-boundingBoxWidth / 2) 8 $ Pictures [boundingBox, shieldMeter])
+		] where
+
+	shipBridge = 
+		translate (-0.052 * dim) (-0.47 * dim) 
+		$ scale (0.105 * dim) (0.96 * dim) 
+		$ color (ownerIDColor (entity^.ownerID)) 
+		$ polygon [(0,0), (0,0.95), (0.5, 1), (1, 0.95), (1, 0)]
 			
-			shipAndHealth time = map (translate x y) $
-				selection ++ 
-				[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (getPictureSized "transparent" dim dim assets)]
-				,	(translate (-boundingBoxWidth / 2) 7 $ Pictures [boundingBox , healthMeter])
-				,	(translate (-boundingBoxWidth / 2) 8 $ Pictures [boundingBox, shieldMeter])
-				] where
+	(x,y)   = pDouble2Float $ entity^.entityData.shipLocation
+	(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
+	dim     = 10
+	
+	-- Background box for health and shield meters
+	boundingBox = 
+		color (makeColor8 200 200 200 40) 
+		$ Polygon $ 
+		[	(0,0)
+		,	(boundingBoxWidth, 0)
+		,	(boundingBoxWidth, boxHeight)
+		,	(0, boxHeight)]
+	
+	healthMeter = color (healthColor healthAsPercentage) 
+		$ Polygon $ 
+		[	(0,0)
+		,	(healthBarWidth, 0)
+		,	(healthBarWidth, boxHeight)
+		,	(0, boxHeight)
+		]
+	shieldMeter = color shieldBlue 
+		$ Polygon $ 
+		[	(0,0)
+		,	(shieldBarWidth, 0)
+		,	(shieldBarWidth, boxHeight)
+		,   (0, boxHeight)
+		]
 
-			shipBridge = 
-				translate (-0.052 * dim) (-0.47 * dim) 
-				$ scale (0.105 * dim) (0.96 * dim) 
-				$ color (ownerIDColor (entity^.ownerID)) 
-				$ polygon [(0,0), (0,0.95), (0.5, 1), (1, 0.95), (1, 0)]
-			
-			(x,y)   = pDouble2Float $ entity^.entityData.shipLocation
-			(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
-			dim     = 10
-			
-			-- Background box for health and shield meters
-			boundingBox = 
-				color (makeColor8 200 200 200 40) 
-				$ Polygon $ 
-				[	(0,0)
-				,	(boundingBoxWidth, 0)
-				,	(boundingBoxWidth, boxHeight)
-				,	(0, boxHeight)]
-			
-			healthMeter = color (healthColor healthAsPercentage) 
-				$ Polygon $ 
-				[	(0,0)
-				,	(healthBarWidth, 0)
-				,	(healthBarWidth, boxHeight)
-				,	(0, boxHeight)
-				]
-			shieldMeter = color shieldBlue 
-				$ Polygon $ 
-				[	(0,0)
-				,	(shieldBarWidth, 0)
-				,	(shieldBarWidth, boxHeight)
-				,   (0, boxHeight)
-				]
+	boundingBoxWidth = 5
+	boxHeight        = 0.5
+	healthBarWidth   = boundingBoxWidth - (lostHealthPercentage * boundingBoxWidth)
 
-			boundingBoxWidth = 5
-			boxHeight        = 0.5
-			healthBarWidth   = boundingBoxWidth - (lostHealthPercentage * boundingBoxWidth)
+	-- Ship health values
+	currentHealth        = shipHealth' entity game
+	healthAsPercentage   = fromIntegral (shipHealth' entity game) / fromIntegral (shipMaxHealth' entity game)
+	lostHealthPercentage = fromIntegral (shipCurrentDamage' entity) / fromIntegral (shipMaxHealth' entity game)
 
-			-- Ship health values
-			currentHealth        = shipHealth' entity game
-			healthAsPercentage   = fromIntegral (shipHealth' entity game) / fromIntegral (shipMaxHealth' entity game)
-			lostHealthPercentage = fromIntegral (shipCurrentDamage' entity) / fromIntegral (shipMaxHealth' entity game)
-
-			-- Ship shield values
-			shieldBarWidth       = boundingBoxWidth - (lostShieldPercentage * boundingBoxWidth)
-			lostShield           = entity^.entityData.shipDamage.damageShield
-			shipTotalShield      = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) 
-				(game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageShield
-			currentShield        = shipTotalShield - lostShield
-			lostShieldPercentage = fromIntegral lostShield / fromIntegral shipTotalShield
-			shieldPercentage     = fromIntegral currentShield / fromIntegral shipTotalShield
-			-- Colour for the shields
-			shieldBlue           = makeColor8 40 100 255 180
+	-- Ship shield values
+	shieldBarWidth       = boundingBoxWidth - (lostShieldPercentage * boundingBoxWidth)
+	lostShield           = entity^.entityData.shipDamage.damageShield
+	shipTotalShield      = (fromJust $ Map.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) 
+		(game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageShield
+	currentShield        = shipTotalShield - lostShield
+	lostShieldPercentage = fromIntegral lostShield / fromIntegral shipTotalShield
+	shieldPercentage     = fromIntegral currentShield / fromIntegral shipTotalShield
+	-- Colour for the shields
+	shieldBlue           = makeColor8 40 100 255 180
 
 drawSelectionArcGreen :: Float -> Float -> Picture
 drawSelectionArcGreen radius time = color (selectionColour time) $ rotate (time * 10) $ circle where

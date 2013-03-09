@@ -91,6 +91,11 @@ selectionIsEmpty (SelectionOwnShips []) = True
 selectionIsEmpty (SelectionEnemyShips []) = True
 selectionIsEmpty _ = False
 
+selectionToTriple :: Selection -> ([Int],[Int],Maybe Int)
+selectionToTriple (SelectionOwnShips f)   = (f,[],Nothing)
+selectionToTriple (SelectionEnemyShips e) = ([],e,Nothing)
+selectionToTriple (SelectionPlanet i)     = ([],[],Just i)
+
 makeLenses ''UIState
 makeLenses ''ClientState
 

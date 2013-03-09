@@ -10,12 +10,15 @@ import Serenity.External
 import Serenity.Game.Client.GUI
 import Serenity.Game.Client.Main
 import Serenity.Game.Client.Color
+import Serenity.Model
+import Serenity.Maths.Util
 
 import Graphics.Gloss.Data.Extent
 import Control.Lens
 import Control.Monad.State
 import Data.Monoid
 import Data.Maybe
+import qualified Data.Map as Map
 
 data PlayData a = PlayData 
 	{	_playSelectBox :: Maybe ((Float, Float), (Float, Float))
@@ -50,7 +53,7 @@ sidebarView a clientState = (initBox ((0,0),(200,750))) <++
 mainView :: PlayState a => a -> ClientState -> View a
 mainView a clientState = (initView ((0,0),(1024, 750)))
 	& (viewSubviewMode .~ ViewSubviewModeKeep)
-	& (viewDepict .~ (Just $ render (clientState^.clientGame) (clientState^.clientUIState) (a^.aAssets)))
+	& (viewDepict .~ (Just $ translate (1024/2) (750/2) $ render (clientState^.clientGame) (clientState^.clientUIState) (a^.aAssets)))
 	& (viewEventHandler .~ (Just $ \event -> handleMainEvent event a))
 	<++ catMaybes
 	[	selectionBox (a^.aPlay.playSelectBox)
@@ -72,9 +75,10 @@ boxToExtent ((x1,y1),(x2,y2)) = makeExtent maxY minY maxX minX where
 
 handleMainEvent :: PlayState a => UIEvent -> a -> a
 handleMainEvent event = case event of
-	UIEventMouseDownInside LeftButton point mods -> startSelect point
+	UIEventMouseDownInside _ point mods -> startSelect point
 	UIEventMouseUpInside   LeftButton point (Modifiers Up Up Up) -> endSelect False point
 	UIEventMouseUpInside   LeftButton point (Modifiers Down Up Up) -> endSelect True point
+	UIEventMouseUpInside   RightButton point mods -> endSelectRight point
 	UIEventMouseUpOutside  LeftButton point mods -> endSelect False point
 	UIEventMotion point -> continueSelect point
 	UIEventKeyPress _ _ _ -> aClientState %~ handleGameEvent event
@@ -93,6 +97,9 @@ startSelect point =  aPlay.playSelectBox.~ Just (point, point)
 continueSelect :: PlayState a => (Float, Float) -> a -> a
 continueSelect point = aPlay.playSelectBox.traverse._2 .~ point
 
+cancelSelect :: PlayState a => a -> a
+cancelSelect = aPlay.playSelectBox .~ Nothing
+
 endSelect :: PlayState a => Bool -> (Float, Float) -> a -> a
 endSelect deselect point = execState $ do
 	overMaybe (aPlay.playSelectBox) (aClientState.traverse) (select.boxToExtent)
@@ -107,8 +114,27 @@ shipSelection [] [] (p:_) = SelectionPlanet p
 shipSelection [] e  _     = SelectionEnemyShips e
 shipSelection f  _  _     = SelectionOwnShips f
 
-cancelSelect :: PlayState a => a -> a
-cancelSelect = aPlay.playSelectBox .~ Nothing
+endSelectRight :: PlayState a => (Float, Float) -> a -> a
+endSelectRight point = execState $ do
+	overMaybe (aPlay.playSelectBox) (aClientState.traverse) order
+	meh2 <- use $ aClientState
+	aPlay.playSelectBox .= Nothing where
+		order :: ((Float, Float), (Float, Float)) -> ClientState -> ClientState
+		order box = execState $ do
+			clientState <- get
+			(friendly, enemy, planets, wasDrag) <- return $ lassoShips (boxToExtent box) clientState
+			(f,e,p)  <- return $ selectionToTriple (clientState^.clientUIState.uiStateSelected)
+			newOrder <- return $ chooseOrder friendly enemy planets (translatePoint clientState $ pFloat2Double $ fst $ box)
+			clientCommands %= (++[GiveOrder (head f) newOrder])
+
+		translatePoint clientState point = mapLocationFromView point (clientState^.clientUIState.uiStateViewport) (sX, sY) where
+			(sX,sY) = clientState^.clientGame.gameBuilder.gbSector.sectorSize
+
+chooseOrder [] [] []    loc = OrderMove loc Nothing
+chooseOrder [] [] (p:_) loc = OrderCapture p
+chooseOrder [] (e:_)  _ loc = OrderAttack e
+chooseOrder (f:_)  _  _ loc = OrderGuardShip f
+chooseOrder _      _  _ loc = OrderNone
 
 timePlay :: PlayState a => Float -> a -> a
 timePlay _ = execState $ do

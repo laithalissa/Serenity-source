@@ -8,9 +8,9 @@ module Serenity.AI.SectorGraph
 ,	(|>|)
 ,	(|>>|)
 ,	(|>*>|)
-,	edgeCost'
+,	edgeCost
 ,	make
-,	isSpaceLane'
+,	isSpaceLane
 ) where
 
 import Serenity.Model.Common
@@ -45,16 +45,19 @@ data SectorGraph = SectorGraph
 	,	_sgNodes :: Set SectorNode
 	,	_sgSector :: Sector
 	,	_sgSpaceLaneRadius :: Double
+	,	_sgEdgeCache :: Maybe (Set SectorEdge)
 	} deriving(Show)
 
 data SectorEdge = SectorEdge 
 	{	_edgeNode1 :: NodeID
 	,	_edgeNode2 :: NodeID
-	,	_edgeCost :: Double
-	}
+	,	_edgeTimeCost :: Double
+	,	_edgeIsSpaceLane :: Bool
+	} deriving(Show)
 
 makeLenses ''SectorNode
 makeLenses ''SectorGraph
+makeLenses ''SectorEdge
 
 instance Enum NodeID where
 	toEnum i = NodeID i
@@ -65,6 +68,12 @@ instance Eq SectorNode where
 
 instance Ord SectorNode where
 	compare n1 n2 = compare (n1^.nodeID) (n2^.nodeID)	
+
+instance Eq SectorEdge where
+	(SectorEdge e1n1 e1n2 _ _) == (SectorEdge e2n1 e2n2 _ _) = ((e1n1==e2n1)&&(e1n2==e2n2))||((e1n1==e2n2)&&(e1n2==e2n1))
+
+instance Ord SectorEdge where
+	compare (SectorEdge e1n1 e1n2 _ _) (SectorEdge e2n1 e2n2 _ _) = if e1n1 == e2n1 then compare e1n2 e2n2 else compare e1n1 e2n1
 
 -- helpers --
 
@@ -191,11 +200,30 @@ addSpaceLaneEdge nID1 nID2 graph =
 	in	graph{_sgNodes=nodes'}
 
 
+cacheEdges :: SectorGraph -> SectorGraph
+cacheEdges graph = 
+	let	f es' isSL = Set.map (\(n1,n2) -> SectorEdge n1 n2 (edgeCost' graph n1 n2) isSL) es'
+		normalEdges' = f (getEdges graph) False
+		spaceLaneEdges' = f (getSpaceLaneEdges graph) True
+		edges' = Set.union normalEdges' spaceLaneEdges'
+	in	graph{_sgEdgeCache = Just edges'}
+
+-- | cartesian product of 2 lists
 cart :: [a] -> [a] -> [(a,a)]
 cart [] [] = []
 cart as [] = []
 cart [] bs = []
 cart (a:as) bs = (cart as bs) ++ (map (\b -> (a,b)) bs)
+
+
+edgeTupleEq :: SectorEdge -> (NodeID, NodeID) -> Bool
+edgeTupleEq edge1 (n1, n2) = edge1 == (SectorEdge n1 n2 0.0 False)
+
+cacheSearch :: SectorGraph -> NodeID -> NodeID -> SectorEdge
+cacheSearch graph n1 n2 =
+	let	cache = fromJust $ graph^.sgEdgeCache
+		results = Set.filter (\e -> not $ edgeTupleEq e (n1,n2)) cache
+	in	(Set.toList results) !! 0
 
 ---------- API ----------
 make 
@@ -232,7 +260,7 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 
 		graph'''' = addEdgeNodes graph'''
 
-	in	trace (show $ Set.size $ graph''''^.sgNodes) (addionalIDs, graph'''')
+	in	trace (show $ Set.size $ graph''''^.sgNodes) (addionalIDs, cacheEdges graph'''')
 
 		where
 
@@ -291,6 +319,11 @@ graph |>>| nID = (graph<^>nID)^.nodeSpaceLaneNeighbours
 graph |>*>| nID = Set.union (graph|>|nID) (graph|>>|nID)
 
 
+-- | calculates cost of edge (cached)
+edgeCost :: SectorGraph -> NodeID -> NodeID -> Double
+edgeCost graph nID1 nID2 = (cacheSearch graph nID1 nID2)^.edgeTimeCost
+
+-- | calculates cost of edge (no cache)
 edgeCost' :: SectorGraph -> NodeID -> NodeID -> Double
 edgeCost' graph nID1 nID2 = 
 	let	node1 = graph<^>nID1
@@ -303,6 +336,12 @@ edgeCost' graph nID1 nID2 =
 		distance' = distance node1Location node2Location
 		cost' = distance' / multiplier
 	in	cost' -- trace (printf "cost between node %s and %s is %s\n" (show nID1) (show nID2) (show cost')) cost'
+
+
+-- | calculates if edge between nodes is space lanes (cached)
+isSpaceLane :: SectorGraph -> NodeID -> NodeID -> Bool
+isSpaceLane graph nID1 nID2 = (cacheSearch graph nID1 nID2)^.edgeIsSpaceLane
+
 
 -- | strict, calculates instead of querying graph
 isSpaceLane' :: SectorGraph -> NodeID -> NodeID -> Bool

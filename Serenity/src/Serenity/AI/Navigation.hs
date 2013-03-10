@@ -102,9 +102,9 @@ route sector start end =
 		-- helpers
 		
 		nodeLoc index = graph |@| (path!!index)
-		isSpaceLane index = isSpaceLane' graph (path!!index) (path!!(index+1))
+		isSpaceLaneIndex index = isSpaceLane graph (path!!index) (path!!(index+1))
 
-		route' = [ (nodeLoc index, nodeLoc (index+1), isSpaceLane index)  | index <- [0..((length path)-2)] ]
+		route' = [ (nodeLoc index, nodeLoc (index+1), isSpaceLaneIndex index)  | index <- [0..((length path)-2)] ]
 	in	route' --trace (printf "start:\n%s\n end:\n%s\n graph:\n%s\n route:\n%s\n"  (show start) (show end) (ppShow graph) (ppShow route')) route' 
 
 		
@@ -117,10 +117,10 @@ aStar' graph startID endID =
 		neighbour nodeID = graph |>*>| nodeID
 
 		weight :: NodeID -> NodeID -> Double
-		weight nodeID1 nodeID2 = edgeCost' graph nodeID1 nodeID2
+		weight nodeID1 nodeID2 = edgeCost graph nodeID1 nodeID2
 
 		heuristic :: NodeID -> Double
-		heuristic nodeID = edgeCost' graph nodeID endID
+		heuristic nodeID = edgeCost graph nodeID endID
 
 		isGoal :: NodeID -> Bool
 		isGoal nodeID = nodeID == endID

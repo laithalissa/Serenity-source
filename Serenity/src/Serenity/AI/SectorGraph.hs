@@ -260,7 +260,9 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 
 		graph'''' = addEdgeNodes graph'''
 
-	in	trace (show $ Set.size $ graph''''^.sgNodes) (addionalIDs, cacheEdges graph'''')
+		cachedGraph = cacheEdges graph''''
+
+	in	(addionalIDs, cachedGraph)
 
 		where
 
@@ -281,7 +283,7 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 
 		addEdgeNodes :: SectorGraph -> SectorGraph
 		addEdgeNodes graph = 
-			let	edges = Set.toList $ getSpaceLaneEdges graph
+			let	edges = Set.toList $ Set.union (getSpaceLaneEdges graph) (getEdges graph)
 				f g (n1, n2) = addEdgeNode n1 n2 g
 			in	foldl f graph edges
 		-- | addes regular nodes along the edge between nID1 and nID2
@@ -292,7 +294,7 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 				node1Location@(x1,y1) = node1^.nodeLocation
 				node2Location@(x2,y2) = node2^.nodeLocation
 				y = equationOfLine node1Location node2Location
-				xs = let (x,x')=(min x1 x2, max x1 x2) in [x,x+20 .. x']
+				xs = let (x,x')=(min x1 x2, max x1 x2) in [x+edgeBreak,x+2*edgeBreak .. x']
 				ys = map y xs
 				locations = zip xs ys
 			in	addAddionalLocations' graph locations

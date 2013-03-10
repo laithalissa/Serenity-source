@@ -7,7 +7,11 @@ module Serenity.AI.SectorGraph
 import Serenity.Model.Common
 import Serenity.Model.Sector
 
+import Control.Arrow
+import Control.Category
+
 import Control.Lens
+import Data.Maybe(fromJust, isJust)
 import Data.Set(Set)
 import qualified Data.Set as Set
 import Data.Map(Map)
@@ -41,7 +45,7 @@ instance Eq SectorNode where
 	n1 == n2 = n1^.nodeID == n2^.nodeID
 
 instance Ord SectorNode where
-	compare n1 n2 = compare (n1^.sectorID) (n2^.sectorID)	
+	compare n1 n2 = compare (n1^.nodeID) (n2^.nodeID)	
 
 -- helpers --
 
@@ -71,7 +75,7 @@ isPointOnLine allowedDistance point ((sx,sy), (fx,fy)) =
 		xs = let (sx',fx')=sortTuple (sx,fx) in [sx' .. fx']
 		ys = map y xs
 		linePoints = zip xs ys
-	in	or $ map ((<=allowedDistance) . distance point) linesPoints
+	in	or $ map ((<=allowedDistance) . distance point) linePoints
 
 
 isLineOnLine 
@@ -102,28 +106,28 @@ graph |>| nID = (graph<^>nID)^.nodeNormalNeighbours
 (|>>|) :: SectorGraph -> NodeID -> Set NodeID
 graph |>>| nID = (graph<^>nID)^.nodeSpaceLaneNeighbours
 
-getEdges
+getEdgesF
 	:: (SectorGraph -> NodeID -> Set NodeID) 
 	-> SectorGraph 
 	-> Set (NodeID, NodeID)
-getEdges g graph = 
+getEdgesF g graph = 
 	let 	f (seen,edges) nodeID = 
 			if Set.member nodeID seen
 			then (seen, edges)
 			else (Set.insert nodeID seen, 
 			      Set.union edges (setToEdge nodeID $ g graph nodeID) )
 		setToEdge nodeID setNodeIDs = Set.map (\nid->(nodeID,nid)) setNodeIDs
-		(_,edges) = Set.foldl f (Set.empty, Set.empty) $ map _nodeID $ graph^.sgNodes
-	in	edges
+		(_,edges') = foldl f (Set.empty, Set.empty) $ map _nodeID $ Set.toList $ graph^.sgNodes
+	in	edges'
 
 
 -- | look existing normal edges
-(|-|) :: SectorGraph -> Set (NodeID, NodeID)
-graph|-| = getEdges (|>|) graph nodeID
+getEdges :: SectorGraph -> Set (NodeID, NodeID)
+getEdges graph = getEdgesF (|>|) graph
 
 -- | lookup space lane edges
-(|--|) :: SectorGraph -> Set (NodeID, NodeID)
-graph|--| = getEdges (|>>|) graph nodeID
+getSpaceLaneEdges :: SectorGraph -> Set (NodeID, NodeID)
+getSpaceLaneEdges graph = getEdgesF (|>>|) graph 
 
 adjacent :: SectorGraph -> NodeID -> Set NodeID
 adjacent graph nID = Set.union (graph|>>|nID) (graph|>|nID)
@@ -142,10 +146,10 @@ isJumpLane' graph nID1 nID2 =
 		node2Location = node2^.nodeLocation
 		spaceLaneRadius = graph^.sgSpaceLaneRadius
 		line = (node1Location, node2Location)
-		spaceLanes = graph|--|
+		spaceLanes = getSpaceLaneEdges graph
 		loc' (nid1, nid2) = ((graph<^>nid1)^.nodeLocation, (graph<^>nid2)^.nodeLocation)
 		f line' = isLineOnLine spaceLaneRadius line line'
-	in	or $ map (f . loc') spaceLanes
+	in	or $ map (f . loc') $ Set.toList spaceLanes
 
 
 edgeCost' :: SectorGraph -> NodeID -> NodeID -> Double
@@ -160,8 +164,6 @@ edgeCost' graph nID1 nID2 =
 		distance' = distance node1Location node2Location
 	in	distance' / multiplier
 		
-
-isJumpLane' :: SectorGraph -> NodeID -> NodeID -> Bool
 
 empty :: Sector -> Double -> SectorGraph
 empty sector spaceLaneRadius = SectorGraph
@@ -188,13 +190,13 @@ addEdge id1 id2 graph =
 			node2 = graph<^>id2
 			spaceLaneCheck = isJumpLane' graph id1 id2 
 			(node1N', node2N') = 	if spaceLaneCheck
-						then (Set.insert id2 (graph|>>|node1), Set.insert id1 (graph|>>|node2))
-						else (Set.insert id2 (graph|>|node1), Set.insert id1 (graph|>|node2))
+						then (Set.insert id2 (graph|>>|id1), Set.insert id1 (graph|>>|id2))
+						else (Set.insert id2 (graph|>|id1), Set.insert id1 (graph|>|id2))
 			
 			(node1',node2') = 	if spaceLaneCheck
 						then (node1{_nodeSpaceLaneNeighbours=node1N'}, node2{_nodeSpaceLaneNeighbours=node2N'})
 						else (node1{_nodeNormalNeighbours=node1N'}, node2{_nodeNormalNeighbours=node2N'})
-			nodes' = Set.insert node1' $ Set.insert node2' graph
+			nodes' = Set.insert node1' $ Set.insert node2' (graph^.sgNodes)
 		in	graph{_sgNodes=nodes'}
 			
 
@@ -218,7 +220,7 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 	let	graph = empty sector radius
 		planets = sectorPlanets' sector
 
-		nodeF (graph, nodeIDs) planet = let	(graph', nID) = addNode (planet^.planetLocation) 
+		nodeF (graph, nodeIDs) planet = let	(graph', nID) = addNode (planet^.planetLocation) graph 
 						in	(graph', Map.insert (planet^.planetID) nID nodeIDs)							
 		(graph', planetNodeIDs) = foldl nodeF (graph,Map.empty) $ sectorPlanets' sector
 
@@ -250,4 +252,4 @@ cart :: [a] -> [a] -> [(a,a)]
 cart [] [] = []
 cart as [] = []
 cart [] bs = []
-cart a:as bs = (cart as bs) ++ (map (\b -> (a,b)) bs)
+cart (a:as) bs = (cart as bs) ++ (map (\b -> (a,b)) bs)

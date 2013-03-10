@@ -10,6 +10,7 @@ import Serenity.Model.Entity
 import Serenity.Model.Sector
 import Serenity.Model.Ship
 import Serenity.Model.Wire
+import Serenity.AI.SectorGraph
 
 import Data.VectorSpace
 import Data.Graph.AStar(aStar)
@@ -60,7 +61,7 @@ import Prelude hiding (id, (.))
 -- route = proc (sector, entity, destination) -> do
 	
 
-data SectorGraph = SectorGraph 
+data SectorGraphOld = SectorGraphOld 
 	{	nextNodeID 	:: Int
 	,	nodes 		:: Set SectorNode
 	,	edges 		:: Set SectorEdge
@@ -107,13 +108,13 @@ instance Ord SectorEdge where
 
 
 
-emptyGraph = SectorGraph 0 Set.empty Set.empty
+emptyGraph = SectorGraphOld 0 Set.empty Set.empty
 
 graphAddNode 
-	:: SectorGraph 
+	:: SectorGraphOld 
 	-> Location 
 	-> Maybe Int -- ^ just if planetID, nothing if virtual node
-	-> (SectorGraph, NodeID)
+	-> (SectorGraphOld, NodeID)
 graphAddNode graph location mID =
 	let	nodeID = if (isJust mID) then NodePlanetID (fromJust mID) else NodeID (nextNodeID graph)
 	 	node = SectorNode nodeID location
@@ -128,12 +129,12 @@ graphAddNode graph location mID =
 			else (graph{nextNodeID=nextNodeID', nodes=nodes'}, nodeID)
 
 graphAddEdge
-	:: SectorGraph
+	:: SectorGraphOld
 	-> Sector
 	-> NodeID
 	-> NodeID 
 	-> Bool -- ^ is space lane
-	-> SectorGraph
+	-> SectorGraphOld
 graphAddEdge graph sector id1 id2 isSpaceLane =
 	let	cost = calculateEdgeCost sector (graphNodeLocation' graph id1) (graphNodeLocation' graph id2) isSpaceLane
 		edge' = SectorEdge id1 id2 cost isSpaceLane
@@ -143,12 +144,12 @@ graphAddEdge graph sector id1 id2 isSpaceLane =
 
 
 graphAddNodeWithEdges
-	:: SectorGraph
+	:: SectorGraphOld
 	-> Sector
 	-> Location
 	-> Maybe Int -- ^ if just then planetID and isSpaceLane, otherwise virtualnode and not spaceLane
 	-> [NodeID]
-	-> (SectorGraph, NodeID)
+	-> (SectorGraphOld, NodeID)
 graphAddNodeWithEdges graph sector location mID neighbourIDs =
 	let	(graph', nodeID') = graphAddNode graph location mID
 		f g nID = graphAddEdge g sector nodeID' nID (isJust mID)
@@ -157,10 +158,10 @@ graphAddNodeWithEdges graph sector location mID neighbourIDs =
 
 
 graphAddConnectedNode
-	:: SectorGraph
+	:: SectorGraphOld
 	-> Sector
 	-> Location
-	-> (SectorGraph, NodeID)
+	-> (SectorGraphOld, NodeID)
 graphAddConnectedNode graph sector location =
 	let	(graph', nodeID') = graphAddNode graph location Nothing
 		edgeF edge = if (sectorEdgeNode1ID edge) == nodeID' 
@@ -205,7 +206,7 @@ makeDirection start end = normalized (end - start)
 
 route :: Sector -> Location -> Location -> [(Location, Location, Bool)]
 route sector start end =
-	let	graph = makeSectorGraph sector
+	let	graph = makeSectorGraphOld sector
 		(graph', startID) = graphAddConnectedNode graph sector start
 		(graph'', endID) = graphAddConnectedNode graph' sector end
 
@@ -220,7 +221,7 @@ route sector start end =
 
 		
 
-aStar' :: SectorGraph -> NodeID -> NodeID -> [SectorNode]
+aStar' :: SectorGraphOld -> NodeID -> NodeID -> [SectorNode]
 aStar' graph startID endID =
 	let	-- | aStar argument 1
 		end = graphNode' graph endID
@@ -250,7 +251,7 @@ aStar' graph startID endID =
 			in trace msg (start : (fromJust mPath))
 
 
-graphNeighbours' :: SectorGraph -> NodeID -> Set NodeID
+graphNeighbours' :: SectorGraphOld -> NodeID -> Set NodeID
 graphNeighbours' graph id = 
 	let	f (SectorEdge id1 id2 _ _) = case (id1, id2) of
 			(id, o) -> o
@@ -258,15 +259,15 @@ graphNeighbours' graph id =
 			(_, _) -> id
 	in	Set.filter (/=id) $ Set.map f $ edges graph 
 		
-graphNode' :: SectorGraph -> NodeID -> SectorNode
+graphNode' :: SectorGraphOld -> NodeID -> SectorNode
 graphNode' graph nodeID = 
 	let	results = Set.filter (\n -> (sectorNodeID n) == nodeID) (nodes graph)
 	in	(Set.toList results) !! 0
 
-graphNodeLocation' :: SectorGraph -> NodeID -> Location
+graphNodeLocation' :: SectorGraphOld -> NodeID -> Location
 graphNodeLocation' graph nid =  sectorNodeLocation $ graphNode' graph nid
 
-graphEdge' :: SectorGraph -> NodeID -> NodeID -> SectorEdge
+graphEdge' :: SectorGraphOld -> NodeID -> NodeID -> SectorEdge
 graphEdge' graph n1ID n2ID = 
 	let	f e1@(SectorEdge id1 id2 _ _) e2@(SectorEdge id3 id4 _ _)  = 
 			if setPairEqual (n1ID, n2ID) (id1, id2)
@@ -276,7 +277,7 @@ graphEdge' graph n1ID n2ID =
 
 
 -- | warning: the original edge is not removed, 2 edges are added
-splitEdge :: Sector -> SectorGraph -> NodeID -> NodeID -> Location -> SectorGraph
+splitEdge :: Sector -> SectorGraphOld -> NodeID -> NodeID -> Location -> SectorGraphOld
 splitEdge sector graph node1ID node2ID location =
 	let	node1 = graphNode' graph node1ID
 		node2 = graphNode' graph node2ID
@@ -289,8 +290,8 @@ splitEdge sector graph node1ID node2ID location =
 	
 
 -- | makes a sectorGraph directly from sector, no artificial nodes
-makeSectorGraph :: Sector -> SectorGraph
-makeSectorGraph sector = 
+makeSectorGraphOld :: Sector -> SectorGraphOld
+makeSectorGraphOld sector = 
 	let	planets = sectorPlanets' sector
 		spaceLanes = sector^.sectorSpaceLanes
 		graph = emptyGraph
@@ -313,7 +314,7 @@ calculateEdgeCost sector start end isSpaceLane =
 min' :: (a -> Double) -> a -> a -> a
 min' f a1 a2 = if (f a1) <= (f a2) then a1 else a2
 
-nearestNode :: SectorGraph -> Location -> NodeID
+nearestNode :: SectorGraphOld -> Location -> NodeID
 nearestNode graph location = 
 	let 	nodes' = Set.toList $ nodes graph
 		distances = map (distance location . sectorNodeLocation) nodes'

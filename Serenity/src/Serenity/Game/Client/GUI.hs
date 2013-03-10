@@ -12,11 +12,11 @@ import Serenity.Game.Client.ClientMessage (GUICommand(..))
 import Serenity.Maths.Util
 import Serenity.Model
 import Serenity.Game.Client.Color
+import Serenity.Sheen.Util
 
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Data.Color
 import Control.Lens
-import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (catMaybes, fromJust)
 import GHC.Float
@@ -39,27 +39,27 @@ handleMessage _ uiState = uiState
 
 render :: Game -> UIState ClientState -> Assets -> Picture
 render game uiState assets = Pictures
-	[	stars
-	,	paralaxShift $ Pictures[ blueNebula, greenNebula]
+	[	translate 80 80 $ scale 0.9 0.9 $ parallaxShift 150 stars
+	,	 translate 100 100 $ Pictures [parallaxShift 10 blueNebula, parallaxShift 7 greenNebula]
 	,	(drawWorldToWindow. renderInWorld) game
 	]
 	where
 		greenNebula       = getPicture "greenNebulaLayer" assets
 		blueNebula        = getPicture "blueNebulaLayer" assets
 		stars             = getPicture "starBackdropLayer" assets 
-		drawWorldToWindow = translateWorld . scaleWorld
-		scaleWorld        = scale (double2Float s) (double2Float s)
-		translateWorld    = translate (double2Float $ vpx*(1-s)) (double2Float$ vpy*(1-s))
+		drawWorldToWindow x = 
+			scale (double2Float (s)) (double2Float (s)) $ 
+			translate (double2Float (-vpx)) (double2Float (- vpy)) x
+		
+		parallaxShift a x = 
+			scale (double2Float (1+s/100)) (double2Float (1+s/100)) $ 
+			translate (double2Float (-vpx/a)) (double2Float (- vpy/a)) x
 
 		(ww, wh)          = (fromIntegral w, fromIntegral h) where (w, h) = windowSize
 		((vpx, vpy), vpz) = uiState^.uiStateViewport
-		(gw, gh)          =  game^.gameBuilder^.gbSector.sectorSize
+		(gw, gh)          = game^.gameBuilder^.gbSector.sectorSize
 		normScale         = ((min ww wh) / (max gw gh))
-		s                 = vpz * normScale	
-		paralaxShift	  = translate 
-								(-(double2Float vpx) + (paralaxDirection $ double2Float vpz) * 2) 
-								(-(double2Float vpy) + (paralaxDirection $ double2Float vpz) * 2) 
-		paralaxDirection zl = if zl >= 1 then zl else ( -1 / zl )
+		s = vpz * normScale	
 
 		renderInWorld game = pictures
 			[	pictures $ map (pictureSpaceLane game uiState assets) $ game^.gameBuilder^.gbSector.sectorSpaceLanes
@@ -79,7 +79,7 @@ picturePlanet game uiState assets (planetID, planet) = translate x y $ Pictures 
 
 pictureSpaceLane :: Game -> UIState ClientState -> Assets -> (Int, Int) -> Picture
 pictureSpaceLane game uiState assets (p1, p2) = 
-	color (dark green) 
+	color (changeAlpha green 0.5) 
 	$ line $ map (\p -> pDouble2Float $ p^.planetLocation) planets where
 		planets    = catMaybes $ map (\k -> Map.lookup k planetsMap) [p1, p2]
 		planetsMap = game^.gameBuilder^.gbSector.sectorPlanets

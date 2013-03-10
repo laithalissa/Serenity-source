@@ -15,7 +15,6 @@ import Control.Lens
 import Control.Monad.State
 import Graphics.Gloss.Interface.IO.Game
 import GHC.Float
-import Serenity.Maths.Util
 
 -- | Run the client
 client ::
@@ -83,7 +82,7 @@ handleStep delta clientState = do
 		then clientGameStatus .~ Complete $ clientState
 		else clientState
 
-	return $ (clientUIState.uiStateViewport .~ newViewPort $ clientState') {_clientGame = gameState', _clientCommands = []}
+	return $ (wasdControls clientState') {_clientGame = gameState', _clientCommands = []}
 
 	where
 		getUpdate (UpdateMessage update _) = [update]
@@ -97,14 +96,28 @@ handleStep delta clientState = do
 		inn   = keyMostRecentDownFrom ks (Char 'q') [Char 'q', Char 'e']
 		out   = keyMostRecentDownFrom ks (Char 'e') [Char 'q', Char 'e']
 
-		a = 3
-		b = 0.1
+		left'  = keyMostRecentDownFrom ks (Char 'A') [Char 'A', Char 'D']
+		right' = keyMostRecentDownFrom ks (Char 'D') [Char 'A', Char 'D']
+		up'    = keyMostRecentDownFrom ks (Char 'W') [Char 'W', Char 'S']
+		down'  = keyMostRecentDownFrom ks (Char 'S') [Char 'W', Char 'S']
 
-		moveLeft   = if left  then modify (\((x,y), z) -> ((x-a,y), z) ) else return ()
-		moveRight  = if right then modify (\((x,y), z) -> ((x+a,y), z) ) else return ()
-		moveUp     = if up    then modify (\((x,y), z) -> ((x,y+a), z) ) else return ()
-		moveDown   = if down  then modify (\((x,y), z) -> ((x,y-a), z) ) else return ()
-		zoomIn     = if inn   then modify (\((x,y), z) -> ((x,y), rangeLimitAttainBounds (0.3) (10.0) (z+b)) ) else return ()		
-		zoomOut    = if out   then modify (\((x,y), z) -> ((x,y), rangeLimitAttainBounds (0.3) (10.0) (z-b)) ) else return ()		
-		allUpdates = do moveLeft; moveRight; moveUp; moveDown; zoomIn; zoomOut
-		newViewPort = execState allUpdates $ clientState^.clientUIState.uiStateViewport
+		a = 10
+
+		viewPortL = clientUIState.uiStateViewport
+
+		wasdControls :: ClientState -> ClientState
+		wasdControls = execState $ do
+			sector <- use $ clientGame.gameBuilder.gbSector
+			when right  $ viewPortL %= viewPortPanX sector ( a)
+			when left   $ viewPortL %= viewPortPanX sector (-a)
+			when up     $ viewPortL %= viewPortPanY sector ( a)
+			when down   $ viewPortL %= viewPortPanY sector (-a)
+
+			when right' $ viewPortL %= viewPortPanX sector ( a*4)
+			when left'  $ viewPortL %= viewPortPanX sector (-a*4)
+			when up'    $ viewPortL %= viewPortPanY sector ( a*4)
+			when down'  $ viewPortL %= viewPortPanY sector (-a*4)
+
+			when inn    $ viewPortL %= viewPortZoom sector (1.1)
+			when out    $ viewPortL %= viewPortZoom sector (0.9)
+

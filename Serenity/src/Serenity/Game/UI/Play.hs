@@ -18,7 +18,6 @@ import Control.Lens
 import Control.Monad.State
 import Data.Monoid
 import Data.Maybe
-import qualified Data.Map as Map
 
 data PlayData a = PlayData 
 	{	_playSelectBox :: Maybe ((Float, Float), (Float, Float))
@@ -45,26 +44,28 @@ viewPlay a = case (a^.aClientState) of
 
 sidebarView :: PlayState a => a -> ClientState -> View a
 sidebarView a clientState = (initBox ((0,0),(200,750))) <++
-	[	minimap a (aClientState.(to fromJust).clientGame) (a^.aClientState.(to fromJust).clientOwnerID) & (viewOrigin .~ (0,25))
+	[	minimap a (aClientState.(to fromJust).clientGame) (a^.aClientState.(to fromJust).clientOwnerID) (200,200) & (viewOrigin .~ (0,40))
 	,	(initView ((0,0),(200,35))) & (viewBackground .~ (Just black)) <++
 		[	labelStatic a ((initLabel (DynamicString aName) (bright myColor) Nothing) & (labelScale .~ 1)) ((5,5), (200,25))
 		]
 	,	(initView ((0,600),(200,150))) 
 			& (viewBackground .~ (Just $ black))
 			& (viewDepictMode .~ ViewDepictModeViewUppermost)
-			& (viewDepict .~ (Just $ translate 100 75 $ pictures [background, scale s s $ foreground]))
-	,	(initBox ((0,550),(200,50))) <++
+			& (viewDepict .~ (Just $ translate 100 75 $ pictures $ (if useStarBackdrop then [backdrop] else []) ++ [scale s s $ foreground]))
+	,	(initView ((0,545),(200,50))) & (viewBackground .~ (Just black)) <++
 		[	labelStatic a ((initLabel (StaticString name) (bright textColor) Nothing) & (labelScale .~ 1.2)) ((10,15), (200,50))
 		]
 	] where
-		(game, uiState, assets) = (clientState^.clientGame, clientState^.clientUIState, a^.aAssets)
-		background = getPictureSized "starBackdropSidebar" 200 150 assets
+		viewPort = clientState^.clientUIState.uiStateViewport
 
-		((foreground, name), textColor, s) = case (clientState^.clientUIState.uiStateSelected) of
-			SelectionOwnShips   (shipID:_) -> (lookupShip shipID, bright green, 12)
-			SelectionEnemyShips (shipID:_) -> (lookupShip shipID, bright red, 12)
-			SelectionPlanet     planetID   -> (lookupPlanet planetID, dark white, 9)
-			_                              -> ((pictures [], ""), black, 12)
+		(game, uiState, assets) = (clientState^.clientGame, clientState^.clientUIState, a^.aAssets)
+		backdrop = getPictureSized "starBackdropSidebar" 200 150 assets
+
+		((foreground, name), useStarBackdrop, textColor, s) = case (clientState^.clientUIState.uiStateSelected) of
+			SelectionOwnShips   (shipID:_) -> (lookupShip shipID, True, bright green, 12)
+			SelectionEnemyShips (shipID:_) -> (lookupShip shipID, True, bright red, 12)
+			SelectionPlanet     planetID   -> (lookupPlanet planetID, True, dark white, 9)
+			_                              -> ((pictures [], ""), False, black, 12)
 		
 		lookupShip shipID = case game^.gameShips.(at shipID) of
 			Just ship -> (pictureEntity game uiState assets 0 ship, ship^.shipName)
@@ -106,6 +107,7 @@ handleMainEvent event = case event of
 	UIEventMouseDownInside _ point mods -> startSelect point
 	UIEventMouseUpInside   LeftButton point (Modifiers Up Up Up) -> endSelect False point
 	UIEventMouseUpInside   LeftButton point (Modifiers Down Up Up) -> endSelect True point
+	UIEventMouseUpInside   LeftButton point (Modifiers Up Up Down) -> endSelectRight point
 	UIEventMouseUpInside   RightButton point mods -> endSelectRight point
 	UIEventMouseUpOutside  LeftButton point mods -> endSelect False point
 	UIEventMotion point -> continueSelect point

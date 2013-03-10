@@ -6,6 +6,7 @@ import Serenity.Sheen
 import Serenity.Game.UI.Application
 import Serenity.Game.Server.Main
 import Serenity.External
+import Serenity.Model
 
 import Control.Lens
 import Control.Monad.State
@@ -115,7 +116,7 @@ timeHostIO _ = do
 	runServer' = do
 		serverPort <- use aPort
 		numPlayers <- use (aHost.hostNumPlayers)
-		serverThreadID <- liftIO.forkIO $ server (fromIntegral $ read serverPort) (read numPlayers)
+		serverThreadID <- liftIO.forkIO $ server sectorTwo (fromIntegral $ read serverPort) (read numPlayers)
 		aHost.hostServerGame .= (Running serverThreadID)
 		return ()
 

@@ -26,10 +26,11 @@ import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 -- | Run the server.
 server 
-	:: Int   -- ^ Port to listen on.
+	:: Sector
+	-> Int   -- ^ Port to listen on.
 	-> Int   -- ^ Number of clients to connect.
 	-> IO ()
-server port clientCount = forever $ do
+server sector port clientCount = forever $ do
 	print "server started"	
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
 	(clients, transport) <- connectionPhase (fromIntegral port) clientCount
@@ -39,7 +40,7 @@ server port clientCount = forever $ do
 	closeTransport transport
 	print "server finished"
 	where
-		createGameBuilder clients = makeGameBuilder sectorOne $
+		createGameBuilder clients = makeGameBuilder sector $
 			M.fromList $ map (\c -> (clientID c, demoFleet)) clients
 
 -- | Wait for n clients to connect

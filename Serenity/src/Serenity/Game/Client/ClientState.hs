@@ -11,9 +11,7 @@ import Serenity.Network.Transport
 
 import Graphics.Gloss.Data.Extent
 import Control.Lens
-import Control.Concurrent.STM
 import Control.Monad.State
-import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.List
 
@@ -49,14 +47,14 @@ mapLocationFromView
 	-> ViewPort -- ^ View port
 	-> Size     -- ^ Size of the map
 	-> Location
-mapLocationFromView (x, y) ((vx, vy), vz) (w, h) = (mapX, mapY)
+mapLocationFromView (x, y) ((vpx, vpy), vpz) (w, h) = (mapX, mapY)
 	where
-		mapX = (-(vx*(1-s)) - (ww/2) + x)/s
-		mapY = (-(vy*(1-s)) - (wh/2) + y)/s
+		mapX = (((x-(ww/2))/s) + vpx)
+		mapY = (((y-(wh/2))/s) + vpy)
 		ww = fromIntegral $ fst windowSize
 		wh = fromIntegral $ snd windowSize
 		normScale = ((min ww wh) / (max w h))
-		s = vz * normScale
+		s = vpz * normScale
 
 mapExtentFromView :: Extent -> ViewPort -> Size -> Extent
 mapExtentFromView extent viewPort mapSize = makeExtent (floor yMax') (floor yMin') (floor xMax') (floor xMin') where
@@ -98,6 +96,10 @@ selectionToTriple (SelectionPlanet i)     = ([],[],Just i)
 
 makeLenses ''UIState
 makeLenses ''ClientState
+
+viewPortPanX sector a ((x,y),z) = ((x', y ), z ) where x' = rangeLimitAttainBounds 0 (sector^.sectorSize._1) (x+2*a/z)
+viewPortPanY sector a ((x,y),z) = ((x , y'), z ) where y' = rangeLimitAttainBounds 0 (sector^.sectorSize._2) (y+2*a/z)
+viewPortZoom sector a ((x,y),z) = ((x , y ), z') where z' = rangeLimitAttainBounds 1 12 (z*a)
 
 -- | Create the initial client state
 initClientState :: Assets -> GameBuilder -> OwnerID -> [(OwnerID, String)] -> TransportInterface -> ClientState

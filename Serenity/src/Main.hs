@@ -6,6 +6,7 @@ where
 import Serenity.Game.Client.Main (client)
 import Serenity.Game.Server.Main (server)
 import Serenity.Game.UI.Main     (gui)
+import Serenity.Model
 import System.Console.ParseArgs
 
 clientMainArgs :: IO (Args String)
@@ -78,6 +79,7 @@ main = do
 		"server" -> do
 			sArgs <- serverMainArgs
 			server 
+				sectorOne
 				(getRequiredArg sArgs "port")
 				(getRequiredArg sArgs "clientCount")
 				

@@ -81,7 +81,7 @@ timeLobbyIO dt = do
 				ControlMessage ControlStarting -> return connected
 				_ -> waitForStarting inbox connected
 
-		createGameBuilder clients = makeGameBuilder sectorOne $
+		createGameBuilder clients = makeGameBuilder sectorTwo $
 			M.fromList $ map (\c -> (fst c, demoFleet)) clients
 
 connectToServer :: String -> PortNumber -> String -> IO (TransportInterface, Int)

@@ -12,7 +12,7 @@ class AppState a where
 	aMode :: Simple Lens a ApplicationMode
 	aAssets :: Simple Lens a Assets
 
-serenityVersionString = "Alpha 1.01"
+serenityVersionString = "Alpha 1.2"
 
 data ApplicationMode = Splash | Menu | Host| Join | Lobby | Play | End | Quit deriving Eq
 

@@ -2,6 +2,15 @@
 
 module Serenity.AI.SectorGraph
 (	SectorGraph
+,	NodeID
+,	lookupNode
+,	(|@|)
+,	(|>|)
+,	(|>>|)
+,	(|>*>|)
+,	edgeCost'
+,	make
+,	isSpaceLane'
 ) where
 
 import Serenity.Model.Common
@@ -25,14 +34,14 @@ data SectorNode = SectorNode
 	,	_nodeLocation :: Location
 	,	_nodeSpaceLaneNeighbours :: Set NodeID
 	,	_nodeNormalNeighbours :: Set NodeID
-	}
+	} deriving(Show)
 
 data SectorGraph = SectorGraph
 	{	_sgNextNodeID :: NodeID
 	,	_sgNodes :: Set SectorNode
 	,	_sgSector :: Sector
 	,	_sgSpaceLaneRadius :: Double
-	}
+	} deriving(Show)
 
 makeLenses ''SectorNode
 makeLenses ''SectorGraph
@@ -98,6 +107,10 @@ lookupNode graph nID = graph<^>nID
 (<^>) :: SectorGraph -> NodeID -> SectorNode
 graph <^> nID = (!!0) $ filter ((==nID) . _nodeID) $ Set.toList $ graph^.sgNodes
 
+-- | look up node location
+(|@|) :: SectorGraph -> NodeID -> Location
+graph |@| nID = (graph<^>nID)^.nodeLocation
+
 -- | looks up normal neighbours
 (|>|) :: SectorGraph -> NodeID -> Set NodeID
 graph |>| nID = (graph<^>nID)^.nodeNormalNeighbours
@@ -105,6 +118,10 @@ graph |>| nID = (graph<^>nID)^.nodeNormalNeighbours
 -- | looks up space lanes
 (|>>|) :: SectorGraph -> NodeID -> Set NodeID
 graph |>>| nID = (graph<^>nID)^.nodeSpaceLaneNeighbours
+
+-- | lookup all neighbours
+(|>*>|) :: SectorGraph -> NodeID -> Set NodeID
+graph |>*>| nID = Set.union (graph|>|nID) (graph|>>|nID)
 
 getEdgesF
 	:: (SectorGraph -> NodeID -> Set NodeID) 
@@ -138,8 +155,8 @@ isConnected graph nID1 nID2 =
 	in	Set.member nID2 neighbours
 
 -- | strict, calculates instead of querying graph
-isJumpLane' :: SectorGraph -> NodeID -> NodeID -> Bool
-isJumpLane' graph nID1 nID2 =
+isSpaceLane' :: SectorGraph -> NodeID -> NodeID -> Bool
+isSpaceLane' graph nID1 nID2 =
 	let	node1 = graph<^>nID1
 		node2 = graph<^>nID2
 		node1Location = node1^.nodeLocation
@@ -158,7 +175,7 @@ edgeCost' graph nID1 nID2 =
 		node2 = graph<^>nID2
 		node1Location = node1^.nodeLocation
 		node2Location = node2^.nodeLocation
-		multiplier =	if isJumpLane' graph nID1 nID2
+		multiplier =	if isSpaceLane' graph nID1 nID2
 				then graph^.sgSector.sectorSpaceLaneSpeedMultiplier
 				else 1.0
 		distance' = distance node1Location node2Location
@@ -188,7 +205,7 @@ addEdge id1 id2 graph =
 	then graph
 	else 	let	node1 = graph<^>id1
 			node2 = graph<^>id2
-			spaceLaneCheck = isJumpLane' graph id1 id2 
+			spaceLaneCheck = isSpaceLane' graph id1 id2 
 			(node1N', node2N') = 	if spaceLaneCheck
 						then (Set.insert id2 (graph|>>|id1), Set.insert id1 (graph|>>|id2))
 						else (Set.insert id2 (graph|>|id1), Set.insert id1 (graph|>|id2))
@@ -215,7 +232,7 @@ make
 	-> Double -- ^ edge break spacing
 	-> Double -- ^ spacing of virtual nodes around the graph
 	-> [Location] -- ^ addional virtual nodes
-	-> SectorGraph
+	-> ([NodeID], SectorGraph)
 make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 	let	graph = empty sector radius
 		planets = sectorPlanets' sector
@@ -245,7 +262,7 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 		-- | adds addiontal edges
 		graph'''' = 	let 	pairs = cart (Set.toList $ Set.map _nodeID (graph'''^.sgNodes)) addionalIDs
 				in	foldl (\g (id1,id2)-> addEdge id1 id2 g) graph''' pairs
-	in	graph''''
+	in	(addionalIDs, graph'''')
 
 
 cart :: [a] -> [a] -> [(a,a)]

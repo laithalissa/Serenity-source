@@ -86,8 +86,36 @@ sectorOne = Sector
 		,	(3, Planet {_planetID = 3, _planetName = "Qoruscant", _planetEcotype = Metal , _planetLocation  = (190, 190), _planetResources = res 10 0 10})
 		]
 	,	_sectorSpaceLanes  = [(1,2), (2,3)]
-	,	_sectorSpaceLaneSpeedMultiplier = 2.0
+	,	_sectorSpaceLaneSpeedMultiplier = 10.0
 	}
+
+sectorTwo = Sector
+	{	_sectorName        = "Sector Two"
+	,	_sectorSize        = (500, 500)
+	,	_sectorSpawnPoints = [(50,50), (50,450), (450,50), (450,450)]
+	,	_sectorPlanets     = Map.fromList
+		[	makePlanet 1 (100, 100)
+		,	makePlanet 2 (400, 100)
+		,	makePlanet 3 (100, 400)
+		,	makePlanet 4 (400, 400)
+		,	makePlanet 5 (150, 250)
+		,	makePlanet 6 (250, 350)
+		,	makePlanet 7 (250, 150)
+		,	makePlanet 8 (350, 250)
+		]
+	,	_sectorSpaceLanes  = 
+		[	(1,4)
+		, 	(3,2)
+		,	(5,6)
+		,	(5,7)
+		,	(8,6)
+		,	(8,7)
+		]
+	,	_sectorSpaceLaneSpeedMultiplier = 4.0
+	}
+
+	where 
+	makePlanet pid location = (pid, Planet {_planetID = pid, _planetName = "Splearth" , _planetEcotype = Blue  , _planetLocation  = location, _planetResources = res 10 10 0})
 
 
 planetLocation' :: Sector -> PlanetID -> Location

@@ -19,6 +19,7 @@ import Data.Maybe (fromJust, isJust)
 import Data.VectorSpace
 import Prelude hiding (id, (.))
 
+import Serenity.Debug(trace')
 import Debug.Trace(trace)
 
 --arr' = arr . uncurry
@@ -93,7 +94,7 @@ evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 				then [UpdateShipOrder (entity^.entityID) makeOrderNone]
 				else if p == [] 
 					then [] 
-					else trace (show p) [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] 
+					else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] 
 
 		(action:rest) -> do
 			hasFinishedAction <- (arr $ uncurry3 finishedAction) -< (game, entity, action)
@@ -195,21 +196,33 @@ move
 	-> ShipAction
 	-> [Update]
 
-move game entity (ActionMove start end isSpaceLane) =
+move game entity (ActionMove start end@(endLoc, endDir) isSpaceLane) =
 	let	startTime = entity^.entityData.shipActionStartTime
 		timeNow = game^.gameTime
 		speed = shipSpeed' game entity isSpaceLane
 		(curve, curveLength) = makePath radiusOfCurvature start end
 		s = ((timeNow-startTime)/(curveLength)) * speed -- * speed
-		s' = if s > 1.0 then 1.0 else s
-		position = curve s'
-		position' = differentiate (curve, s')
-	in	[	UpdateEntityLocationDirection
-			{	updateEntityID = entity^.entityID
-			,	updateEntityLocation = pDouble2Float position
-			,	updateEntityDirection = pDouble2Float position'
-			}
-		]
+
+		position = curve s
+		position' = differentiate (curve, s)
+		moveUpdate = 	UpdateEntityLocationDirection
+				{	updateEntityID = entity^.entityID
+				,	updateEntityLocation = pDouble2Float position
+				,	updateEntityDirection = pDouble2Float position'
+				}
+
+		finishedMoveUpdate =
+				UpdateEntityLocationDirection
+				{	updateEntityID = entity^.entityID
+				,	updateEntityLocation = pDouble2Float endLoc
+				,	updateEntityDirection = pDouble2Float endDir
+				}
+
+				
+
+	in	if s >= 1.0 
+		then [finishedMoveUpdate]
+		else [moveUpdate]
 
 -- move :: UpdateWire (Entity Ship, Double, ((Double,Double),(Double,Double)), ((Double, Double), (Double, Double)), Double)
 -- move = proc (entity, startTime, start, end, speed) -> do

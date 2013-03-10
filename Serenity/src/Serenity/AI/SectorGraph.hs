@@ -19,6 +19,9 @@ import Serenity.Model.Sector
 import Control.Arrow
 import Control.Category
 
+import Text.Printf
+import Debug.Trace(trace)
+
 import Control.Lens
 import Data.Maybe(fromJust, isJust)
 import Data.Set(Set)
@@ -179,7 +182,8 @@ edgeCost' graph nID1 nID2 =
 				then graph^.sgSector.sectorSpaceLaneSpeedMultiplier
 				else 1.0
 		distance' = distance node1Location node2Location
-	in	distance' / multiplier
+		cost' = distance' / multiplier
+	in	cost' -- trace (printf "cost between node %s and %s is %s\n" (show nID1) (show nID2) (show cost')) cost'
 		
 
 empty :: Sector -> Double -> SectorGraph
@@ -241,14 +245,10 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 						in	(graph', Map.insert (planet^.planetID) nID nodeIDs)							
 		(graph', planetNodeIDs) = foldl nodeF (graph,Map.empty) $ sectorPlanets' sector
 
-		-- | returns list of planetIDs connected to
-		g planet = let pid=planet^.planetID in 	map (\(pID1,pID2)->if pid==pID1 then pID2 else pID1) $ 
-							filter (\(pID1,pID2)-> pID1==pid || pID2==pid) (sector^.sectorSpaceLanes)
-
 		-- | given list of edges and planet return new list of edges including planets
 		edgesF edges planet = let	pID=planet^.planetID
 						nID = fromJust $ Map.lookup pID planetNodeIDs
-						pIDs = g planet
+						pIDs = connectedPlanetIDs planet
 					in	edges ++ [(nID, fromJust $ Map.lookup pID' planetNodeIDs) | pID' <- pIDs]
 		edges = foldl edgesF [] $ sectorPlanets' sector
 
@@ -257,13 +257,23 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 		graph'' = foldl edgeF graph' $ edges
 
 		-- | adds additional location
-		(graph''', addionalIDs) = foldl (\(g,ids) l -> let (g',nid)=addNode l g in (g',ids++[nid])) (graph'',[]) addionalNodeLocations
+		(graph''', addionalIDs) = addAddionalLocations graph'' 
 		
-		-- | adds addiontal edges
-		graph'''' = 	let 	pairs = cart (Set.toList $ Set.map _nodeID (graph'''^.sgNodes)) addionalIDs
-				in	foldl (\g (id1,id2)-> addEdge id1 id2 g) graph''' $ filter (\(a,b)-> a /= b) pairs
-	in	(addionalIDs, graph'''')
+	in	(addionalIDs, graph''')
 
+		where
+
+		addAddionalLocations :: SectorGraph -> (SectorGraph, [NodeID])
+		addAddionalLocations graph = 
+			let	(graph', addionalIDs) = foldl (\(g,ids) l -> let (g',nid)=addNode l g in (g',ids++[nid])) (graph,[]) addionalNodeLocations
+				pairs = cart (Set.toList $ Set.map _nodeID (graph'^.sgNodes)) addionalIDs
+				graph'' = foldl (\g (id1,id2)-> addEdge id1 id2 g) graph' $ filter (\(a,b)-> a /= b) pairs
+			in 	(graph'', addionalIDs)
+
+		connectedPlanetIDs :: Planet -> [PlanetID]
+		connectedPlanetIDs planet = 
+			let 	pid=planet^.planetID 
+			in 	map (\(pID1,pID2)->if pid==pID1 then pID2 else pID1) $ filter (\(pID1,pID2)-> pID1==pid || pID2==pid) (sector^.sectorSpaceLanes)
 
 cart :: [a] -> [a] -> [(a,a)]
 cart [] [] = []

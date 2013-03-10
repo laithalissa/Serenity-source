@@ -37,7 +37,7 @@ picturePlanet miniMapSize sSize p = translate x y (color planetColor $ circleSol
 	planetColor = case p^.planetEcotype of
 		Blue   -> dark $ dark green
 		Desert -> dark orange
-		Metal  -> greyN 0.7
+		Metal  -> greyN 0.5
 		Ocean  -> blue
 		Star   -> bright yellow
 

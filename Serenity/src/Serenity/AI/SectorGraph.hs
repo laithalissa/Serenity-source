@@ -10,6 +10,8 @@ import Serenity.Model.Sector
 import Control.Lens
 import Data.Set(Set)
 import qualified Data.Set as Set
+import Data.Map(Map)
+import qualified Data.Map as Map
 import Prelude hiding (id, (.))
 
 data NodeID = NodeID Int deriving(Eq, Ord, Show)
@@ -140,7 +142,11 @@ isJumpLane' graph nID1 nID2 =
 		node2Location = node2^.nodeLocation
 		spaceLaneRadius = graph^.sgSpaceLaneRadius
 		line = (node1Location, node2Location)
-		
+		spaceLanes = graph|--|
+		loc' (nid1, nid2) = ((graph<^>nid1)^.nodeLocation, (graph<^>nid2)^.nodeLocation)
+		f line' = isLineOnLine spaceLaneRadius line line'
+	in	or $ map (f . loc') spaceLanes
+
 
 edgeCost' :: SectorGraph -> NodeID -> NodeID -> Double
 edgeCost' graph nID1 nID2 = 
@@ -148,8 +154,14 @@ edgeCost' graph nID1 nID2 =
 		node2 = graph<^>nID2
 		node1Location = node1^.nodeLocation
 		node2Location = node2^.nodeLocation
-		spaceLaneRadius = graph^.sgSpaceLaneRadius
+		multiplier =	if isJumpLane' graph nID1 nID2
+				then graph^.sgSector.sectorSpaceLaneSpeedMultiplier
+				else 1.0
+		distance' = distance node1Location node2Location
+	in	distance' / multiplier
 		
+
+isJumpLane' :: SectorGraph -> NodeID -> NodeID -> Bool
 
 empty :: Sector -> Double -> SectorGraph
 empty sector spaceLaneRadius = SectorGraph
@@ -172,12 +184,29 @@ addEdge :: NodeID ->NodeID -> SectorGraph -> SectorGraph
 addEdge id1 id2 graph =
 	if isConnected graph id1 id2
 	then graph
-	else let	node1 = graph<^>id1
+	else 	let	node1 = graph<^>id1
 			node2 = graph<^>id2
+			spaceLaneCheck = isJumpLane' graph id1 id2 
+			(node1N', node2N') = 	if spaceLaneCheck
+						then (Set.insert id2 (graph|>>|node1), Set.insert id1 (graph|>>|node2))
+						else (Set.insert id2 (graph|>|node1), Set.insert id1 (graph|>|node2))
+			
+			(node1',node2') = 	if spaceLaneCheck
+						then (node1{_nodeSpaceLaneNeighbours=node1N'}, node2{_nodeSpaceLaneNeighbours=node2N'})
+						else (node1{_nodeNormalNeighbours=node1N'}, node2{_nodeNormalNeighbours=node2N'})
+			nodes' = Set.insert node1' $ Set.insert node2' graph
+		in	graph{_sgNodes=nodes'}
+			
 
 
-
-
+addSpaceLaneEdge :: NodeID -> NodeID -> SectorGraph -> SectorGraph
+addSpaceLaneEdge nID1 nID2 graph = 
+	let	node1 = graph<^>nID1
+		node2 = graph<^>nID2
+		node1' = node1{_nodeSpaceLaneNeighbours = Set.insert nID2 (node1^.nodeSpaceLaneNeighbours)}
+		node2' = node2{_nodeSpaceLaneNeighbours = Set.insert nID1 (node2^.nodeSpaceLaneNeighbours)}
+		nodes' = Set.insert node1' $ Set.insert node2' (graph^.sgNodes)
+	in	graph{_sgNodes=nodes'}
 make 
 	:: Sector
 	-> Double -- ^ radius of effect for space lanes
@@ -186,5 +215,39 @@ make
 	-> [Location] -- ^ addional virtual nodes
 	-> SectorGraph
 make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
-	let	
+	let	graph = empty sector radius
+		planets = sectorPlanets' sector
 
+		nodeF (graph, nodeIDs) planet = let	(graph', nID) = addNode (planet^.planetLocation) 
+						in	(graph', Map.insert (planet^.planetID) nID nodeIDs)							
+		(graph', planetNodeIDs) = foldl nodeF (graph,Map.empty) $ sectorPlanets' sector
+
+		-- | returns list of planetIDs connected to
+		g planet = let pid=planet^.planetID in 	map (\(pID1,pID2)->if pid==pID1 then pID2 else pID1) $ 
+							filter (\(pID1,pID2)-> pID1==pid || pID2==pid) (sector^.sectorSpaceLanes)
+
+		-- | given list of edges and planet return new list of edges including planets
+		edgesF edges planet = let	pID=planet^.planetID
+						nID = fromJust $ Map.lookup pID planetNodeIDs
+						pIDs = g planet
+					in	edges ++ [(nID, fromJust $ Map.lookup pID' planetNodeIDs) | pID' <- pIDs]
+		edges = foldl edgesF [] $ sectorPlanets' sector
+
+		edgeF g (nID1, nID2) = addSpaceLaneEdge nID1 nID2 g
+		-- | graph'' will now have all planet nodes and sector space lanes
+		graph'' = foldl edgeF graph' $ edges
+
+		-- | adds additional location
+		(graph''', addionalIDs) = foldl (\(g,ids) l -> let (g',nid)=addNode l g in (g',nid:ids)) (graph'',[]) addionalNodeLocations
+		
+		-- | adds addiontal edges
+		graph'''' = 	let 	pairs = cart (Set.toList $ Set.map _nodeID (graph'''^.sgNodes)) addionalIDs
+				in	foldl (\g (id1,id2)-> addEdge id1 id2 g) graph''' pairs
+	in	graph''''
+
+
+cart :: [a] -> [a] -> [(a,a)]
+cart [] [] = []
+cart as [] = []
+cart [] bs = []
+cart a:as bs = (cart as bs) ++ (map (\b -> (a,b)) bs)

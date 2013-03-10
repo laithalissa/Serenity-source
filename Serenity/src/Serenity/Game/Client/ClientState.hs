@@ -132,19 +132,20 @@ lassoShips extent = evalState $ do
 	ships       <- use (clientGame.gameShips)
 	oID         <- use clientOwnerID
 	ext         <- return $ mapExtentFromView extent viewPort mapSize
-	sUnderMouse <- return $ Map.filter (inBoxShip (expand ext)) ships
+	sUnderMouse <- return $ Map.filter (inBoxShip (expand' ext)) ships
 	(friendly, enemy) <- return $ partition (\(_,ship) -> ship^.ownerID == oID) (Map.toList sUnderMouse)
 	planets     <- use (clientGame.gameBuilder.gbSector.sectorPlanets)
-	pUnderMouse <- return $ Map.filter (inBoxPlanet (expand ext)) planets
+	pUnderMouse <- return $ Map.filter (inBoxPlanet (expand' ext)) planets
 	return $ (map fst friendly, map fst enemy, Map.keys pUnderMouse, wasDrag)
 	where
 		wasDrag = extentArea extent > 100
-		expand extent  = if wasDrag then extent else expand' extent
-		expand' extent = makeExtent (yMax+5) (yMin-5) (xMax+5) (xMin-5) where (yMax, yMin, xMax, xMin) = takeExtent extent
+		expand' extent  = if wasDrag then extent else expand 5 extent
+
+expand a extent = makeExtent (yMax+a) (yMin-a) (xMax+a) (xMin-a) where (yMax, yMin, xMax, xMin) = takeExtent extent
 
 inBoxShip :: Extent -> Entity Ship -> Bool
 inBoxShip extent ship = pointInExtent extent (pDouble2Float $ ship^.entityData.shipLocation)
 
 inBoxPlanet :: Extent -> Planet -> Bool
-inBoxPlanet extent planet = pointInExtent extent (pDouble2Float $ planet^.planetLocation)
+inBoxPlanet extent planet = pointInExtent (expand 10 extent) (pDouble2Float $ planet^.planetLocation)
 

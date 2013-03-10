@@ -97,7 +97,7 @@ sectorTwo = Sector
 		,	Planet 4 "Derida"              Desert (200, 500) (makeRes 5  5  0 )
 		,	Planet 5 "Arietis"             Desert (800, 500) (makeRes 5  5  0 )
 		,	Planet 6 "Castillon"           Blue   (50 , 50 ) (makeRes 10 0  0 )
-		,	Planet 7 "Elden Kennet"        Blue   (950, 950) (makeRes 10 0  0 )
+		,	Planet 7 "Elden Kennett"       Blue   (950, 950) (makeRes 10 0  0 )
 		,	Planet 8 "Alcantar"            Blue   (50 , 950) (makeRes 10 0  0 )
 		,	Planet 9 "New Zaldi"           Blue   (950, 50)  (makeRes 10 0  0 )
 		]

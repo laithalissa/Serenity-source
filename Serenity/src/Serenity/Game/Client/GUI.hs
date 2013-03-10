@@ -70,12 +70,12 @@ render game uiState assets = Pictures
 picturePlanet :: Game -> UIState ClientState -> Assets -> (Int, Planet) -> Picture
 picturePlanet game uiState assets (planetID, planet) = translate x y $ Pictures $ [p, name] ++ selectBox where
 	planetSelected = isSelectedPlanet uiState planetID
-	selectBox = if planetSelected then [planetSelectionArc 8.5 (double2Float (game^.gameTime))] else []
+	selectBox = if planetSelected then [planetSelectionArc 16.5 (double2Float (game^.gameTime))] else []
 	(x,y) = pDouble2Float $ planet^.planetLocation
-	p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets
+	p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 32 32 assets
 	name = if planetSelected
-		then color (greyN 0.7) $ translate (7) (-8) $ scale 0.016 0.016 $ Text (planet^.planetName)
-		else color (greyN 0.7) $ translate (5.5) (-6.5) $ scale 0.011 0.011 $ Text (planet^.planetName)
+		then color (greyN 0.7) $ translate (13) (-15) $ scale 0.03 0.03 $ Text (planet^.planetName)
+		else color (greyN 0.7) $ translate (11) (-13) $ scale 0.02 0.02 $ Text (planet^.planetName)
 
 pictureSpaceLane :: Game -> UIState ClientState -> Assets -> (Int, Int) -> Picture
 pictureSpaceLane game uiState assets (p1, p2) = 

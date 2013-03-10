@@ -3,7 +3,7 @@
 module Serenity.AI.SectorGraph
 (	SectorGraph
 ,	NodeID
-,	lookupNode
+,	(<^>)
 ,	(|@|)
 ,	(|>|)
 ,	(|>>|)
@@ -21,6 +21,7 @@ import Control.Category
 
 import Text.Printf
 import Debug.Trace(trace)
+import Text.Show.Pretty(ppShow)
 
 import Control.Lens
 import Data.Maybe(fromJust, isJust)
@@ -45,6 +46,12 @@ data SectorGraph = SectorGraph
 	,	_sgSector :: Sector
 	,	_sgSpaceLaneRadius :: Double
 	} deriving(Show)
+
+data SectorEdge = SectorEdge 
+	{	_edgeNode1 :: NodeID
+	,	_edgeNode2 :: NodeID
+	,	_edgeCost :: Double
+	}
 
 makeLenses ''SectorNode
 makeLenses ''SectorGraph
@@ -104,41 +111,21 @@ isLineOnLine allowedDistance (s1@(x1,y1), f1@(x2,y2)) (s2, f2) =
 	in	and $ map f points
 
 
-lookupNode :: SectorGraph -> NodeID -> SectorNode
-lookupNode graph nID = graph<^>nID
-
-(<^>) :: SectorGraph -> NodeID -> SectorNode
-graph <^> nID = (!!0) $ filter ((==nID) . _nodeID) $ Set.toList $ graph^.sgNodes
-
--- | look up node location
-(|@|) :: SectorGraph -> NodeID -> Location
-graph |@| nID = (graph<^>nID)^.nodeLocation
-
--- | looks up normal neighbours
-(|>|) :: SectorGraph -> NodeID -> Set NodeID
-graph |>| nID = (graph<^>nID)^.nodeNormalNeighbours
-
--- | looks up space lanes
-(|>>|) :: SectorGraph -> NodeID -> Set NodeID
-graph |>>| nID = (graph<^>nID)^.nodeSpaceLaneNeighbours
-
--- | lookup all neighbours
-(|>*>|) :: SectorGraph -> NodeID -> Set NodeID
-graph |>*>| nID = Set.union (graph|>|nID) (graph|>>|nID)
-
 getEdgesF
 	:: (SectorGraph -> NodeID -> Set NodeID) 
 	-> SectorGraph 
 	-> Set (NodeID, NodeID)
-getEdgesF g graph = 
+getEdgesF f' graph = 
 	let 	f (seen,edges) nodeID = 
 			if Set.member nodeID seen
 			then (seen, edges)
-			else (Set.insert nodeID seen, 
-			      Set.union edges (setToEdge nodeID $ g graph nodeID) )
+			else 	let	seen' = Set.insert nodeID seen
+					edges' = Set.union edges (setToEdge nodeID $ f' graph nodeID)
+				in 	(seen', edges') -- trace (printf "edges' %s: %s\nedges'':%s\n" (show $ Set.size edges') (show edges') (show edges'')) 
 		setToEdge nodeID setNodeIDs = Set.map (\nid->(nodeID,nid)) setNodeIDs
 		(_,edges') = foldl f (Set.empty, Set.empty) $ map _nodeID $ Set.toList $ graph^.sgNodes
-	in	edges'
+		edges'' = Set.filter (\(n1,n2) -> (n1 > n2) && (Set.member (n2,n1) edges') ) edges'
+	in	edges'' -- trace (printf "edges are: %s" (show edges'')) 
 
 
 -- | look existing normal edges
@@ -156,34 +143,6 @@ isConnected :: SectorGraph -> NodeID -> NodeID -> Bool
 isConnected graph nID1 nID2 =
 	let	neighbours = adjacent graph nID1
 	in	Set.member nID2 neighbours
-
--- | strict, calculates instead of querying graph
-isSpaceLane' :: SectorGraph -> NodeID -> NodeID -> Bool
-isSpaceLane' graph nID1 nID2 =
-	let	node1 = graph<^>nID1
-		node2 = graph<^>nID2
-		node1Location = node1^.nodeLocation
-		node2Location = node2^.nodeLocation
-		spaceLaneRadius = graph^.sgSpaceLaneRadius
-		line = (node1Location, node2Location)
-		spaceLanes = getSpaceLaneEdges graph
-		loc' (nid1, nid2) = ((graph<^>nid1)^.nodeLocation, (graph<^>nid2)^.nodeLocation)
-		f line' = isLineOnLine spaceLaneRadius line line'
-	in	or $ map (f . loc') $ Set.toList spaceLanes
-
-
-edgeCost' :: SectorGraph -> NodeID -> NodeID -> Double
-edgeCost' graph nID1 nID2 = 
-	let	node1 = graph<^>nID1
-		node2 = graph<^>nID2
-		node1Location = node1^.nodeLocation
-		node2Location = node2^.nodeLocation
-		multiplier =	if isSpaceLane' graph nID1 nID2
-				then graph^.sgSector.sectorSpaceLaneSpeedMultiplier
-				else 1.0
-		distance' = distance node1Location node2Location
-		cost' = distance' / multiplier
-	in	cost' -- trace (printf "cost between node %s and %s is %s\n" (show nID1) (show nID2) (show cost')) cost'
 		
 
 empty :: Sector -> Double -> SectorGraph
@@ -230,6 +189,15 @@ addSpaceLaneEdge nID1 nID2 graph =
 		node2' = node2{_nodeSpaceLaneNeighbours = Set.insert nID1 (node2^.nodeSpaceLaneNeighbours)}
 		nodes' = Set.insert node1' $ Set.insert node2' (graph^.sgNodes)
 	in	graph{_sgNodes=nodes'}
+
+
+cart :: [a] -> [a] -> [(a,a)]
+cart [] [] = []
+cart as [] = []
+cart [] bs = []
+cart (a:as) bs = (cart as bs) ++ (map (\b -> (a,b)) bs)
+
+---------- API ----------
 make 
 	:: Sector
 	-> Double -- ^ radius of effect for space lanes
@@ -257,15 +225,23 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 		graph'' = foldl edgeF graph' $ edges
 
 		-- | adds additional location
-		(graph''', addionalIDs) = addAddionalLocations graph'' 
+		(graph''', addionalIDs) = addAddionalLocations graph'' addionalNodeLocations
 		
-	in	(addionalIDs, graph''')
+
+		-- | adds edge nodes
+
+		graph'''' = addEdgeNodes graph'''
+
+	in	trace (show $ Set.size $ graph''''^.sgNodes) (addionalIDs, graph'''')
 
 		where
 
-		addAddionalLocations :: SectorGraph -> (SectorGraph, [NodeID])
-		addAddionalLocations graph = 
-			let	(graph', addionalIDs) = foldl (\(g,ids) l -> let (g',nid)=addNode l g in (g',ids++[nid])) (graph,[]) addionalNodeLocations
+		addAddionalLocations' :: SectorGraph -> [Location] -> SectorGraph
+		addAddionalLocations' graph locations = fst $ addAddionalLocations graph locations
+
+		addAddionalLocations :: SectorGraph -> [Location] -> (SectorGraph, [NodeID])
+		addAddionalLocations graph nodeLocations' = 
+			let	(graph', addionalIDs) = foldl (\(g,ids) l -> let (g',nid)=addNode l g in (g',ids++[nid])) (graph,[]) nodeLocations'
 				pairs = cart (Set.toList $ Set.map _nodeID (graph'^.sgNodes)) addionalIDs
 				graph'' = foldl (\g (id1,id2)-> addEdge id1 id2 g) graph' $ filter (\(a,b)-> a /= b) pairs
 			in 	(graph'', addionalIDs)
@@ -275,8 +251,69 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 			let 	pid=planet^.planetID 
 			in 	map (\(pID1,pID2)->if pid==pID1 then pID2 else pID1) $ filter (\(pID1,pID2)-> pID1==pid || pID2==pid) (sector^.sectorSpaceLanes)
 
-cart :: [a] -> [a] -> [(a,a)]
-cart [] [] = []
-cart as [] = []
-cart [] bs = []
-cart (a:as) bs = (cart as bs) ++ (map (\b -> (a,b)) bs)
+		addEdgeNodes :: SectorGraph -> SectorGraph
+		addEdgeNodes graph = 
+			let	edges = Set.toList $ getSpaceLaneEdges graph
+				f g (n1, n2) = addEdgeNode n1 n2 g
+			in	foldl f graph edges
+		-- | addes regular nodes along the edge between nID1 and nID2
+		addEdgeNode :: NodeID -> NodeID -> SectorGraph -> SectorGraph
+		addEdgeNode nID1 nID2 graph =
+			let	node1 = graph<^>nID1
+				node2 = graph<^>nID2
+				node1Location@(x1,y1) = node1^.nodeLocation
+				node2Location@(x2,y2) = node2^.nodeLocation
+				y = equationOfLine node1Location node2Location
+				xs = let (x,x')=(min x1 x2, max x1 x2) in [x,x+20 .. x']
+				ys = map y xs
+				locations = zip xs ys
+			in	addAddionalLocations' graph locations
+				
+
+
+(<^>) :: SectorGraph -> NodeID -> SectorNode
+graph <^> nID = (!!0) $ filter ((==nID) . _nodeID) $ Set.toList $ graph^.sgNodes
+
+-- | look up node location
+(|@|) :: SectorGraph -> NodeID -> Location
+graph |@| nID = (graph<^>nID)^.nodeLocation
+
+-- | looks up normal neighbours
+(|>|) :: SectorGraph -> NodeID -> Set NodeID
+graph |>| nID = (graph<^>nID)^.nodeNormalNeighbours
+
+-- | looks up space lanes
+(|>>|) :: SectorGraph -> NodeID -> Set NodeID
+graph |>>| nID = (graph<^>nID)^.nodeSpaceLaneNeighbours
+
+-- | lookup all neighbours
+(|>*>|) :: SectorGraph -> NodeID -> Set NodeID
+graph |>*>| nID = Set.union (graph|>|nID) (graph|>>|nID)
+
+
+edgeCost' :: SectorGraph -> NodeID -> NodeID -> Double
+edgeCost' graph nID1 nID2 = 
+	let	node1 = graph<^>nID1
+		node2 = graph<^>nID2
+		node1Location = node1^.nodeLocation
+		node2Location = node2^.nodeLocation
+		multiplier =	if isSpaceLane' graph nID1 nID2
+				then graph^.sgSector.sectorSpaceLaneSpeedMultiplier
+				else 1.0
+		distance' = distance node1Location node2Location
+		cost' = distance' / multiplier
+	in	cost' -- trace (printf "cost between node %s and %s is %s\n" (show nID1) (show nID2) (show cost')) cost'
+
+-- | strict, calculates instead of querying graph
+isSpaceLane' :: SectorGraph -> NodeID -> NodeID -> Bool
+isSpaceLane' graph nID1 nID2 =
+	let	node1 = graph<^>nID1
+		node2 = graph<^>nID2
+		node1Location = node1^.nodeLocation
+		node2Location = node2^.nodeLocation
+		spaceLaneRadius = graph^.sgSpaceLaneRadius
+		line = (node1Location, node2Location)
+		spaceLanes = getSpaceLaneEdges graph
+		loc' (nid1, nid2) = ((graph<^>nid1)^.nodeLocation, (graph<^>nid2)^.nodeLocation)
+		f line' = isLineOnLine spaceLaneRadius line line'
+	in	or $ map (f . loc') $ Set.toList spaceLanes

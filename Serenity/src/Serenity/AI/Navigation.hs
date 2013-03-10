@@ -105,7 +105,7 @@ route sector start end =
 		isSpaceLane index = isSpaceLane' graph (path!!index) (path!!(index+1))
 
 		route' = [ (nodeLoc index, nodeLoc (index+1), isSpaceLane index)  | index <- [0..((length path)-2)] ]
-	in	trace (printf "start:\n%s\n end:\n%s\n graph:\n%s\n route:\n%s\n"  (show start) (show end) (ppShow graph) (ppShow route')) route' 
+	in	route' --trace (printf "start:\n%s\n end:\n%s\n graph:\n%s\n route:\n%s\n"  (show start) (show end) (ppShow graph) (ppShow route')) route' 
 
 		
 

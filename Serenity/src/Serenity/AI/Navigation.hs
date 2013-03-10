@@ -70,7 +70,9 @@ planRoute sector entity (endLocation, endDirection) =
 	let	
 		path = route sector entityLocation endLocation
 		indexes = [0..((length path)-1)]
-	in	map (makeAction path) indexes
+		routePlan = map (makeAction path) indexes
+	in	routePlan
+		
 
 	where
 	entityLocation = entity^.entityData.shipLocation
@@ -103,7 +105,7 @@ route sector start end =
 		isSpaceLane index = isSpaceLane' graph (path!!index) (path!!(index+1))
 
 		route' = [ (nodeLoc index, nodeLoc (index+1), isSpaceLane index)  | index <- [0..((length path)-2)] ]
-	in	trace ("route for (" ++ (show start) ++ ", " ++ (show end) ++ ") is : " ++ (ppShow route') ++ "\n\n endroute") route'
+	in	trace (printf "start:\n%s\n end:\n%s\n graph:\n%s\n route:\n%s\n"  (show start) (show end) (ppShow graph) (ppShow route')) route' 
 
 		
 

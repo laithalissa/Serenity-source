@@ -257,11 +257,11 @@ make sector radius edgeBreak virtualNodeSpacing addionalNodeLocations =
 		graph'' = foldl edgeF graph' $ edges
 
 		-- | adds additional location
-		(graph''', addionalIDs) = foldl (\(g,ids) l -> let (g',nid)=addNode l g in (g',nid:ids)) (graph'',[]) addionalNodeLocations
+		(graph''', addionalIDs) = foldl (\(g,ids) l -> let (g',nid)=addNode l g in (g',ids++[nid])) (graph'',[]) addionalNodeLocations
 		
 		-- | adds addiontal edges
 		graph'''' = 	let 	pairs = cart (Set.toList $ Set.map _nodeID (graph'''^.sgNodes)) addionalIDs
-				in	foldl (\g (id1,id2)-> addEdge id1 id2 g) graph''' pairs
+				in	foldl (\g (id1,id2)-> addEdge id1 id2 g) graph''' $ filter (\(a,b)-> a /= b) pairs
 	in	(addionalIDs, graph'''')
 
 

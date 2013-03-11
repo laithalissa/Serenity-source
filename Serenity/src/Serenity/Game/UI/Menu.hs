@@ -27,7 +27,7 @@ initMenuData assets = MenuData
 	,	_menuVersionLabel  = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
 	,	_menuHostButton    = initMenuButton "Host      ->" (\_ -> Host)
 	,	_menuJoinButton    = initMenuButton "Join      ->" (\_ -> Join)
-	,	_menuCreditsButton = initMenuButton "Credits    <-" (\_ -> Credits)
+	,	_menuCreditsButton = initMenuButton "Credits    " (\_ -> Credits)
 	,	_menuQuitButton    = initMenuButton "Quit      -<" (\_ -> Quit)
 	}
 

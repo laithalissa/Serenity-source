@@ -7,6 +7,7 @@ module Serenity.Game.UI.Main
 import Serenity.Sheen
 import Serenity.Game.UI.Application
 import Serenity.Game.UI.Menu
+import Serenity.Game.UI.Credits
 import Serenity.Game.UI.Splash
 import Serenity.Game.UI.Host
 import Serenity.Game.UI.Join
@@ -28,6 +29,7 @@ data ApplicationController = ApplicationController
 	,	_appAssets      :: Assets
 	,	_appSplashData  :: SplashData ApplicationController
 	,	_appMenuData    :: MenuData ApplicationController
+	,	_appCreditsData :: CreditsData ApplicationController
 	,	_appHostData    :: HostData ApplicationController
 	,	_appJoinData    :: JoinData ApplicationController
 	,	_appLobbyData   :: LobbyData ApplicationController
@@ -46,6 +48,7 @@ initApplicationController assets = ApplicationController
 	,	_appAssets      = assets
 	,	_appSplashData  = initSplashData assets
 	,	_appMenuData    = initMenuData   assets
+	,	_appCreditsData = initCreditsData   assets
 	,	_appHostData    = initHostData   assets
 	,	_appJoinData    = initJoinData   assets
 	,	_appLobbyData   = initLobbyData  assets
@@ -58,35 +61,38 @@ initApplicationController assets = ApplicationController
 
 appServerString   = appJoinData.joinAddress
 
-instance AppState    ApplicationController where {aMode=appMode; aAssets=appAssets}
-instance SplashState ApplicationController where {aSplash=appSplashData}
-instance MenuState   ApplicationController where {aMenu=appMenuData}
-instance HostState   ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
-instance JoinState   ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
-instance LobbyState  ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName}
-instance PlayState   ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
-instance EndState    ApplicationController where {aEnd=appEndData; aClientState=appClientState}
+instance AppState     ApplicationController where {aMode=appMode; aAssets=appAssets}
+instance SplashState  ApplicationController where {aSplash=appSplashData}
+instance MenuState    ApplicationController where {aMenu=appMenuData}
+instance CreditsState ApplicationController where {aCredits=appCreditsData}
+instance HostState    ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
+instance JoinState    ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
+instance LobbyState   ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName}
+instance PlayState    ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
+instance EndState     ApplicationController where {aEnd=appEndData; aClientState=appClientState}
 
 instance ViewController ApplicationController where
 	globals = appViewGlobals
 	getView app = case app^.appMode of 
-		Splash -> viewSplash app
-		Menu   -> viewMenu   app 
-		Host   -> viewHost   app
-		Join   -> viewJoin   app
-		Lobby  -> viewLobby  app
-		Play   -> viewPlay   app 
-		End    -> viewEnd    app
-		Quit   -> (initView ((0, 0), (1024, 750)))
+		Splash  -> viewSplash  app
+		Menu    -> viewMenu    app 
+		Credits -> viewCredits app 
+		Host    -> viewHost    app
+		Join    -> viewJoin    app
+		Lobby   -> viewLobby   app
+		Play    -> viewPlay    app 
+		End     -> viewEnd     app
+		Quit    -> (initView ((0, 0), (1024, 750)))
 	updateTime dt app = case app^.appMode of 
-		Splash -> timeSplash dt app
-		Menu   -> timeMenu   dt app
-		Host   -> timeHost   dt app
-		Join   -> timeJoin   dt app
-		Lobby  -> timeLobby  dt app
-		Play   -> timePlay   dt app
-		End    -> timeEnd    dt app
-		Quit   -> app -- Quit handled by handleMainTime below
+		Splash  -> timeSplash  dt app
+		Menu    -> timeMenu    dt app
+		Credits -> timeCredits dt app 
+		Host    -> timeHost    dt app
+		Join    -> timeJoin    dt app
+		Lobby   -> timeLobby   dt app
+		Play    -> timePlay    dt app
+		End     -> timeEnd     dt app
+		Quit    -> app -- Quit handled by handleMainTime below
 
 gui = do
 	assets    <- initAssets
@@ -110,8 +116,9 @@ handleMainTime dt = execStateT $ do
 	app <- get
 	modify $ updateTime dt
 	case (app^.appMode) of 
-		Host  -> timeHostIO  dt
-		Lobby -> timeLobbyIO dt
-		Play  -> timePlayIO  dt
-		Quit  -> liftIO exitSuccess
-		_     -> return ()
+		Credits -> timeCreditsIO dt
+		Host    -> timeHostIO  dt
+		Lobby   -> timeLobbyIO dt
+		Play    -> timePlayIO  dt
+		Quit    -> liftIO exitSuccess
+		_       -> return ()

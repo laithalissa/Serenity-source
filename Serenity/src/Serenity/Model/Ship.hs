@@ -18,6 +18,7 @@ data Ship = Ship
 	,	_shipGoal :: Goal
 	,	_shipPlan :: Plan
 	,	_shipActionStartTime :: Double
+	,	_shipActionStarted :: Bool
 	,	_shipBeamTargets :: [Int]
 	}
 	deriving (Show, Eq)
@@ -32,6 +33,7 @@ initShip conf location direction = Ship
 	,	_shipGoal=GoalNone
 	,	_shipPlan=[]
 	,	_shipActionStartTime=0.0
+	,	_shipActionStarted=False
 	,	_shipBeamTargets=[]
 	}
 

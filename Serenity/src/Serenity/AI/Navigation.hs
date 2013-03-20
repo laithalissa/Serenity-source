@@ -96,7 +96,7 @@ makeDirection start end = normalized (end - start)
 
 route :: Sector -> Location -> Location -> [(Location, Location, Bool)]
 route sector start end =
-	let	(startID : endID : _, graph) = make sector 1.0 50.0 50.0 [start, end]
+	let	(startID : endID : _, graph) = make sector 5.0 100.0 100.0 [start, end]
 		path = aStar' graph startID endID
 
 		-- helpers

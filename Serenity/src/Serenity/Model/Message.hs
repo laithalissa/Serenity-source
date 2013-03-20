@@ -66,6 +66,9 @@ data Update =
 	{	updateEntityID :: EntityID
 	,	updateShipBeamTargets :: [EntityID]
 	}
+	| UpdateShipStartedPlan
+	{	updateEntityID :: EntityID
+	}
 	| UpdateShipDamage
 	{	updateEntityID :: EntityID
 	,	updateShipDamage :: Damage

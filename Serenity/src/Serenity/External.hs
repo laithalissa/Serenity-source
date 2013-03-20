@@ -26,7 +26,7 @@ makeGameBuilder sector fleets = do
 	return $ GameBuilder sector shipClasses weapons systems fleets
 
 makeDemoGameBuilder :: IO GameBuilder
-makeDemoGameBuilder = makeGameBuilder sectorOne fleet'
+makeDemoGameBuilder = makeGameBuilder sectorTwo fleet'
 	where
 	fleet' = Map.fromList 
 		[	(0, demoFleet)

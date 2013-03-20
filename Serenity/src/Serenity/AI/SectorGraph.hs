@@ -3,14 +3,14 @@
 module Serenity.AI.SectorGraph
 (	SectorGraph
 ,	NodeID
-,	(<^>)
-,	(|@|)
-,	(|>|)
-,	(|>>|)
-,	(|>*>|)
-,	edgeCost
-,	make
-,	isSpaceLane
+,	(<^>) -- graph <^> nodeID = Node
+,	(|@|) -- graph |@| nodeID = Location
+,	(|>|) -- graph |>| nodeID = non-space-lane neighbours: Set NodeID
+,	(|>>|) -- graph |>>| nodeID = space-lane neighbours: Set NodeID
+,	(|>*>|) -- graph |>*>| nodeID = all neighbours: Set NodeID
+,	edgeCost -- graph -> NodeID -> NodeID -> EdgeCost 
+,	make 
+,	isSpaceLane -- graph -> NodeID -> NodeID -> Bool
 ) where
 
 import Serenity.Model.Common

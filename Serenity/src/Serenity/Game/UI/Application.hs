@@ -8,9 +8,13 @@ import Serenity.External
 import Control.Lens
 import Data.Char
 
-serenityVersionString = "Alpha 1.01"
+class AppState a where
+	aMode :: Simple Lens a ApplicationMode
+	aAssets :: Simple Lens a Assets
 
-data ApplicationMode = Splash | Menu | Host| Join | Lobby | Play | Quit deriving Eq
+serenityVersionString = "Alpha 1.2"
+
+data ApplicationMode = Splash | Menu | Credits | Host| Join | Quick | Lobby | Play | End | Quit deriving Eq
 
 background assets = Just $ translate 0 60 $ getPicture "background" assets
 
@@ -38,7 +42,7 @@ initMenuTextBoxLabel :: String -> Simple Lens a String -> TextBoxLabel a
 initMenuTextBoxLabel string lens = initTextBoxLabel string lens buttonColor (Just buttonBackground) buttonPressedBackground 1.6
 
 nameValidation :: String -> String
-nameValidation = filter (flip elem $ ['a'..'z']++['A'..'Z']++"_")
+nameValidation = filter (flip elem $ ['a'..'z']++['A'..'Z']++['0'..'9']++"_")
 
 portValidation :: String -> String
 portValidation = filter isDigit

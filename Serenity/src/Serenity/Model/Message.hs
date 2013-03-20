@@ -4,6 +4,7 @@ module Serenity.Model.Message
 (	Message(..)
 ,	Update(..)
 ,	Command(..)
+,	CtlMsg(..)
 ,	Entity(..)
 ,	Ship(..)
 )
@@ -14,6 +15,7 @@ import Serenity.Model.Sector
 
 import Data.Binary
 import Data.DeriveTH
+import Data.Map (Map)
 
 type ClientID = Int
 type Time = Int
@@ -22,6 +24,7 @@ type Time = Int
 data Message = 
 	  UpdateMessage Update Time            -- ^ Updates are messages containing GameState information to be sent from the server to the clients.
 	| CommandMessage Command ClientID Time -- ^ Commands are intention notifications sent from a specific client to the server.
+	| ControlMessage CtlMsg
 	| Empty                                -- ^ An empty message (for networking and testing purposes).
 	deriving (Show, Eq)
 
@@ -62,9 +65,9 @@ data Update =
 	{	updateEntityID :: EntityID
 	,	updateShipGoal :: Goal
 	}
-	|	UpdateShipBeamTargets
+	|	UpdateShipTargets
 	{	updateEntityID :: EntityID
-	,	updateShipBeamTargets :: [EntityID]
+	,	updateShipTargets :: Map Int [EntityID]
 	}
 	| UpdateShipDamage
 	{	updateEntityID :: EntityID
@@ -84,6 +87,20 @@ data Command =
 	}
 	deriving (Show, Eq)
 
+data CtlMsg =
+	ControlSetName
+	{	controlName :: String
+	}
+	| ControlYourID
+	{	controlID :: Int
+	}
+	|	ControlSetConnected
+	{	controlConnected :: [(Int, String)]
+	}
+	|	ControlReady
+	|	ControlStarting
+	deriving (Show, Eq)
+
 -- Derive binary instances using deep magic.
 -- $(derive makeBinary ''ShipOrder)
 -- $(derive makeBinary ''ShipOrderState)
@@ -95,7 +112,7 @@ derive makeBinary ''Weapon
 derive makeBinary ''ShipClass
 derive makeBinary ''WeaponSlot
 derive makeBinary ''SystemSlot
-derive makeBinary ''WeaponType
+derive makeBinary ''SlotType
 derive makeBinary ''Resources
 derive makeBinary ''WeaponEffect
 derive makeBinary ''Ship
@@ -105,4 +122,5 @@ derive makeBinary ''ShipAction
 derive makeBinary ''Order
 derive makeBinary ''Update
 derive makeBinary ''Command
+derive makeBinary ''CtlMsg
 derive makeBinary ''Message

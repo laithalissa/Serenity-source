@@ -21,7 +21,7 @@ test: build
 	cabal test --show-details=always
 
 install: build
-	cabal install
+	cabal install --disable-documentation
 
 client: install
 	serenity ${runClientArgs}

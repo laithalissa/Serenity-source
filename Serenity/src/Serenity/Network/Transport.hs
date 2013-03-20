@@ -1,9 +1,11 @@
 module Serenity.Network.Transport
-(	TransportInterface(..)
+(	Transport(..)
+,	TransportInterface(..)
 ,	listen
 ,	acceptClient
 ,	connect
 ,	connectTo
+,	closeTransport
 ,	sendAndReceive
 ,	receive
 ,	send
@@ -25,7 +27,11 @@ import Serenity.Network.Packet
 -- | The network transport represents a list of connected
 -- clients and a socket that can be used to communicate
 -- with them.
-type Transport = (ConnectionMap, Socket)
+data Transport = Transport
+	{	transportConnectionMap :: ConnectionMap
+	,	transportSocket :: Socket
+	,	transportEntry :: TChan (Packet, SockAddr)
+	}
 
 -- | Mapping from client address to a connection and its
 -- related inbox/outbox channels.
@@ -45,7 +51,12 @@ listen :: PortNumber -> IO Transport
 listen port = withSocketsDo $ do
 	sock <- socket AF_INET Datagram 0
 	bindSocket sock (SockAddrInet port iNADDR_ANY)
-	return (M.empty, sock)
+	chan <- atomically $ newTChan
+	return $ Transport
+		{	transportConnectionMap = M.empty
+		,	transportSocket = sock
+		,	transportEntry = chan
+		}
 
 getOutboundSocket :: HostName -> PortNumber -> IO (Socket, SockAddr)
 getOutboundSocket host port = do
@@ -64,57 +75,63 @@ connect host port = do
 	(sock, addr) <- getOutboundSocket host port
 	channels <- newTransportInterface
 	send (channelConnection channels) sock Empty addr
-	return (M.singleton addr channels, sock)
+	chan <- atomically $ newTChan
+	return $ Transport
+		{	transportConnectionMap = M.singleton addr channels
+		,	transportSocket = sock
+		,	transportEntry = chan
+		}
 
 connectTo :: HostName -> PortNumber -> IO TransportInterface
 connectTo host port = do
 	transport <- connect host port
-	sendAndReceive transport
-	let [channels] = M.elems (fst transport)
+	transportVar <- atomically $ newTVar transport
+	sendAndReceive transportVar
+	let [channels] = M.elems (transportConnectionMap transport)
 	return channels
 
 -- | Computation that accepts a connection from a new client and provides
 -- inbox/outbox channels to communicate with it.
---
--- It might be simpler to have explicit state i.e.
--- acceptClient :: ServerTransport -> IO (TransportInterface, ServerTransport)
-acceptClient :: StateT Transport IO TransportInterface
-acceptClient = do
-	(clients, sock) <- get
-	(client, channels) <- lift $ acceptClient' (clients, sock)
-	put $ (M.insert client channels clients, sock)
+acceptClient :: TVar Transport -> IO TransportInterface
+acceptClient transportVar = do
+	transport <- atomically $ readTVar transportVar
+	(client, channels) <- acceptClient' transport
+	let clients' = M.insert client channels (transportConnectionMap transport)
+	atomically $ writeTVar transportVar (transport {transportConnectionMap = clients'})
 	return channels
 
 acceptClient' :: Transport -> IO (SockAddr, TransportInterface)
-acceptClient' (clients, sock) = do
-	(packet, client) <- receivePacket sock
+acceptClient' transport@Transport{transportConnectionMap = clients, transportEntry = entry} = do
+	(packet, client) <- atomically $ readTChan entry
 	if Syn `elem` (getFlags packet) && M.notMember client clients
 		then do
 			channels <- newTransportInterface
 			updateConnection (channelConnection channels) (connectionReceivedPacket packet)
-			send (channelConnection channels) sock Empty client
+			-- send (channelConnection channels) sock Empty client
+			atomically $ writeTChan (channelOutbox channels) Empty
 			return (client, channels)
-		else acceptClient' (clients, sock)
+		else acceptClient' transport
+
+closeTransport :: Transport -> IO ()
+closeTransport transport = close (transportSocket transport)
 
 -- | Start communications with clients connected to the given
 -- server transport.
-sendAndReceive :: Transport -> IO ()
-sendAndReceive (clients, sock) = do
-	socketTVar <- atomically $ newTVar sock
-	forkIO $ forever $ inboxLoop clients socketTVar
-	forkIO $ forever $ outboxLoop clients socketTVar
+sendAndReceive :: TVar Transport -> IO ()
+sendAndReceive transportVar = do
+	forkIO $ forever $ inboxLoop transportVar
+	forkIO $ forever $ outboxLoop transportVar
 	return ()
 	where
-		inboxLoop clients socketTVar = do
-			sock <- atomically $ readTVar socketTVar
-			maybe <- receive clients sock
+		inboxLoop transportVar = do
+			maybe <- receive transportVar
 			case maybe of
 				Just (message, channels) -> atomically $ writeTChan (channelInbox channels) message
 				Nothing -> return ()
 
-		outboxLoop clients socketTVar = do
-			sock <- atomically $ readTVar socketTVar
-			mapM_ (readAndSend sock) (M.toList clients)
+		outboxLoop transportVar = do
+			transport <- atomically $ readTVar transportVar
+			mapM_ (readAndSend $ transportSocket transport) (M.toList $ transportConnectionMap transport)
 			threadDelay 1000
 			return ()
 
@@ -126,15 +143,19 @@ sendAndReceive (clients, sock) = do
 
 -- | Get the next Message along with the address of the
 -- sender from the given socket.
-receive :: ConnectionMap -> Socket -> IO (Maybe (Message, TransportInterface))
-receive clients sock = do
+receive :: TVar Transport -> IO (Maybe (Message, TransportInterface))
+receive transportVar = do
+	Transport{transportSocket = sock} <- atomically $ readTVar transportVar
 	(packet, addr) <- receivePacket sock
+	Transport{transportConnectionMap = clients, transportSocket = sock, transportEntry = entry} <- atomically $ readTVar transportVar
 	case M.lookup addr clients of
 		Just channels -> do
 			-- TODO Packet verification
 			updateConnection (channelConnection channels) (connectionReceivedPacket packet)
 			return $ Just (getPacketData packet, channels)
-		Nothing -> return Nothing
+		Nothing -> do
+			atomically $ writeTChan entry (packet, addr)
+			return Nothing
 
 -- | Send a Message on the given socket to the specified address.
 send :: TVar Connection -> Socket -> Message -> SockAddr -> IO ()

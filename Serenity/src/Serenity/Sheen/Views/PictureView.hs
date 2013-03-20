@@ -31,3 +31,6 @@ pictureView a pictureView bounds = (initView bounds)
 		picture = case a^.pictureView.pictureViewValue of
 			StaticPicture p -> p
 			DynamicPicture lens -> renderPicture (a^.lens)
+
+pictureViewStatic :: a -> PictureView a -> ((Int, Int), (Int, Int)) -> View a
+pictureViewStatic a pView bounds = pictureView a (to $ \_ -> pView) bounds

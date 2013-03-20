@@ -52,3 +52,14 @@ differentiate
 	:: (Floating s, Num (s, s), Ord s, InnerSpace s, Scalar s ~ s, v ~ (s,s), RealFrac s, Fractional (s,s), Enum s)
 	=> ((s->v),s) -> v
 differentiate (curve, s) = (curve(s+h)^-^curve(s-h))^/(2*h) where h = 0.01
+
+data Partition = One | Two | Three
+
+part3 :: (a -> Maybe Partition) -> [a] -> ([a],[a],[a])
+part3 p xs = foldl (part3' p) ([], [], []) xs 
+	where
+	part3' p (a, b, c) x = case p x of
+		Just One   -> (x:a, b  , c  )
+		Just Two   -> (a  , x:b, c  )
+		Just Three -> (a  , b  , x:c)
+		_ -> (a, b, c)

@@ -12,9 +12,8 @@ module Serenity.Model.Time
 ,	filteredUpdates
 ) where
 
-import Debug.Trace(trace)
-
 import Serenity.AI.Plan
+import Serenity.AI.Targeting
 import Serenity.Maths.Util
 import Serenity.Model.Game
 import Serenity.Model.Entity
@@ -23,6 +22,7 @@ import Serenity.Model.Wire
 
 import Control.Parallel(par)
 import Control.Lens
+import Data.List (nub)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, fromJust)
 import Data.VectorSpace
@@ -80,8 +80,8 @@ instance Updateable Game where
 	update UpdateShipDamage{updateEntityID=eID, updateShipDamage=damage} game =
 		gameShips.(at eID).traverse.entityData.shipDamage .~ damage $ game
 
-	update UpdateShipBeamTargets{updateEntityID=eID, updateShipBeamTargets=targets} game =
-		gameShips.(at eID).traverse.entityData.shipBeamTargets .~ targets $ game
+	update UpdateShipTargets{updateEntityID=eID, updateShipTargets=targets} game =
+		gameShips.(at eID).traverse.entityData.shipTargets .~ targets $ game
 
 	update UpdateGameRanks{updateGameRanks=ranks} game = gameRanks .~ ranks $ game
 
@@ -148,38 +148,29 @@ evolveShipDamage = proc (entity, game) -> do
 		lostHealth entity = entity^.entityData.shipDamage.damageHull
 		totalHealth entity game = (fromJust $ M.lookup (entity^.entityData^.shipConfiguration^.shipConfigurationShipClass) (game^.gameBuilder^.gbShipClasses))^.shipClassMaxDamage^.damageHull
 		health entity game = (totalHealth entity game) - (lostHealth entity)
-		damageTargets entity game = concatMap (damageTarget game) (entity^.entityData.shipBeamTargets)
+		damageTargets entity game = concatMap (damageTarget game) (concat . M.elems $ entity^.entityData.shipTargets)
 		damageTarget game target = case M.lookup target (game^.gameShips) of
 			Just entity -> [UpdateShipDamage (entity^.entityID) (entity^.entityData.shipDamage & damageHull +~ 1)]
 			Nothing -> []
 
 evolveShipTargets :: UpdateWire (Entity Ship, Game)
 evolveShipTargets = proc (entity@Entity{_entityData=ship}, game) -> do
-	let targets = M.keys $ M.filter (otherInRange entity) (game^.gameShips)
-	if (not $ null targets) || (not $ null $ ship^.shipBeamTargets)
-		then id -< [UpdateShipBeamTargets (entity^.entityID) targets]
+	let targets = findShipTargets entity game
+	if targets /= (ship^.shipTargets)
+		then id -< [UpdateShipTargets (entity^.entityID) targets]
 		else id -< []
-	where
-		otherInRange e t = e /= t && (e^.ownerID) /= (t^.ownerID) && inRange (e^.entityData) t
-
--- | Check if the target ship is in range
-inRange
-	:: Ship -- ^ Ship
-	-> Entity Ship -- ^ Target
-	-> Bool
-inRange ship target = magnitude ((ship^.shipLocation) - (target^.entityData.shipLocation)) < 25
 
 checkGameEnd :: Game -> [Update]
 checkGameEnd game = case game^.gameGameMode of
-	DeathMatch ->
-		if all (== head playersLeft) (tail playersLeft)
-			then [UpdateGameRanks $ (head playersLeft, 1):(updateRanks), UpdateGameOver]
-			else if not $ null deadPlayers
-				then [UpdateGameRanks updateRanks]
-				else []
+	DeathMatch -> case length playersLeft of
+		0 -> [UpdateGameRanks updateRanks, UpdateGameOver]
+		1 -> [UpdateGameRanks $ (head playersLeft, 1):updateRanks, UpdateGameOver]
+		_ -> if not $ null deadPlayers
+			then [UpdateGameRanks updateRanks]
+			else []
 	_ -> []
 	where
-		playersLeft = map _ownerID (M.elems $ game^.gameShips)
-		deadPlayers = filter (\p -> p `notElem` playersLeft && p `notElem` (map fst $ game^.gameRanks)) (game^.gamePlayers)
-		updateRanks = (game^.gameRanks) ++ (map (\p -> (p, (length (game^.gamePlayers)) - (length (game^.gameRanks)))) deadPlayers)
+		playersLeft = nub $ map _ownerID (M.elems $ game^.gameShips)
+		deadPlayers = filter (\p -> p `notElem` playersLeft && p `notElem` (map fst $ game^.gameRanks)) (map fst $ game^.gamePlayers)
+		updateRanks = (map (\p -> (p, (length playersLeft) + 1)) deadPlayers) ++ (game^.gameRanks)
 

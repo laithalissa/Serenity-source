@@ -1,3 +1,5 @@
+{-# LANGUAGE NoMonomorphismRestriction #-}
+
 module Serenity.Game.UI.Main
 (	gui
 ) where
@@ -5,18 +7,22 @@ module Serenity.Game.UI.Main
 import Serenity.Sheen
 import Serenity.Game.UI.Application
 import Serenity.Game.UI.Menu
+import Serenity.Game.UI.Credits
 import Serenity.Game.UI.Splash
 import Serenity.Game.UI.Host
 import Serenity.Game.UI.Join
+import Serenity.Game.UI.Quick
+import Serenity.Game.UI.Lobby
+import Serenity.Game.UI.Play
+import Serenity.Game.UI.End
 import Serenity.Game.Client.ClientState
 import Serenity.External
-import Serenity.Model
 
 import Control.Lens
 import Control.Monad.State
-import Control.Concurrent
-import Control.Concurrent.STM
+import Data.Char
 import System.Exit
+import System.Posix.User
 
 data ApplicationController = ApplicationController
 	{	_appViewGlobals :: ViewGlobals ApplicationController
@@ -24,68 +30,102 @@ data ApplicationController = ApplicationController
 	,	_appAssets      :: Assets
 	,	_appSplashData  :: SplashData ApplicationController
 	,	_appMenuData    :: MenuData ApplicationController
+	,	_appCreditsData :: CreditsData ApplicationController
 	,	_appHostData    :: HostData ApplicationController
 	,	_appJoinData    :: JoinData ApplicationController
-	,	_appGameData    :: TMVar (Maybe Game)
+	,	_appQuickData   :: QuickData ApplicationController
+	,	_appLobbyData   :: LobbyData ApplicationController
+	,	_appPlayData    :: PlayData ApplicationController
+	,	_appEndData     :: EndData ApplicationController
 	,	_appClientState :: Maybe ClientState
+	,	_appPort        :: String
+	,	_appNickName    :: String
 	}
 
 makeLenses ''ApplicationController
 
-initApplicationController gameRef assets = ApplicationController
+initApplicationController assets = ApplicationController
 	{	_appViewGlobals = initGlobals
 	,	_appMode        = Splash
 	,	_appAssets      = assets
-	,	_appSplashData  = initSplashData assets
-	,	_appMenuData    = initMenuData assets
-	,	_appHostData    = initHostData appHostData assets
-	,	_appJoinData    = initJoinData appJoinData assets
-	,	_appGameData    = gameRef
+	,	_appSplashData  = initSplashData  assets
+	,	_appMenuData    = initMenuData    assets
+	,	_appCreditsData = initCreditsData assets
+	,	_appHostData    = initHostData    assets
+	,	_appJoinData    = initJoinData    assets
+	,	_appQuickData   = initQuickData   assets
+	,	_appLobbyData   = initLobbyData   assets
+	,	_appPlayData    = initPlayData    assets
+	,	_appEndData     = initEndData     assets
 	,	_appClientState = Nothing
+	,	_appPort        = "9900"
+	,	_appNickName    = ""
 	}
+
+appServerString   = appJoinData.joinAddress
+
+instance AppState     ApplicationController where {aMode=appMode; aAssets=appAssets}
+instance SplashState  ApplicationController where {aSplash=appSplashData}
+instance MenuState    ApplicationController where {aMenu=appMenuData}
+instance CreditsState ApplicationController where {aCredits=appCreditsData}
+instance HostState    ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
+instance JoinState    ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
+instance QuickState   ApplicationController where {aQuick=appQuickData; aHost=appHostData; aHostName=appServerString; aPort=appPort}
+instance LobbyState   ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName}
+instance PlayState    ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
+instance EndState     ApplicationController where {aEnd=appEndData; aClientState=appClientState}
 
 instance ViewController ApplicationController where
 	globals = appViewGlobals
 	getView app = case app^.appMode of 
-		Splash -> viewSplash app appSplashData appAssets appMode
-		Menu   -> viewMenu app appMenuData appAssets appMode
-		Host   -> viewHost app appHostData appAssets appMode
-		Join   -> viewJoin app appJoinData appAssets appMode
-		Lobby  -> error "Lobby Screen not here yet"
-		Play   -> error "Play Screen not here yet"
-		Quit   -> (initView ((0, 0), (1024, 750)))
+		Splash  -> viewSplash  app
+		Menu    -> viewMenu    app 
+		Credits -> viewCredits app 
+		Host    -> viewHost    app
+		Join    -> viewJoin    app
+		Quick   -> viewQuick   app
+		Lobby   -> viewLobby   app
+		Play    -> viewPlay    app 
+		End     -> viewEnd     app
+		Quit    -> (initView ((0, 0), (1024, 750)))
 	updateTime dt app = case app^.appMode of 
-		Splash -> timeSplash appSplashData appMode dt app
-		Menu   -> timeMenu appMenuData appMode dt app
-		Host   -> timeHost appHostData appMode dt app
-		Join   -> timeJoin appJoinData appMode dt app
-		Lobby  -> app
-		Play   -> app
-		Quit   -> app -- Quit handled by handleMainTime below
+		Splash  -> timeSplash  dt app
+		Menu    -> timeMenu    dt app
+		Credits -> timeCredits dt app 
+		Host    -> timeHost    dt app
+		Join    -> timeJoin    dt app
+		Quick   -> timeQuick   dt app
+		Lobby   -> timeLobby   dt app
+		Play    -> timePlay    dt app
+		End     -> timeEnd     dt app
+		Quit    -> app -- Quit handled by handleMainTime below
 
 gui = do
-	assets  <- initAssets
-	gameRef <- newTMVarIO Nothing
-	forkIO (forever $ serverThread gameRef)
+	assets    <- initAssets
+	userEntry <- getRealUserID >>= getUserEntryForID
+	username  <- return $ _head %~ toUpper $ nameValidation $ userName userEntry
 	playIOZero
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black
-		30
-		(initApplicationController gameRef assets)
+		50
+		((initApplicationController assets) & (appNickName .~ username))
 		(\a -> return $ draw a)
-		(\event -> \a -> return $ handleEvent event a)
+		(\event -> \a -> return $ handleEvent event a & correctFocus)
 		handleMainTime
+
+correctFocus = execState $ do
+	mode <- use appMode
+	when (mode == Play) $ appViewGlobals.globalFocus .= [0]
 
 handleMainTime :: Float -> ApplicationController -> IO ApplicationController
 handleMainTime dt = execStateT $ do
+	app <- get
 	modify $ updateTime dt
-	timeHostIO appHostData appGameData dt
-	app <- get; when (app^.appMode == Quit) $ liftIO exitSuccess
-
-serverThread :: TMVar (Maybe Game) -> IO ()
-serverThread ref = do
-	mGame <- atomically $ takeTMVar ref
-	case mGame of
-		Just game -> return ()
-		Nothing -> return ()
-	atomically $ putTMVar ref mGame
+	case (app^.appMode) of 
+		Credits -> timeCreditsIO dt
+		Host    -> timeHostIO  dt
+		Quick   -> timeQuickIO dt
+		Lobby   -> timeLobbyIO dt
+		Play    -> timePlayIO  dt
+		Quit    -> liftIO exitSuccess
+		_       -> return ()

@@ -25,7 +25,7 @@ tests = testGroup "Server Main Tests"
 	]
 
 testConnectionPhaseConnectsNClients port n = do
-	clientDataList <- serverClientFixture server client
+	(clientDataList, _) <- serverClientFixture server client
 	length clientDataList @?= n
 	where
 		client = replicateM_ n (connect "localhost" port)
@@ -45,7 +45,7 @@ testSendToClient = do
 			return updates
 
 		server = do
-			clientDataList <- connectionPhase port 1
+			(clientDataList, _) <- connectionPhase port 1
 			let updates = [UpdateEntity{}]
 			sendToClients updates clientDataList
 			return ()

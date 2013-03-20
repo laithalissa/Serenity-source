@@ -1,7 +1,4 @@
-module Serenity.Game.Client.Main (
-	client
-)
-where
+module Serenity.Game.Client.Main where
 
 import Serenity.External
 import Serenity.Game.Client.ClientState
@@ -18,6 +15,7 @@ import Control.Lens
 import Control.Monad.State
 import Graphics.Gloss.Interface.IO.Game
 import GHC.Float
+
 -- | Run the client
 client ::
 	String -- ^ Host
@@ -29,8 +27,6 @@ client serverHost serverPort ownerId = do
 	print $ "Connecting... " ++ serverHost ++ ":" ++ show serverPort
 
 	channels <- connectTo serverHost (fromIntegral serverPort)
-	let inbox = channelInbox channels
-	let outbox = channelOutbox channels
 
 	waitUntilConnected (channelConnection channels)
 	print "Connected!"
@@ -41,10 +37,10 @@ client serverHost serverPort ownerId = do
 		(InWindow "Project Serenity" windowSize (0, 0))
 		black
 		30
-		(initClientState assets gameBuilder ownerId)
+		(initClientState assets gameBuilder ownerId [(ownerId, "")] channels)
 		(return . render)
-		(handleEvent outbox)
-		(handleStep inbox)
+		(\e c -> return $ handleEvent e c)
+		(handleStep)
 	where
 		waitUntilConnected connTVar = do
 			connection <- atomically $ readTVar connTVar
@@ -55,31 +51,26 @@ client serverHost serverPort ownerId = do
 -- | Handle a Gloss input event, e.g. keyboard action
 -- The event is used to create a list of commands which are sent to the server.
 -- For example, clicking in the game area will order a ship to move to that location.
-handleEvent :: TChan Message -> Event -> ClientState -> IO ClientState
-handleEvent outbox event clientState = do
-	-- Get a list of commands
-	newClientState <- return $ handleInput (translateEvent event) clientState
-	let messages = map (\c -> CommandMessage c 0 0) (newClientState^.clientCommands)
-
-	-- Send commands to the server
-	sendMessages outbox messages
-
-	return $ newClientState {_clientCommands = [], _clientKeyboardState = getNewKeyboardState event (newClientState^.clientKeyboardState) }
-
+handleEvent :: Event -> ClientState -> ClientState
+handleEvent event = execState $ do
+	id %= handleInput (translateEvent event)
+	clientKeyboardState %= getNewKeyboardState event 
 	where
-		translateEvent (EventKey key state modifiers (x, y)) = EventKey key state modifiers (x + wx, y + wy)
-		translateEvent (EventMotion (x, y)) = EventMotion (x + wx, y + wy)
-
-		wx = fromIntegral $ (fst windowSize) `div` 2
-		wy = fromIntegral $ (snd windowSize) `div` 2
-
 		getNewKeyboardState (EventKey key keystate _ _) = handleKeyEvent key keystate
 		getNewKeyboardState _ = id
 
 -- | Update the game state on a time step
 -- Updates are received from the server and then applied to the game state
-handleStep :: TChan Message -> Float -> ClientState -> IO ClientState
-handleStep inbox delta clientState = do
+handleStep :: Float -> ClientState -> IO ClientState
+handleStep delta clientState = do
+
+	let inbox = channelInbox $ clientState^.clientChannels
+	let outbox = channelOutbox $ clientState^.clientChannels
+
+	let messagesOut = map (\c -> CommandMessage c 0 0) (clientState^.clientCommands)
+	-- Send commands to the server
+	sendMessages outbox messagesOut
+
 	-- Receive updates from the server
 	messages <- readTChanUntilEmpty inbox
 	let us = concatMap getUpdate messages
@@ -87,11 +78,11 @@ handleStep inbox delta clientState = do
 	-- Apply the updates to the game state
 	gameState' <- return $ gameTime +~ (float2Double delta) $ updates us (clientState^.clientGame)
 
-	if UpdateGameOver `elem` us
-		then print $ "Game over! " ++ (show $ gameState'^.gameRanks)
-		else return ()
+	let clientState' = if UpdateGameOver `elem` us
+		then clientGameStatus .~ Complete $ clientState
+		else clientState
 
-	return $ (clientUIState.viewport .~ newViewPort $ clientState) {_clientGame = gameState'}
+	return $ (wasdControls clientState') {_clientGame = gameState', _clientCommands = []}
 
 	where
 		getUpdate (UpdateMessage update _) = [update]
@@ -105,14 +96,28 @@ handleStep inbox delta clientState = do
 		inn   = keyMostRecentDownFrom ks (Char 'q') [Char 'q', Char 'e']
 		out   = keyMostRecentDownFrom ks (Char 'e') [Char 'q', Char 'e']
 
-		a = 3
-		b = 0.1
+		left'  = keyMostRecentDownFrom ks (Char 'A') [Char 'A', Char 'D']
+		right' = keyMostRecentDownFrom ks (Char 'D') [Char 'A', Char 'D']
+		up'    = keyMostRecentDownFrom ks (Char 'W') [Char 'W', Char 'S']
+		down'  = keyMostRecentDownFrom ks (Char 'S') [Char 'W', Char 'S']
 
-		moveLeft   = if left  then modify (\((x,y), z) -> ((x-a,y), z) ) else return ()
-		moveRight  = if right then modify (\((x,y), z) -> ((x+a,y), z) ) else return ()
-		moveUp     = if up    then modify (\((x,y), z) -> ((x,y+a), z) ) else return ()
-		moveDown   = if down  then modify (\((x,y), z) -> ((x,y-a), z) ) else return ()
-		zoomIn     = if inn   then modify (\((x,y), z) -> ((x,y), z+b) ) else return ()
-		zoomOut    = if out   then modify (\((x,y), z) -> ((x,y), z-b) ) else return ()
-		allUpdates = do moveLeft; moveRight; moveUp; moveDown; zoomIn; zoomOut
-		newViewPort = execState allUpdates $ clientState^.clientUIState.viewport
+		a = 10
+
+		viewPortL = clientUIState.uiStateViewport
+
+		wasdControls :: ClientState -> ClientState
+		wasdControls = execState $ do
+			sector <- use $ clientGame.gameBuilder.gbSector
+			when right  $ viewPortL %= viewPortPanX sector ( a)
+			when left   $ viewPortL %= viewPortPanX sector (-a)
+			when up     $ viewPortL %= viewPortPanY sector ( a)
+			when down   $ viewPortL %= viewPortPanY sector (-a)
+
+			when right' $ viewPortL %= viewPortPanX sector ( a*4)
+			when left'  $ viewPortL %= viewPortPanX sector (-a*4)
+			when up'    $ viewPortL %= viewPortPanY sector ( a*4)
+			when down'  $ viewPortL %= viewPortPanY sector (-a*4)
+
+			when inn    $ viewPortL %= viewPortZoom sector (1.1)
+			when out    $ viewPortL %= viewPortZoom sector (0.9)
+

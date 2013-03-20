@@ -26,7 +26,8 @@ data GameBuilder = GameBuilder
 makeLenses ''GameBuilder
 
 data GameMode =
-	DeathMatch
+	  DeathMatch
+	| Unwinnable
 	deriving Show
 
 data Game = Game
@@ -36,7 +37,7 @@ data Game = Game
 	,	_gameShips  :: Map EntityID (Entity Ship)
 	,	_gameBuilder :: GameBuilder
 	,	_gameGameMode :: GameMode
-	,	_gamePlayers :: [OwnerID]
+	,	_gamePlayers :: [(OwnerID, String)]
 	,	_gameRanks :: [(OwnerID, Int)]
 	}
 	deriving Show
@@ -55,8 +56,8 @@ addShip ownerId ship game = game'
 		,	_entityData=ship
 		}
 
-initGame :: GameBuilder -> Game
-initGame gameBuilder = game'
+initGame :: [(OwnerID, String)] -> GameBuilder -> Game
+initGame players gameBuilder = game'
 	where 
 	fleetsList :: [(OwnerID, Fleet)]
 	fleetsList = Map.toList (gameBuilder^.gbPlayerFleets)
@@ -80,16 +81,16 @@ initGame gameBuilder = game'
 		,	_gameShips  = Map.empty
 		,	_gameBuilder = gameBuilder
 		,	_gameGameMode = DeathMatch
-		,	_gamePlayers = [0, 1, 2, 3] -- XXX
+		,	_gamePlayers = players
 		,	_gameRanks = []
 		}
 
 
 
-demoGame :: GameBuilder -> Game
-demoGame gameBuilder = game' game
+demoGame :: [(OwnerID, String)] -> GameBuilder -> Game
+demoGame players gameBuilder = game
 	where 
-	game = initGame gameBuilder
+	game = initGame players gameBuilder
 	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game
 		where
 		f :: Entity Ship -> Entity Ship
@@ -138,3 +139,16 @@ shipHealth' entity game = (shipMaxHealth' entity game) - (shipCurrentDamage' ent
 
 gameEntity' :: EntityID -> Game -> Entity Ship
 gameEntity' eID game = fromJust $ Map.lookup eID (game^.gameShips)
+
+shipWeapons :: GameBuilder -> Getter Ship [(Maybe Weapon, WeaponSlot)]
+shipWeapons gameBuilder = to (weaponInfo gameBuilder)
+	where
+		shipClass gB ship = fromJust $ Map.lookup (ship^.shipConfiguration.shipConfigurationShipClass) (gB^.gbShipClasses)
+		weapons gB ship = map (fmap (\w -> fromJust $ Map.lookup w (gB^.gbWeapons))) (ship^.shipConfiguration.shipConfigurationWeapons)
+		weaponInfo gameBuilder ship = zip (weapons gameBuilder ship) ((shipClass gameBuilder ship)^.shipClassWeaponSlots)
+
+shipWeaponSlots :: GameBuilder -> Getter Ship [WeaponSlot]
+shipWeaponSlots gameBuilder = to (weaponSlots gameBuilder)
+	where
+		shipClass gB ship = fromJust $ Map.lookup (ship^.shipConfiguration.shipConfigurationShipClass) (gB^.gbShipClasses)
+		weaponSlots gB ship = (shipClass gB ship)^.shipClassWeaponSlots

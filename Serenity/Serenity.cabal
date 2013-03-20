@@ -13,6 +13,7 @@ executable serenity
         easy-file == 0.1.1,
         stm,
         mtl,
+        split == 0.2.1.1,
         unix,
         network >= 2.4.1.0,
         bytestring,
@@ -27,18 +28,21 @@ executable serenity
         array,
         astar == 0.2.1,
         gloss == 1.7.7.1,
+        colour == 2.3.3,
         netwire == 4.0.7,
         derive,
         parallel == 3.2.0.3,
         parseargs == 0.1.3.2,
         template-haskell,
         random == 1.0.1.1,
+        random-extras == 0.19,
+        random-fu == 0.2.4.0,
         QuickCheck,
         yaml-light == 0.1.4,
         pretty-show == 1.5
     hs-source-dirs: src
-    ghc-options:    -W -threaded -rtsopts
-    extensions: TemplateHaskell DoAndIfThenElse
+    ghc-options:    -threaded -rtsopts -fwarn-incomplete-patterns -fwarn-dodgy-exports -fwarn-dodgy-imports -fwarn-unused-imports
+    extensions: TemplateHaskell
 
 Test-Suite test-serenity
     type:           exitcode-stdio-1.0

@@ -17,43 +17,85 @@ import Serenity.Network.Utility (readTChanUntilEmpty, sendMessages)
 
 import Prelude hiding (id, (.))
 
-import Control.Concurrent (threadDelay)
+import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent.STM
 import Control.Lens
-import Control.Monad.State (runStateT)
+import Control.Monad (forever)
+import qualified Data.Map as M
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 -- | Run the server.
 server 
-	:: Int   -- ^ Port to listen on.
+	:: Sector
+	-> GameMode
+	-> Int   -- ^ Port to listen on.
 	-> Int   -- ^ Number of clients to connect.
 	-> IO ()
-server port clientCount = do
+server sector gameMode port clientCount = forever $ do
 	print "server started"	
-	gameBuilder' <- makeDemoGameBuilder
 	print $ "waiting for " ++ (show clientCount) ++ " clients to connect..."
-	clients <- connectionPhase (fromIntegral port) clientCount
+	(clients, transport) <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
-	play 5 clients (demoGame gameBuilder') commands evolve updates
+	gameBuilder' <- createGameBuilder clients
+	play 5 clients ((demoGame (map (\c -> (clientID c, clientName c)) clients) gameBuilder') & gameGameMode .~ gameMode) commands evolve updates
+	closeTransport transport
 	print "server finished"
+	where
+		createGameBuilder clients = makeGameBuilder sector $
+			M.fromList $ map (\c -> (clientID c, demoFleet)) clients
 
 -- | Wait for n clients to connect
 connectionPhase
 	:: PortNumber      -- ^ Port to listen on.
 	-> Int             -- ^ Number of clients to connect.
-	-> IO [ClientData] -- ^ Client connection information.
+	-> IO ([ClientData], Transport) -- ^ Client connection information.
 
 connectionPhase port clientLimit = do 
 	transport <- listen port
-	(clients, server) <- connectionPhase' clientLimit transport []
-	sendAndReceive server
-	return clients
+	clientChan <- atomically $ newTChan
+	transportVar <- atomically $ newTVar transport
+	sendAndReceive transportVar
+	forkIO $ acceptLoop clientLimit transportVar clientChan
+	clients <- connectionPhase' clientChan clientLimit []
+	waitForReadies clients []
+	transport' <- atomically $ readTVar transportVar
+	return (clients, transport')
 	where
-		connectionPhase' limit transport clients = do
-			(channels, transport') <- runStateT acceptClient transport
-			let clients' = (ClientData{clientTransportInterface=channels}):clients
+		acceptLoop limit transportVar chan = do
+			channels <- acceptClient transportVar
+			atomically $ writeTChan chan channels
+			transport <- atomically $ readTVar transportVar
+			if M.size (transportConnectionMap transport) >= limit
+				then return ()
+				else acceptLoop limit transportVar chan
+
+		connectionPhase' chan limit clients = do
+			channels <- atomically $ readTChan chan
+			name <- getClientName (channelInbox channels)
+			let newID = length clients
+			let clients' = (ClientData
+				{	clientID = newID
+				,	clientName = name
+				,	clientTransportInterface = channels
+				}):clients
+			atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlYourID newID)
+			sendToClients [ControlMessage $ ControlSetConnected $ map (\c -> (clientID c, clientName c)) clients'] clients'
 			if length clients' >= limit
-				then return (clients', transport')
-				else connectionPhase' limit transport' clients'
+				then return clients'
+				else connectionPhase' chan limit clients'
+
+		getClientName chan = do
+			msg <- atomically $ readTChan chan
+			case msg of
+				ControlMessage (ControlSetName name) -> return name
+				_ -> getClientName chan
+
+		waitForReadies clients readies = do
+			messages <- mapM readTChanUntilEmpty $ map (channelInbox . clientTransportInterface) clients
+			let messages' = readies ++ (filter (\m -> case m of ControlMessage ControlReady -> True; _ -> False) $ concat messages)
+			if length messages' == length clients
+				then sendToClients [ControlMessage ControlStarting] clients
+				else waitForReadies clients messages'
 
 -- | Run the server with given update functions.
 play :: forall world . (Show world, world ~ Game) 
@@ -79,7 +121,7 @@ play stepsPerSecond clientDataList initialWorld transform wire updateWorld = do
 			(updatesT, wire') <- return $ runWire wire (fromRational time) (game', game')
 			game''            <- return $ gameTime +~ (fromRational time) $ updateWorld updatesT game'
 			game'''           <- return $ gameRandom %~ (snd.next) $ game''
-			sendToClients (filteredUpdates' ++ updatesT) clientDataList
+			sendToClients (map (\u -> UpdateMessage u 0) (filteredUpdates' ++ updatesT)) clientDataList
 			threadDelay $ floor (1000000 / (fromIntegral stepsPerSecond))
 			if UpdateGameOver `elem` updatesT
 				then return ()
@@ -96,9 +138,8 @@ getCommands clientDataList = do
 		getCommands _ = []
 
 -- | Send updates to all clients
-sendToClients :: [Update] -> [ClientData] -> IO ()
-sendToClients updates clientDataList = mapM_ (\outbox -> sendMessages outbox messages) outboxes
+sendToClients :: [Message] -> [ClientData] -> IO ()
+sendToClients messages clientDataList = mapM_ (\outbox -> sendMessages outbox messages) outboxes
 		where
 			outboxes = map (channelOutbox . clientTransportInterface) clientDataList
-			messages = map (\u -> UpdateMessage u 0) updates
 

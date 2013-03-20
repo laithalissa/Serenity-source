@@ -13,7 +13,6 @@ data MenuData a = MenuData
 	,	_menuVersionLabel  :: Label a
 	,	_menuHostButton    :: Button a ApplicationMode
 	,	_menuJoinButton    :: Button a ApplicationMode
-	,	_menuDemoButton    :: Button a ApplicationMode
 	,	_menuCreditsButton :: Button a ApplicationMode
 	,	_menuQuitButton    :: Button a ApplicationMode
 	}
@@ -28,8 +27,7 @@ initMenuData assets = MenuData
 	,	_menuVersionLabel  = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
 	,	_menuHostButton    = initMenuButton "Host      ->" (\_ -> Host)
 	,	_menuJoinButton    = initMenuButton "Join      ->" (\_ -> Join)
-	,	_menuDemoButton    = initMenuButton "Quick     ->"  (\_ -> Quick)
-	,	_menuCreditsButton = initMenuButton "Credits    "  (\_ -> Credits)
+	,	_menuCreditsButton = initMenuButton "Credits    " (\_ -> Credits)
 	,	_menuQuitButton    = initMenuButton "Quit      -<" (\_ -> Quit)
 	}
 
@@ -42,7 +40,6 @@ viewMenu a = (initView ((0, 0), (1024, 750)))
 	,	(initBox ((680, 0), (345, 750))) <++
 		[	button a (aMenu.menuHostButton)    aMode ((80,650),(185,28))
 		,	button a (aMenu.menuJoinButton)    aMode ((80,550),(185,28))
-		,	button a (aMenu.menuDemoButton)    aMode ((80,450),(185,28))
 		,	button a (aMenu.menuCreditsButton) aMode ((80,150),(185,28))
 		,	button a (aMenu.menuQuitButton)    aMode ((80, 50),(185,28))
 		]

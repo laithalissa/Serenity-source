@@ -14,7 +14,7 @@ class AppState a where
 
 serenityVersionString = "Alpha 1.2"
 
-data ApplicationMode = Splash | Menu | Credits | Host| Join | Quick | Lobby | Play | End | Quit deriving Eq
+data ApplicationMode = Splash | Menu | Credits | Host| Join | Lobby | Play | End | Quit deriving Eq
 
 background assets = Just $ translate 0 60 $ getPicture "background" assets
 

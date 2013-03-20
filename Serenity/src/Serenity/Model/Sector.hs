@@ -90,8 +90,8 @@ sectorOne = Sector
 		,	Planet 5 "Arietis"             Desert (800, 500) (makeRes 5  5  0 )
 		,	Planet 6 "Castillon"           Blue   (50 , 50 ) (makeRes 10 0  0 )
 		,	Planet 7 "Elden Kennett"       Blue   (950, 950) (makeRes 10 0  0 )
-		,	Planet 8 "Alcantar"            Ocean  (50 , 950) (makeRes 10 0  0 )
-		,	Planet 9 "New Zaldi"           Ocean  (950, 50)  (makeRes 10 0  0 )
+		,	Planet 8 "Alcantar"            Blue   (50 , 950) (makeRes 10 0  0 )
+		,	Planet 9 "New Zaldi"           Blue   (950, 50)  (makeRes 10 0  0 )
 		]
 	,	_sectorSpaceLaneSpeedMultiplier = 4.0
 	,	_sectorSpaceLanes = [(1,2),(1,3),(4,6),(4,8),(2,6),(2,9),(5,9),(5,7),(3,7),(3,8)]

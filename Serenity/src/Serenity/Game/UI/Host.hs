@@ -116,8 +116,9 @@ timeHostIO _ = do
 	runServer' = do
 		serverPort <- use aPort
 		numPlayers <- use (aHost.hostNumPlayers)
-		serverThreadID <- liftIO.forkIO $ server sectorTwo DeathMatch (fromIntegral $ read serverPort) (read numPlayers)
+		serverThreadID <- liftIO.forkIO $ server sectorTwo (fromIntegral $ read serverPort) (read numPlayers)
 		aHost.hostServerGame .= (Running serverThreadID)
+		return ()
 
 	stopServer' serverThreadID = do
 		liftIO $ killThread serverThreadID

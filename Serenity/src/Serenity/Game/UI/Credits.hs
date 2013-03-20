@@ -80,7 +80,7 @@ timeCreditsIO dt = do
 		aCredits.creditsTime .= 0
 		aCredits.creditsAGameNameLabel.labelTextOffset .= (10,20)
 		numGames <- aCredits.creditsNumGamesShown <+= 1
-		aCredits.creditsAGameNameLabel.labelColor .= (bright $ ownerIDColor numGames)
+		aCredits.creditsAGameNameLabel.labelColor .= (ownerIDColor numGames)
 
 picturesLens :: Getter a [(String, String, String)]
 picturesLens = to (\_ -> list) where 

@@ -80,7 +80,6 @@ main = do
 			sArgs <- serverMainArgs
 			server 
 				sectorOne
-				DeathMatch
 				(getRequiredArg sArgs "port")
 				(getRequiredArg sArgs "clientCount")
 				

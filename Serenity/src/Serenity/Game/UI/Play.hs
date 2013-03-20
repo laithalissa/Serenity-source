@@ -148,6 +148,7 @@ shipSelection f  _  _     = SelectionOwnShips f
 endSelectRight :: PlayState a => (Float, Float) -> a -> a
 endSelectRight point = execState $ do
 	overMaybe (aPlay.playSelectBox) (aClientState.traverse) order
+	meh2 <- use $ aClientState
 	aPlay.playSelectBox .= Nothing 
 	where
 		order box = execState $ do

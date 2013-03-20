@@ -123,7 +123,7 @@ sectorTwo = Sector
 	}
 
 	where 
-	makePlanet pid location = (pid, Planet {_planetID = pid, _planetName = "Splearth" , _planetEcotype = Blue  , _planetLocation  = location, _planetResources = res 10 10 0})
+	makePlanet pid location = (pid, Planet {_planetID = pid, _planetName = "Splearth" , _planetEcotype = Blue  , _planetLocation  = location, _planetResources = Resources 10 10 0})
 
 
 planetLocation' :: Sector -> PlanetID -> Location

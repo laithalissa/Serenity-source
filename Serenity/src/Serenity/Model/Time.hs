@@ -30,7 +30,10 @@ import Prelude hiding (id, (.))
 class Updateable a where
 	update  ::  Update  -> a -> a
 	updates :: [Update] -> a -> a
-	updates = flip (foldr update)
+	updates = seq' $ flip (foldr f)
+		where 
+		f u a = seq' $ update (seq' u) (seq' a)
+		seq' a = seq a a
 
 class (Updateable a) => Evolvable a where
 	evolve :: UpdateWire (a, Game)
@@ -60,18 +63,20 @@ instance Updateable Game where
 		gameShips.(at eID).traverse.entityData.shipOrder .~ order $ 
 		gameShips.(at eID).traverse.entityData.shipPlan .~ [] $ 
 		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ (game^.gameTime) $ 
+		gameShips.(at eID).traverse.entityData.shipActionStarted .~ False $ 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ GoalNone $ game
 	
-
 	update UpdateShipPlan{updateEntityID=eID, updateShipPlan=plan} game =
 		gameShips.(at eID).traverse.entityData.shipPlan .~ plan $ 
+		gameShips.(at eID).traverse.entityData.shipActionStarted .~ False $ 
 		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ (game^.gameTime) $ game
 
 	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ 
+		gameShips.(at eID).traverse.entityData.shipActionStarted .~ False $ 
 		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ (game^.gameTime) $ game
 
-	update UpdateShipStartedPlan{updateEntityID=eID} game =
+	update UpdateShipStartedPlan{updateEntityID=eID} game = trace "updating started plan" $ 
 		gameShips.(at eID).traverse.entityData.shipActionStarted .~ True $ 
 		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ (game^.gameTime) $ game
 
@@ -99,7 +104,9 @@ mapEvolve = proc (ents, game) -> do
 		[] -> id -< []
 
 instance Commandable Game where
-	command c@GiveOrder{commandEntityID = cID} game = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
+	command c@GiveOrder{commandEntityID = cID} game = seq results results
+		where 
+		results = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
 
 instance Updateable (Entity Ship) where
 	update _ = id
@@ -113,7 +120,6 @@ instance Evolvable (Entity Ship) where
 		upP <- evolveShipPlan -< (entity, game)
 		upD <- evolveShipDamage -< (entity, game)
 		id -< (upT ++ upP ++ upD)
-
 
 
 filteredUpdates :: [Update] -> [Update]
@@ -133,7 +139,6 @@ filteredUpdates updates' = resultUpdates
 	hasDelete eID (u:us) = case u of
 		(DeleteEntity eID') -> if (eID == eID') then True else hasDelete eID us
 		_ -> hasDelete eID us
-
 
 
 evolveShipDamage :: UpdateWire (Entity Ship, Game)
@@ -179,3 +184,4 @@ checkGameEnd game = case game^.gameGameMode of
 		playersLeft = map _ownerID (M.elems $ game^.gameShips)
 		deadPlayers = filter (\p -> p `notElem` playersLeft && p `notElem` (map fst $ game^.gameRanks)) (game^.gamePlayers)
 		updateRanks = (game^.gameRanks) ++ (map (\p -> (p, (length (game^.gamePlayers)) - (length (game^.gameRanks)))) deadPlayers)
+

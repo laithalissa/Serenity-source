@@ -94,13 +94,17 @@ evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 				then [UpdateShipOrder (entity^.entityID) makeOrderNone]
 				else if p == [] 
 					then [] 
-					else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] 
+					else 	[	UpdateShipGoal (entity^.entityID) g, 
+							UpdateShipPlan (entity^.entityID) p
+						] 
 
 		(action:rest) -> do
 			hasFinishedAction <- (arr $ uncurry3 finishedAction) -< (game, entity, action)
-			if hasFinishedAction
+			if (ship^.shipActionStarted)
+			then 	if hasFinishedAction
 				then id -< [UpdateShipPlan (entity^.entityID) rest]
 				else (arr $ uncurry3 actt) -< (entity, game, action)
+			else	id -< trace "ship starting plan" $ [UpdateShipStartedPlan $ entity^.entityID]
 
 --actt :: Entity Ship -> Game -> ShipAction -> [Update]
 --moveTimeRemaining :: BaseWire (Game, Entity Ship, Position, Double) Double

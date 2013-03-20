@@ -37,7 +37,7 @@ executable serenity
         pretty-show == 1.5
     hs-source-dirs: src
     ghc-options:    -W -threaded -rtsopts
-    extensions: TemplateHaskell
+    extensions: TemplateHaskell DoAndIfThenElse
 
 Test-Suite test-serenity
     type:           exitcode-stdio-1.0
@@ -75,4 +75,4 @@ Test-Suite test-serenity
         pretty-show == 1.5
     hs-source-dirs: tests, src
     ghc-options:    -W -threaded -rtsopts
-    extensions: TemplateHaskell
+    extensions: TemplateHaskell DoAndIfThenElse

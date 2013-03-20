@@ -23,6 +23,7 @@ import Text.Printf
 import Debug.Trace(trace)
 import Text.Show.Pretty(ppShow)
 
+import Control.Parallel(par)
 import Control.Lens
 import Data.Maybe(fromJust, isJust)
 import Data.Set(Set)
@@ -318,7 +319,10 @@ graph |>>| nID = (graph<^>nID)^.nodeSpaceLaneNeighbours
 
 -- | lookup all neighbours
 (|>*>|) :: SectorGraph -> NodeID -> Set NodeID
-graph |>*>| nID = Set.union (graph|>|nID) (graph|>>|nID)
+graph |>*>| nID = 
+	let	a = (graph|>|nID) 
+		b = (graph|>>|nID)
+	in	a `par` b `par` (Set.union a b)
 
 
 -- | calculates cost of edge (cached)
@@ -328,14 +332,10 @@ edgeCost graph nID1 nID2 = (cacheSearch graph nID1 nID2)^.edgeTimeCost
 -- | calculates cost of edge (no cache)
 edgeCost' :: SectorGraph -> NodeID -> NodeID -> Double
 edgeCost' graph nID1 nID2 = 
-	let	node1 = graph<^>nID1
-		node2 = graph<^>nID2
-		node1Location = node1^.nodeLocation
-		node2Location = node2^.nodeLocation
-		multiplier =	if isSpaceLane' graph nID1 nID2
+	let	multiplier =	if isSpaceLane' graph nID1 nID2
 				then graph^.sgSector.sectorSpaceLaneSpeedMultiplier
 				else 1.0
-		distance' = distance node1Location node2Location
+		distance' = distance (graph |@| nID1) (graph |@| nID2)
 		cost' = distance' / multiplier
 	in	cost' -- trace (printf "cost between node %s and %s is %s\n" (show nID1) (show nID2) (show cost')) cost'
 

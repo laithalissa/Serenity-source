@@ -33,7 +33,6 @@ initShip conf location direction = Ship
 	,	_shipGoal=GoalNone
 	,	_shipPlan=[]
 	,	_shipActionStartTime=0.0
-	,	_shipActionStarted=False
 	,	_shipBeamTargets=[]
 	}
 

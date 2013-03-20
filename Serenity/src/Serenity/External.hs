@@ -34,3 +34,4 @@ makeDemoGameBuilder = makeGameBuilder sectorTwo fleet'
 		,	(2, demoFleet)
 		,	(3, demoFleet)
 		]
+

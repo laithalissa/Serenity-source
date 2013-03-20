@@ -29,6 +29,7 @@ executable serenity
         gloss == 1.7.7.1,
         netwire == 4.0.7,
         derive,
+        parallel == 3.2.0.3,
         parseargs == 0.1.3.2,
         template-haskell,
         random == 1.0.1.1,
@@ -69,10 +70,11 @@ Test-Suite test-serenity
         gloss == 1.7.7.1,
         netwire == 4.0.7,
         parseargs == 0.1.3.2,
+        parallel == 3.2.0.3,
         template-haskell,
         random == 1.0.1.1,
         yaml-light == 0.1.4,
         pretty-show == 1.5
     hs-source-dirs: tests, src
-    ghc-options:    -W -threaded -rtsopts
+    ghc-options:    -W -threaded -rtsopts 
     extensions: TemplateHaskell DoAndIfThenElse

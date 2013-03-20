@@ -21,19 +21,23 @@ import Serenity.Model.Entity
 import Serenity.Model.Message
 import Serenity.Model.Wire
 
+import Control.Parallel(par)
 import Control.Lens
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, fromJust)
 import Data.VectorSpace
 import Prelude hiding (id, (.))
 
+par' :: a -> a
+par' a = par a a
+
 class Updateable a where
 	update  ::  Update  -> a -> a
 	updates :: [Update] -> a -> a
-	updates = seq' $ flip (foldr f)
-		where 
-		f u a = seq' $ update (seq' u) (seq' a)
-		seq' a = seq a a
+	updates = flip (foldr f)
+		where
+		f u a = u `par` (update u a)
+	
 
 class (Updateable a) => Evolvable a where
 	evolve :: UpdateWire (a, Game)
@@ -63,21 +67,14 @@ instance Updateable Game where
 		gameShips.(at eID).traverse.entityData.shipOrder .~ order $ 
 		gameShips.(at eID).traverse.entityData.shipPlan .~ [] $ 
 		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ (game^.gameTime) $ 
-		gameShips.(at eID).traverse.entityData.shipActionStarted .~ False $ 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ GoalNone $ game
 	
 	update UpdateShipPlan{updateEntityID=eID, updateShipPlan=plan} game =
 		gameShips.(at eID).traverse.entityData.shipPlan .~ plan $ 
-		gameShips.(at eID).traverse.entityData.shipActionStarted .~ False $ 
 		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ (game^.gameTime) $ game
 
 	update UpdateShipGoal{updateEntityID=eID, updateShipGoal=goal} game = 
 		gameShips.(at eID).traverse.entityData.shipGoal .~ goal $ 
-		gameShips.(at eID).traverse.entityData.shipActionStarted .~ False $ 
-		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ (game^.gameTime) $ game
-
-	update UpdateShipStartedPlan{updateEntityID=eID} game = trace "updating started plan" $ 
-		gameShips.(at eID).traverse.entityData.shipActionStarted .~ True $ 
 		gameShips.(at eID).traverse.entityData.shipActionStartTime .~ (game^.gameTime) $ game
 
 	update UpdateShipDamage{updateEntityID=eID, updateShipDamage=damage} game =
@@ -104,7 +101,7 @@ mapEvolve = proc (ents, game) -> do
 		[] -> id -< []
 
 instance Commandable Game where
-	command c@GiveOrder{commandEntityID = cID} game = seq results results
+	command c@GiveOrder{commandEntityID = cID} game = results
 		where 
 		results = concatMap (command c) (catMaybes [game^.gameShips.(at cID)])
 
@@ -112,7 +109,8 @@ instance Updateable (Entity Ship) where
 	update _ = id
 
 instance Commandable (Entity Ship) where
-	command GiveOrder{commandEntityID=cID, order=order} _ = return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
+	command GiveOrder{commandEntityID=cID, order=order} _ = 
+		return UpdateShipOrder{updateEntityID=cID, updateShipOrder=order}
 
 instance Evolvable (Entity Ship) where
 	evolve = proc (entity@Entity{_entityData=ship}, game) -> do

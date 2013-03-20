@@ -3,6 +3,7 @@
 module Serenity.AI.Navigation
 (	planRoute
 ,	distance
+,	route
 )  where
 
 import Serenity.Model.Common
@@ -95,12 +96,11 @@ makeDirection start end = normalized (end - start)
 	
 
 route :: Sector -> Location -> Location -> [(Location, Location, Bool)]
-route sector start end =
+route sector start end = trace "routing" $ 
 	let	(startID : endID : _, graph) = make sector 5.0 100.0 100.0 [start, end]
 		path = aStar' graph startID endID
 
 		-- helpers
-		
 		nodeLoc index = graph |@| (path!!index)
 		isSpaceLaneIndex index = isSpaceLane graph (path!!index) (path!!(index+1))
 

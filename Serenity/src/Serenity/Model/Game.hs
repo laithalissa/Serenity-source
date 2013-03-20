@@ -26,7 +26,8 @@ data GameBuilder = GameBuilder
 makeLenses ''GameBuilder
 
 data GameMode =
-	DeathMatch
+	  DeathMatch
+	| Unwinnable
 	deriving Show
 
 data Game = Game

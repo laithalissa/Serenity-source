@@ -57,11 +57,8 @@ timeLobby _ = execState $ do
 
 timeLobbyIO :: LobbyState a => Float -> StateT a IO ()
 timeLobbyIO dt = do
-	aLobby.lobbyTime += dt
-	time <- use $ aLobby.lobbyTime
-	when (time > 1) $ do
-		mClientState <- use aClientState
-		aClientState <~ loadClientState mClientState
+	time <- aLobby.lobbyTime <+= dt
+	when (time > 1) $ aClientState <~ (use aClientState >>= loadClientState)
 	where
 		loadClientState Nothing = do
 			serverHost <- use aHostName

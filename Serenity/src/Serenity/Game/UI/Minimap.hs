@@ -38,7 +38,7 @@ picturePlanet miniMapSize sSize p = translate x y (color planetColor $ circleSol
 		Blue   -> dark $ dark green
 		Desert -> dark orange
 		Metal  -> greyN 0.5
-		Ocean  -> blue
+		Ocean  -> (bright.light) blue
 		Star   -> bright yellow
 
 pictureSpaceLane :: (Int, Int) -> (Double, Double) -> (Map Int Planet) -> SpaceLane -> Picture

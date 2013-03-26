@@ -11,7 +11,6 @@ import Control.Lens
 import qualified Data.Map as Map
 
 handleClick :: (Double, Double) -> ClientState -> [ClientMessage]
-
 handleClick click clientState = if clickInSector then map f (playersShips clientState) else [] where
 	f entity = ClientMessageCommand $ GiveOrder (entity^.entityID) order
 

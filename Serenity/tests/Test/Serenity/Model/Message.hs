@@ -28,7 +28,6 @@ derive makeArbitrary ''Command
 derive makeArbitrary ''Damage
 derive makeArbitrary ''Entity
 derive makeArbitrary ''Goal
-derive makeArbitrary ''CtlMsg
 derive makeArbitrary ''Message
 derive makeArbitrary ''Order
 derive makeArbitrary ''Resources

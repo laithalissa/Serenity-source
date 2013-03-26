@@ -11,6 +11,7 @@ import Serenity.Game.UI.Credits
 import Serenity.Game.UI.Splash
 import Serenity.Game.UI.Host
 import Serenity.Game.UI.Join
+import Serenity.Game.UI.Quick
 import Serenity.Game.UI.Lobby
 import Serenity.Game.UI.Play
 import Serenity.Game.UI.End
@@ -32,6 +33,7 @@ data ApplicationController = ApplicationController
 	,	_appCreditsData :: CreditsData ApplicationController
 	,	_appHostData    :: HostData ApplicationController
 	,	_appJoinData    :: JoinData ApplicationController
+	,	_appQuickData   :: QuickData ApplicationController
 	,	_appLobbyData   :: LobbyData ApplicationController
 	,	_appPlayData    :: PlayData ApplicationController
 	,	_appEndData     :: EndData ApplicationController
@@ -46,14 +48,15 @@ initApplicationController assets = ApplicationController
 	{	_appViewGlobals = initGlobals
 	,	_appMode        = Splash
 	,	_appAssets      = assets
-	,	_appSplashData  = initSplashData assets
-	,	_appMenuData    = initMenuData   assets
-	,	_appCreditsData = initCreditsData   assets
-	,	_appHostData    = initHostData   assets
-	,	_appJoinData    = initJoinData   assets
-	,	_appLobbyData   = initLobbyData  assets
-	,	_appPlayData    = initPlayData   assets
-	,	_appEndData     = initEndData    assets
+	,	_appSplashData  = initSplashData  assets
+	,	_appMenuData    = initMenuData    assets
+	,	_appCreditsData = initCreditsData assets
+	,	_appHostData    = initHostData    assets
+	,	_appJoinData    = initJoinData    assets
+	,	_appQuickData   = initQuickData   assets
+	,	_appLobbyData   = initLobbyData   assets
+	,	_appPlayData    = initPlayData    assets
+	,	_appEndData     = initEndData     assets
 	,	_appClientState = Nothing
 	,	_appPort        = "9900"
 	,	_appNickName    = ""
@@ -67,6 +70,7 @@ instance MenuState    ApplicationController where {aMenu=appMenuData}
 instance CreditsState ApplicationController where {aCredits=appCreditsData}
 instance HostState    ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
 instance JoinState    ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
+instance QuickState   ApplicationController where {aQuick=appQuickData; aHost=appHostData; aHostName=appServerString; aPort=appPort}
 instance LobbyState   ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName}
 instance PlayState    ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
 instance EndState     ApplicationController where {aEnd=appEndData; aClientState=appClientState}
@@ -79,6 +83,7 @@ instance ViewController ApplicationController where
 		Credits -> viewCredits app 
 		Host    -> viewHost    app
 		Join    -> viewJoin    app
+		Quick   -> viewQuick   app
 		Lobby   -> viewLobby   app
 		Play    -> viewPlay    app 
 		End     -> viewEnd     app
@@ -89,6 +94,7 @@ instance ViewController ApplicationController where
 		Credits -> timeCredits dt app 
 		Host    -> timeHost    dt app
 		Join    -> timeJoin    dt app
+		Quick   -> timeQuick   dt app
 		Lobby   -> timeLobby   dt app
 		Play    -> timePlay    dt app
 		End     -> timeEnd     dt app
@@ -118,6 +124,7 @@ handleMainTime dt = execStateT $ do
 	case (app^.appMode) of 
 		Credits -> timeCreditsIO dt
 		Host    -> timeHostIO  dt
+		Quick   -> timeQuickIO dt
 		Lobby   -> timeLobbyIO dt
 		Play    -> timePlayIO  dt
 		Quit    -> liftIO exitSuccess

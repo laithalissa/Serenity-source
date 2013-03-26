@@ -26,7 +26,8 @@ data GameBuilder = GameBuilder
 makeLenses ''GameBuilder
 
 data GameMode =
-	DeathMatch
+	  DeathMatch
+	| Unwinnable
 	deriving Show
 
 data Game = Game
@@ -93,8 +94,7 @@ demoGame players gameBuilder = game
 	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game
 		where
 		f :: Entity Ship -> Entity Ship
-		--f e = entityData.shipOrder .~ (OrderAttack $ (getEntity ((e^.ownerID + 1) `mod` 4))^.entityID) $ e
-		f = entityData.shipOrder .~ (makeOrderMove (190, 190))
+		f e = entityData.shipOrder .~ (OrderAttack $ (getEntity ((e^.ownerID + 1) `mod` 4))^.entityID) $ e
 		getEntity :: OwnerID -> Entity Ship
 		getEntity oId = foldl1 (\x y -> if x^.ownerID == oId then x else y) $ Map.elems (game^.gameShips)
 
@@ -106,16 +106,6 @@ demoGame players gameBuilder = game
 --shipCurrentHull :: Game -> EntityID -> Int
 
 ---------- Lens Helpers ----------
-
-shipSpeed' :: Game -> Entity Ship -> Bool -> Double
-shipSpeed' game entity isUsingSpaceLane = 
-	let	multiplier = if isUsingSpaceLane then sectorSpaceLaneSpeed' game else 1.0
-		shipSpeed = (shipClass' entity game)^.shipClassSpeed
-	in	multiplier * shipSpeed
-
-
-sectorSpaceLaneSpeed' :: Game -> Double
-sectorSpaceLaneSpeed' game = game^.gameBuilder.gbSector.sectorSpaceLaneSpeedMultiplier
 
 gameMap' :: Simple Lens Game Sector
 gameMap' = gameBuilder.gbSector

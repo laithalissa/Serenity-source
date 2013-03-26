@@ -2,12 +2,9 @@
 
 module Serenity.Model.Sector where
 
-import Serenity.Model.Common
-
 import Control.Lens
 import Data.AdditiveGroup
 import Data.Map (Map)
-import Data.Maybe (fromJust)
 import qualified Data.Map as Map
 import Data.Binary
 import Data.DeriveTH
@@ -16,12 +13,11 @@ type SpaceLane = (PlanetID, PlanetID)
 type PlanetID = Int
 
 data Sector = Sector
-	{	_sectorName         		:: String
-	,	_sectorSize         		:: (Double, Double)
-	,	_sectorSpawnPoints  		:: [Location]
-	,	_sectorPlanets      		:: Map PlanetID Planet
-	,	_sectorSpaceLanes   		:: [SpaceLane]	
-	,	_sectorSpaceLaneSpeedMultiplier :: Double
+	{	_sectorName         :: String
+	,	_sectorSize         :: (Double, Double)
+	,	_sectorSpawnPoints  :: [(Double, Double)]
+	,	_sectorPlanets      :: Map PlanetID Planet
+	,	_sectorSpaceLanes   :: [SpaceLane]	
 	}
 	deriving (Show, Eq)
 
@@ -29,7 +25,7 @@ data Planet = Planet
 	{	_planetID        :: PlanetID
 	,	_planetName      :: String
 	,	_planetEcotype   :: Ecotype
-	,	_planetLocation  :: Location
+	,	_planetLocation  :: (Double, Double)
 	,	_planetResources :: Resources
 	}
 	deriving (Show, Eq)
@@ -80,6 +76,18 @@ instance AdditiveGroup Resources where
 
 sectorOne = Sector
 	{	_sectorName        = "Sector One"
+	,	_sectorSize        = (200, 200)
+	,	_sectorSpawnPoints = [(50,50), (50,150), (150,150), (150,50)]
+	,	_sectorPlanets     = Map.fromList $ zip [1..] $ zipWith (planetID .~ ) [1..]
+		[	Planet 1 "Splearth"  Blue  (30 , 40)  (makeRes 10 10 0)
+		,	Planet 2 "Karida"    Star  (120, 50)  (makeRes 10 10 0)
+		,	Planet 3 "Qoruscant" Metal (170, 170) (makeRes 10 0 10)
+		]
+	,	_sectorSpaceLanes  = [(1,2), (2,3)]
+	}
+
+sectorTwo = Sector
+	{	_sectorName        = "Sector Two"
 	,	_sectorSize        = (1000, 1000)
 	,	_sectorSpawnPoints = [(40,40), (960,40), (40,960), (960,960)]
 	,	_sectorPlanets     = Map.fromList $ zip [1..] $ zipWith (planetID .~ ) [1..]
@@ -90,47 +98,8 @@ sectorOne = Sector
 		,	Planet 5 "Arietis"             Desert (800, 500) (makeRes 5  5  0 )
 		,	Planet 6 "Castillon"           Blue   (50 , 50 ) (makeRes 10 0  0 )
 		,	Planet 7 "Elden Kennett"       Blue   (950, 950) (makeRes 10 0  0 )
-		,	Planet 8 "Alcantar"            Blue   (50 , 950) (makeRes 10 0  0 )
-		,	Planet 9 "New Zaldi"           Blue   (950, 50)  (makeRes 10 0  0 )
+		,	Planet 8 "Alcantar"            Ocean  (50 , 950) (makeRes 10 0  0 )
+		,	Planet 9 "New Zaldi"           Ocean  (950, 50)  (makeRes 10 0  0 )
 		]
-	,	_sectorSpaceLaneSpeedMultiplier = 4.0
 	,	_sectorSpaceLanes = [(1,2),(1,3),(4,6),(4,8),(2,6),(2,9),(5,9),(5,7),(3,7),(3,8)]
 	}
-
-sectorTwo = Sector
-	{	_sectorName        = "Sector Two"
-	,	_sectorSize        = (500, 500)
-	,	_sectorSpawnPoints = [(50,50), (50,450), (450,50), (450,450)]
-	,	_sectorPlanets     = Map.fromList
-		[	makePlanet 1 (100, 100)
-		,	makePlanet 2 (400, 100)
-		,	makePlanet 3 (100, 400)
-		,	makePlanet 4 (400, 400)
-		,	makePlanet 5 (150, 250)
-		,	makePlanet 6 (250, 350)
-		,	makePlanet 7 (250, 150)
-		,	makePlanet 8 (350, 250)
-		]
-	,	_sectorSpaceLanes  = 
-		[	(1,4)
-		, 	(3,2)
-		,	(5,6)
-		,	(5,7)
-		,	(8,6)
-		,	(8,7)
-		]
-	,	_sectorSpaceLaneSpeedMultiplier = 4.0
-	}
-
-	where 
-	makePlanet pid location = (pid, Planet {_planetID = pid, _planetName = "Splearth" , _planetEcotype = Blue  , _planetLocation  = location, _planetResources = Resources 10 10 0})
-
-
-planetLocation' :: Sector -> PlanetID -> Location
-planetLocation' sector planetID = (fromJust $ Map.lookup planetID (sector^.sectorPlanets))^.planetLocation
-
-sectorPlanets' :: Sector -> [Planet]
-sectorPlanets' sector = map snd $ Map.toList $ sector^.sectorPlanets
-
-sectorPlanet' :: Sector -> PlanetID -> Planet
-sectorPlanet' sector pID = foldl1 (\p1 p2 -> if p1^.planetID == pID then p1 else p2) (sectorPlanets' sector)

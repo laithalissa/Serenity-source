@@ -14,10 +14,14 @@ module Serenity.Model.Entity
 ,	module Serenity.Model.Ship
 ) where
 
-import Serenity.Model.Common
 import Serenity.Model.Ship
 
 import Control.Lens
+
+type EntityID = Int
+type OwnerID = Int
+
+
 
 data Entity a = 
 	Entity

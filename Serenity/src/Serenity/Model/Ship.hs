@@ -2,7 +2,6 @@
 
 module Serenity.Model.Ship where
 
-import Serenity.Model.Common
 import Serenity.Model.Sector
 import Serenity.Maths.Util
 
@@ -10,6 +9,9 @@ import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as M (empty)
 import System.Random
+
+type Location = (Double, Double)
+type Direction = (Double, Double)
 
 data Ship = Ship
 	{	_shipConfiguration :: ShipConfiguration
@@ -19,7 +21,6 @@ data Ship = Ship
 	,	_shipOrder :: Order
 	,	_shipGoal :: Goal
 	,	_shipPlan :: Plan
-	,	_shipActionStartTime :: Double
 	,	_shipTargets :: Map Int [Int] -- ^ Map from weapon ID to list of targets
 	}
 	deriving (Show, Eq)
@@ -30,10 +31,9 @@ initShip conf location direction = Ship
 	,	_shipLocation=location
 	,	_shipDirection=direction
 	,	_shipDamage=Damage 0 0
-	,	_shipOrder=makeOrderNone
+	,	_shipOrder=OrderNone
 	,	_shipGoal=GoalNone
 	,	_shipPlan=[]
-	,	_shipActionStartTime=0.0
 	,	_shipTargets = M.empty
 	}
 
@@ -46,39 +46,14 @@ data Damage = Damage
 ----------------- Orders and Planning -------------------
 
 data Order = 
-	OrderNone 
-		{	orderAvoidConflict :: Bool
-		}
-	| OrderMove
-		{	orderLocation :: Location 
-		,	orderDirection :: (Maybe Direction)
-		,	orderAvoidConflict :: Bool
-		}
-	| OrderAttack
-		{	orderTargetEntityID :: Int
-		}
+	  OrderNone
+	| OrderMove Location (Maybe Direction)
+	| OrderAttack Int
 	| OrderGuardShip Int
 	| OrderGuardPlanet Int
 	| OrderGuardLocation Location
 	| OrderCapture Int
 	deriving (Show, Eq)
-
-makeOrderNone = 
-	OrderNone 
-	{	orderAvoidConflict=False
-	}
-
-makeOrderMove location = 
-	OrderMove 
-	{	orderLocation=location 
-	,	orderDirection=Nothing 
-	,	orderAvoidConflict=True
-	}
-
-makeOrderAttack targetEntityID =
-	OrderAttack
-	{	orderTargetEntityID = targetEntityID
-	}
 
 data Goal = 
 	  GoalNone
@@ -93,13 +68,13 @@ data Goal =
 
 data ShipAction = 
 	ActionMove 
-	{	actionStartPosition 	:: Position
-	,	actionFinishPosition  	:: Position
-	,	actionUsingSpaceLane	:: Bool
+	{	startTime :: Double
+	,	startLocDir :: (Location, Direction)
+	,	endLocDir   :: (Location, Direction)
 	}
-	| ActionAttack {actionTargetID :: Int}
+	| ActionAttack {targetID :: Int}
 	| ActionCapture Int
-	| ActionMoveToEntity Int ShipAction
+	|	ActionMoveToEntity Int ShipAction
 	deriving (Show, Eq)
 
 type Plan = [ShipAction]
@@ -189,6 +164,9 @@ makeLenses ''WeaponSlot
 makeLenses ''SystemSlot
 
 ---------- Lens Helpers ----------
+
+
+
 
 -- applyWeaponDamage :: StdGen -> WeaponEffect -> Ship -> Ship
 -- applyWeaponDamage gen effect ship

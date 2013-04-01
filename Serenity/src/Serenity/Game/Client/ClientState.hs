@@ -114,7 +114,7 @@ initClientState assets gameBuilder ownerID players channels = ClientState
 	,	_clientGameStatus = Playing
 	}
 	where
-		game = demoGame players gameBuilder
+		game = initGame players gameBuilder
 
 initUIState :: Game -> UIState ClientState
 initUIState game = UIState

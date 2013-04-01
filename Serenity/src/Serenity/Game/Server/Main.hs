@@ -37,7 +37,7 @@ server sector gameMode port clientCount = forever $ do
 	(clients, transport) <- connectionPhase (fromIntegral port) clientCount
 	print "all clients connected, starting game"
 	gameBuilder' <- createGameBuilder clients
-	play 5 clients ((demoGame (map (\c -> (clientID c, clientName c)) clients) gameBuilder') & gameGameMode .~ gameMode) commands evolve updates
+	play 5 clients ((initGame (map (\c -> (clientID c, clientName c)) clients) gameBuilder') & gameGameMode .~ gameMode) commands evolve updates
 	closeTransport transport
 	print "server finished"
 	where

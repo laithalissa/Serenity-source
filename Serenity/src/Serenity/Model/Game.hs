@@ -33,7 +33,6 @@ data GameMode =
 data Game = Game
 	{	_gameTime :: Double
 	,	_gameRandom :: StdGen
-	,	_gameNextEntityId :: Int
 	,	_gameShips  :: Map EntityID (Entity Ship)
 	,	_gameBuilder :: GameBuilder
 	,	_gameGameMode :: GameMode
@@ -43,22 +42,21 @@ data Game = Game
 	deriving Show
 makeLenses ''Game
 
-addShip :: OwnerID -> Ship -> Game -> Game
-addShip ownerId ship game = game'
-	where
-	game' = gameNextEntityId .~ eId' $ (gameShips .~ ships' $ game)
-	eId' = eId+1
-	eId = game^.gameNextEntityId
-	ships' = Map.insert eId entity' (game^.gameShips)
-	entity' = Entity
-		{	_entityID=eId
-		,	_ownerID=ownerId
-		,	_entityData=ship
-		}
-
 initGame :: [(OwnerID, String)] -> GameBuilder -> Game
-initGame players gameBuilder = game'
-	where 
+initGame players gameBuilder = Game
+	{	_gameTime = 0
+	,	_gameRandom = mkStdGen 1758836
+	,	_gameShips = Map.fromList entities
+	,	_gameBuilder = gameBuilder
+	,	_gameGameMode = DeathMatch
+	,	_gamePlayers = players
+	,	_gameRanks = []
+	}
+	where
+
+	entities = map (\(eID, oID, ship) -> (eID, Entity eID oID ship)) ships
+	ships = map (\(eID, (oID, conf, x, y)) -> (eID, oID, initShip conf (x + (fromIntegral eID) * 10, y) (0, 1))) $ zip [1..] shipsSpawnPoint
+
 	fleetsList :: [(OwnerID, Fleet)]
 	fleetsList = Map.toList (gameBuilder^.gbPlayerFleets)
 	spawnPoints :: [(Double, Double)]
@@ -69,36 +67,7 @@ initGame players gameBuilder = game'
 	shipsSpawnPoint = concat $ map f fleetsSpawnPoint
 		where
 		f (oId,Fleet scs,x,y) = map (\sc-> (oId,sc,x,y)) scs
-	game' :: Game
-	game' = foldl f game shipsSpawnPoint
-		where
-		f g (oId,sc,x,y) = addShip oId (initShip sc (x,y) (0,1)) g
 		
-	game = Game
-		{	_gameTime = 0
-		,	_gameRandom = mkStdGen 1758836
-		,	_gameNextEntityId=0
-		,	_gameShips  = Map.empty
-		,	_gameBuilder = gameBuilder
-		,	_gameGameMode = DeathMatch
-		,	_gamePlayers = players
-		,	_gameRanks = []
-		}
-
-
-
-demoGame :: [(OwnerID, String)] -> GameBuilder -> Game
-demoGame players gameBuilder = game
-	where 
-	game = initGame players gameBuilder
-	game' game = gameShips .~ (Map.map f (game^.gameShips)) $ game
-		where
-		f :: Entity Ship -> Entity Ship
-		f e = entityData.shipOrder .~ (OrderAttack $ (getEntity ((e^.ownerID + 1) `mod` 4))^.entityID) $ e
-		getEntity :: OwnerID -> Entity Ship
-		getEntity oId = foldl1 (\x y -> if x^.ownerID == oId then x else y) $ Map.elems (game^.gameShips)
-
-
 
 
 --shipClass' entity game = gameBuilder.gbShipClasses.(at $ entity^.entityData.shipConfiguration.shipConfigurationShipClass)

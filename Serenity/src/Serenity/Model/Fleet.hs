@@ -10,7 +10,7 @@ initFleet :: [ShipConfiguration] -> Fleet
 initFleet = Fleet 
 
 demoFleet :: Fleet
-demoFleet = Fleet [demoShipConfiguration]
+demoFleet = Fleet $ replicate 8 demoShipConfiguration
 	
 data Fleet = Fleet
 	{	_fleetShips :: [ShipConfiguration]

@@ -63,3 +63,7 @@ part3 p xs = foldl (part3' p) ([], [], []) xs
 		Just Two   -> (a  , x:b, c  )
 		Just Three -> (a  , b  , x:c)
 		_ -> (a, b, c)
+
+-- Find the centre of a two-dimensional region
+centroid :: [(Double, Double)] -> (Double, Double)
+centroid ps = (sumV ps) ^/ (fromIntegral $ length ps)

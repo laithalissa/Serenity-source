@@ -18,6 +18,7 @@ import Control.Lens
 import Control.Monad.State
 import Data.Monoid
 import Data.Maybe
+import Data.VectorSpace
 
 data PlayData a = PlayData 
 	{	_playSelectBox :: Maybe ((Float, Float), (Float, Float))
@@ -155,7 +156,7 @@ endSelectRight point = execState $ do
 			(friendly, enemy, planets, wasDrag) <- return $ lassoShips (boxToExtent box) clientState
 			(f,e,p)  <- return $ selectionToTriple (clientState^.clientUIState.uiStateSelected)
 			newOrder <- return $ chooseOrder friendly enemy planets (translatePoint clientState $ pFloat2Double $ fst $ box)
-			clientCommands %= (++ if f == [] then [] else map (\e -> GiveOrder e newOrder) f)
+			clientCommands %= (++ if f == [] then [] else map (groupOrder (clientState^.clientGame) f newOrder) f)
 
 		translatePoint clientState point = mapLocationFromView point (clientState^.clientUIState.uiStateViewport) (sX, sY) where
 			(sX,sY) = clientState^.clientGame.gameBuilder.gbSector.sectorSize
@@ -164,6 +165,17 @@ chooseOrder [] [] []    loc = OrderMove loc Nothing
 chooseOrder [] [] (p:_) loc = OrderCapture p
 chooseOrder [] (e:_)  _ loc = OrderAttack e
 chooseOrder (f:_)  _  _ loc = OrderGuardShip f
+
+groupOrder :: Game -> [Int] -> Order -> Int -> Command
+groupOrder game group (OrderMove dest dir) ship = GiveOrder ship order'
+	where
+		order' = OrderMove (dest ^+^ (loc ^-^ centre)) dir
+		loc = shipLoc ship
+		centre = centroid $ map shipLoc group
+		shipLoc id = case game^.gameShips.(at id) of
+			Just ship -> ship^.entityData.shipLocation
+			Nothing -> (0, 0)
+groupOrder _ _ order ship = GiveOrder ship order
 
 timePlay :: PlayState a => Float -> a -> a
 timePlay _ = execState $ do

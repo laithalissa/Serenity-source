@@ -4,16 +4,17 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, UndecidableInstances, StandaloneDeriving #-}
 module Serenity.Model.Game where
 
-import Data.Maybe(fromJust)
 
 import Serenity.Model.Entity
 import Serenity.Model.Fleet
+import Serenity.Model.Formation
 import Serenity.Model.Sector
 
 import Control.Lens
-import System.Random
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Maybe (fromJust)
+import System.Random
 
 data GameBuilder = GameBuilder
 	{	_gbSector	:: Sector
@@ -46,7 +47,7 @@ initGame :: [(OwnerID, String)] -> GameBuilder -> Game
 initGame players gameBuilder = Game
 	{	_gameTime = 0
 	,	_gameRandom = mkStdGen 1758836
-	,	_gameShips = Map.fromList entities
+	,	_gameShips = Map.fromList ships
 	,	_gameBuilder = gameBuilder
 	,	_gameGameMode = DeathMatch
 	,	_gamePlayers = players
@@ -54,25 +55,13 @@ initGame players gameBuilder = Game
 	}
 	where
 
-	entities = map (\(eID, oID, ship) -> (eID, Entity eID oID ship)) ships
-	ships = map (\(eID, (oID, conf, x, y)) -> (eID, oID, initShip conf (x + (fromIntegral eID) * 10, y) (0, 1))) $ zip [1..] shipsSpawnPoint
+	ships = map createShip $ zip [1..] $ concatMap expandFleet fleets
+	createShip (eID, (oID, conf, loc)) = (eID, Entity eID oID (initShip conf loc (0, 1)))
+	expandFleet (oID, fleet, loc) = zipWith (\conf loc' -> (oID, conf, loc')) (fleet^.fleetShips) (formation (length $ fleet^.fleetShips) 25 50 0 4 loc)
 
-	fleetsList :: [(OwnerID, Fleet)]
+	fleets = zipWith (\(oID, fleet) loc -> (oID, fleet, loc)) fleetsList spawnPoints
 	fleetsList = Map.toList (gameBuilder^.gbPlayerFleets)
-	spawnPoints :: [(Double, Double)]
-	spawnPoints = gameBuilder^.gbSector^.sectorSpawnPoints
-	fleetsSpawnPoint :: [(OwnerID, Fleet, Double, Double)]
-	fleetsSpawnPoint = zipWith (\(oId, f) (x,y) -> (oId, f, x, y)) fleetsList spawnPoints
-	shipsSpawnPoint :: [(OwnerID, ShipConfiguration, Double, Double)]
-	shipsSpawnPoint = concat $ map f fleetsSpawnPoint
-		where
-		f (oId,Fleet scs,x,y) = map (\sc-> (oId,sc,x,y)) scs
-		
-
-
---shipClass' entity game = gameBuilder.gbShipClasses.(at $ entity^.entityData.shipConfiguration.shipConfigurationShipClass)
-
---shipCurrentHull :: Game -> EntityID -> Int
+	spawnPoints = gameBuilder^.gbSector.sectorSpawnPoints
 
 ---------- Lens Helpers ----------
 

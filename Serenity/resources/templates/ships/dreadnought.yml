@@ -1,16 +1,24 @@
-shipName: Destroyer
-fileName: Destroyer.bmp
+shipName: Dreadnought
+fileName: Dreadnought.bmp
 centerOfRotation: (512, 128)
-speed: 1.5
+speed: 1.0
 damageStrength:
-  hull: 100
-  shields: 100
+  hull: 200
+  shields: 200
 weaponSlots:
   -
     location: (1, 2)
     direction: (10, -5)
     type: Front
   
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Side
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Side
   -
     location: (1, 2)
     direction: (10, -5)
@@ -28,8 +36,22 @@ weaponSlots:
     location: (10, 12)
     direction: (9, 12)
     type: Turret
+  -
+    location: (10, 12)
+    direction: (9, 12)
+    type: Turret
+  -
+    location: (10, 12)
+    direction: (9, 12)
+    type: Turret
 
 systemSlots:
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)
   -
     location: (18, 12)
     direction: (10, 15)

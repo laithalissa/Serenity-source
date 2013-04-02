@@ -100,7 +100,7 @@ pictureEntity game uiState assets time entity = pictures $ (shipAndHealth time) 
 	
 	shipAndHealth time = map (translate x y) $
 		selection ++ 
-		[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (scale 0.015 0.015 $ getPicture "Destroyer" assets)]
+		[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (scale 0.015 0.015 $ getPicture entityAssetName assets)]
 		,	(translate (-boundingBoxWidth / 2) 7 $ Pictures [boundingBox , healthMeter])
 		,	(translate (-boundingBoxWidth / 2) 8 $ Pictures [boundingBox, shieldMeter])
 		] where

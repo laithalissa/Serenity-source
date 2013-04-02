@@ -1,5 +1,5 @@
 shipName: Destroyer
-fileName: Destroyer.bmp
+fileName: Destroyer
 centerOfRotation: (512, 128)
 speed: 1.5
 damageStrength:

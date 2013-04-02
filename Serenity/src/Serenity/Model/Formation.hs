@@ -33,8 +33,8 @@ formation n alpha beta gamma psi (x, y) = map position $ take n [0..]
 					| pos <= half = x - (fromIntegral $ alpha * pos)
 					| otherwise = x + (fromIntegral $ alpha * (pos - half))
 				yPos
-					| pos <= half = y + (fromIntegral $ beta * line) + (fromIntegral $ gamma * pos)
-					| otherwise = y + (fromIntegral $ beta * line) + (fromIntegral $ gamma * (pos - half))
+					| pos <= half = y - (fromIntegral $ beta * line) - (fromIntegral $ gamma * pos)
+					| otherwise = y - (fromIntegral $ beta * line) - (fromIntegral $ gamma * (pos - half))
 
 				(line, pos) = divMod i psi
 				half = psi `div` 2

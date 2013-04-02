@@ -39,7 +39,7 @@ data Ecotype =
 	deriving (Show, Eq)
 
 ecotypeAssetName' :: Ecotype -> String
-ecotypeAssetName' Blue   = "planet1"
+ecotypeAssetName' Blue   = "blue-planet"
 ecotypeAssetName' Desert = "desert-planet"
 ecotypeAssetName' Metal  = "metal-planet"
 ecotypeAssetName' Ocean  = "ocean-planet"

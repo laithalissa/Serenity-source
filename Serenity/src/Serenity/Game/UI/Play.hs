@@ -17,6 +17,7 @@ import Graphics.Gloss.Data.Extent
 import Control.Lens
 import Control.Monad.State
 import Data.Monoid
+import qualified Data.Map as Map
 import Data.Maybe
 
 data PlayData a = PlayData 
@@ -155,7 +156,7 @@ endSelectRight point = execState $ do
 			(friendly, enemy, planets, wasDrag) <- return $ lassoShips (boxToExtent box) clientState
 			(f,e,p)  <- return $ selectionToTriple (clientState^.clientUIState.uiStateSelected)
 			newOrder <- return $ chooseOrder friendly enemy planets (translatePoint clientState $ pFloat2Double $ fst $ box)
-			clientCommands %= (++ if f == [] then [] else [GiveOrder (head f) newOrder])
+			clientCommands %= (++ if f == [] then [] else map (\e -> GiveOrder e newOrder) f)
 
 		translatePoint clientState point = mapLocationFromView point (clientState^.clientUIState.uiStateViewport) (sX, sY) where
 			(sX,sY) = clientState^.clientGame.gameBuilder.gbSector.sectorSize
@@ -190,10 +191,12 @@ picturePlanet game uiState assets (planetID, planet) = Pictures $ [p] where
 	p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets
 
 pictureEntity :: Game -> UIState ClientState -> Assets -> Double -> Entity Ship -> Picture
-pictureEntity game uiState assets time entity = rotate 90 $ Pictures [shipBridge, (getPictureSized "transparent" dim dim assets)] where	
+pictureEntity game uiState assets time entity = rotate 90 $ Pictures [shipBridge, getPictureSized entityAssetName dim dim assets] where
 	shipBridge = 
 		translate (-0.052 * dim) (-0.47 * dim) 
 		$ scale (0.105 * dim) (0.96 * dim) 
 		$ color (ownerIDColor (entity^.ownerID)) 
 		$ polygon [(0,0), (0,0.95), (0.5, 1), (1, 0.95), (1, 0)]
 	dim     = 10
+	entityAssetName = (fromJust $ Map.lookup (entity^.entityData.shipConfiguration.shipConfigurationShipClass)
+		(game^.gameBuilder.gbShipClasses))^.shipClassAssetName

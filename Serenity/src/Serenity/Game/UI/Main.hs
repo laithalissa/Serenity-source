@@ -74,7 +74,7 @@ instance CreditsState ApplicationController where {aCredits=appCreditsData}
 instance HostState    ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
 instance JoinState    ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
 instance QuickState   ApplicationController where {aQuick=appQuickData; aHost=appHostData; aHostName=appServerString; aPort=appPort}
-instance LobbyState   ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName}
+instance LobbyState   ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName; aFleet=appFleet}
 instance PlayState    ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
 instance EndState     ApplicationController where {aEnd=appEndData; aClientState=appClientState}
 

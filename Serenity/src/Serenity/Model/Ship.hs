@@ -3,12 +3,10 @@
 module Serenity.Model.Ship where
 
 import Serenity.Model.Sector
-import Serenity.Maths.Util
 
 import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as M (empty)
-import System.Random
 
 type Location = (Double, Double)
 type Direction = (Double, Double)
@@ -73,8 +71,9 @@ data ShipAction =
 	,	endLocDir   :: (Location, Direction)
 	}
 	| ActionAttack {targetID :: Int}
-	| ActionCapture Int
-	|	ActionMoveToEntity Int ShipAction
+	| ActionCapture {targetID :: Int}
+	| ActionMoveToEntity Int ShipAction
+	-- | ActionOrbit {targetID :: Int}
 	deriving (Show, Eq)
 
 type Plan = [ShipAction]

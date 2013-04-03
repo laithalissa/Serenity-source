@@ -24,7 +24,6 @@ import Control.Lens
 import Data.List (nub)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, fromJust)
-import Data.VectorSpace
 import Prelude hiding (id, (.))
 
 class Updateable a where

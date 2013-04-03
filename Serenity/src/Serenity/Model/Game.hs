@@ -43,6 +43,8 @@ data Game = Game
 	deriving Show
 makeLenses ''Game
 
+gamePlanets = gameBuilder.gbSector.sectorPlanets
+
 initGame :: [(OwnerID, String)] -> GameBuilder -> Game
 initGame players gameBuilder = Game
 	{	_gameTime = 0

@@ -25,7 +25,7 @@ class AppState a => EndState a where
 
 initEndData :: EndState a => Assets -> EndData a
 initEndData assets = EndData
-	{	_endRankingsTable = initTable 50 Nothing
+	{	_endRankingsTable = initTable 1 50 Nothing
 	,	_endContinueButton = initMenuButton "Continue" continueAction
 	}
 

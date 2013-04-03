@@ -13,6 +13,7 @@ import Serenity.Game.UI.Host
 import Serenity.Game.UI.Join
 import Serenity.Game.UI.Quick
 import Serenity.Game.UI.Lobby
+import Serenity.Game.UI.Fleet
 import Serenity.Game.UI.Play
 import Serenity.Game.UI.End
 import Serenity.Game.Client.ClientState
@@ -35,6 +36,7 @@ data ApplicationController = ApplicationController
 	,	_appJoinData    :: JoinData ApplicationController
 	,	_appQuickData   :: QuickData ApplicationController
 	,	_appLobbyData   :: LobbyData ApplicationController
+	,	_appFleetData   :: FleetData ApplicationController
 	,	_appPlayData    :: PlayData ApplicationController
 	,	_appEndData     :: EndData ApplicationController
 	,	_appClientState :: Maybe ClientState
@@ -55,6 +57,7 @@ initApplicationController assets = ApplicationController
 	,	_appJoinData    = initJoinData    assets
 	,	_appQuickData   = initQuickData   assets
 	,	_appLobbyData   = initLobbyData   assets
+	,	_appFleetData   = initFleetData   assets
 	,	_appPlayData    = initPlayData    assets
 	,	_appEndData     = initEndData     assets
 	,	_appClientState = Nothing
@@ -72,6 +75,7 @@ instance HostState    ApplicationController where {aHost=appHostData; aPort=appP
 instance JoinState    ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
 instance QuickState   ApplicationController where {aQuick=appQuickData; aHost=appHostData; aHostName=appServerString; aPort=appPort}
 instance LobbyState   ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName}
+instance FleetState   ApplicationController where {aFleet=appFleetData; aClientState=appClientState}
 instance PlayState    ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
 instance EndState     ApplicationController where {aEnd=appEndData; aClientState=appClientState}
 
@@ -85,6 +89,7 @@ instance ViewController ApplicationController where
 		Join    -> viewJoin    app
 		Quick   -> viewQuick   app
 		Lobby   -> viewLobby   app
+		FleetSetUp -> viewFleet   app
 		Play    -> viewPlay    app 
 		End     -> viewEnd     app
 		Quit    -> (initView ((0, 0), (1024, 750)))
@@ -96,6 +101,7 @@ instance ViewController ApplicationController where
 		Join    -> timeJoin    dt app
 		Quick   -> timeQuick   dt app
 		Lobby   -> timeLobby   dt app
+		FleetSetUp -> timeFleet   dt app
 		Play    -> timePlay    dt app
 		End     -> timeEnd     dt app
 		Quit    -> app -- Quit handled by handleMainTime below
@@ -126,6 +132,7 @@ handleMainTime dt = execStateT $ do
 		Host    -> timeHostIO  dt
 		Quick   -> timeQuickIO dt
 		Lobby   -> timeLobbyIO dt
+		FleetSetUp -> timeFleetIO dt
 		Play    -> timePlayIO  dt
 		Quit    -> liftIO exitSuccess
 		_       -> return ()

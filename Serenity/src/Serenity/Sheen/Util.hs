@@ -18,7 +18,7 @@ extentOrigin :: Simple Lens Extent (Int, Int)
 extentOrigin = lens (fst.fromExtent) (\ext org -> toExtent $ _1 .~ org $ fromExtent ext)
 
 extentSize :: Simple Lens Extent (Int, Int)
-extentSize = lens (fst.fromExtent) (\ext sze -> toExtent $ _2 .~ sze $ fromExtent ext)
+extentSize = lens (snd.fromExtent) (\ext sze -> toExtent $ _2 .~ sze $ fromExtent ext)
 
 overMaybe getter setter f = do
 	x <- use getter

@@ -42,8 +42,8 @@ initCreditsData assets = CreditsData
 	,	_creditsAGameNameLabel   = (initLabel (DynamicString $ aCredits.creditsAGameName) (bright green) Nothing) 
 			& (labelScale .~ 1.4) 
 			& (labelTextOffset .~ (10, 20))
-	,	_creditsDescriptionTable = (initTable 20 Nothing)
-	,	_creditsPortraitsTable   = (initTable 110 Nothing)
+	,	_creditsDescriptionTable = (initTable 1 20 Nothing)
+	,	_creditsPortraitsTable   = (initTable 1 110 Nothing)
 	}
 
 viewCredits :: CreditsState a => a -> View a

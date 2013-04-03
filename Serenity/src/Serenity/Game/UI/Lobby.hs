@@ -53,7 +53,7 @@ timeLobby _ = execState $ do
 	mClientState <- use aClientState
 	case mClientState of 
 		Nothing -> return ()
-		Just _ -> aMode .= Play
+		Just _ -> aMode .= FleetSetUp
 
 timeLobbyIO :: LobbyState a => Float -> StateT a IO ()
 timeLobbyIO dt = do
@@ -65,7 +65,8 @@ timeLobbyIO dt = do
 			serverPort <- use aPort
 			nickName <- use aName
 			(channels, ownerID) <- liftIO $ connectToServer serverHost (fromIntegral $ read serverPort) nickName
-			connected <- liftIO $ waitForStarting (channelInbox channels) []
+			-- connected <- liftIO $ waitForStarting (channelInbox channels) []
+			let connected = [(ownerID, nickName)]
 			assets <- liftIO initAssets
 			gameBuilder <- liftIO $ createGameBuilder connected
 			return $ Just $ initClientState assets gameBuilder ownerID connected channels
@@ -88,7 +89,7 @@ connectToServer host port name = do
 	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlSetName name)
 	(myID, connected) <- waitForID (channelInbox channels)
 	print $ "My ID: " ++ (show myID) ++ ", Connected: " ++ (show connected)
-	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlReady)
+	-- atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlReady)
 	return (channels, myID)
 	where
 		waitUntilConnected connTVar = do

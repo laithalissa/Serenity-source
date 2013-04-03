@@ -97,6 +97,9 @@ data CtlMsg =
 	|	ControlSetConnected
 	{	controlConnected :: [(Int, String)]
 	}
+	|	ControlSetFleet
+	{	controlFleet :: Map String Int
+	}
 	|	ControlReady
 	|	ControlStarting
 	deriving (Show, Eq)

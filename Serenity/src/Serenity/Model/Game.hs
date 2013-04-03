@@ -43,6 +43,8 @@ data Game = Game
 	deriving Show
 makeLenses ''Game
 
+gamePlanets = gameBuilder.gbSector.sectorPlanets
+
 addShip :: OwnerID -> Ship -> Game -> Game
 addShip ownerId ship game = game'
 	where

@@ -2,19 +2,21 @@
 
 module Serenity.AI.Plan where
 
+import Prelude hiding (id, (.))
 import Serenity.Model.Entity
 import Serenity.Model.Game
 import Serenity.Model.Message 
 import Serenity.Model.Wire
+import Serenity.Model.Sector
 import Serenity.Maths.Util
 import Serenity.AI.Path
 
-
 import Control.Lens
 import qualified Data.Map as M
-import Data.Maybe (fromJust, isJust)
+import Data.Maybe (fromJust)
 import Data.VectorSpace
-import Prelude hiding (id, (.))
+
+import Serenity.Debug
 
 goal :: Game -> Order -> Goal
 goal _ (OrderNone)            = GoalNone
@@ -36,6 +38,11 @@ plan game entity (GoalDestroyed target) = [ActionMoveToEntity target (ActionMove
 	goalDir = normalized (goalLoc - shipLoc)
 	shipLoc = entity^.entityData.shipLocation
 	shipDir = entity^.entityData.shipDirection
+plan game entity (GoalCaptured tID) = case game^?gamePlanets.ix tID.planetLocation of 
+	Just goalLoc -> [ActionMove (game^.gameTime) (shipLoc,shipDir) (goalLoc,goalDir)] where
+		goalDir = normalized (goalLoc - shipLoc)
+		(shipLoc, shipDir) = entity^.entityData & ((^.shipLocation) &&& (^.shipDirection))
+	Nothing -> []
 plan _ _ _ = []
 
 evolveShipPlan :: UpdateWire (Entity Ship, Game)
@@ -67,7 +74,7 @@ finishedOrder game _ (OrderAttack target) = M.notMember target (game^.gameShips)
 finishedOrder _ ship (OrderGuardShip a)     = True
 finishedOrder _ ship (OrderGuardPlanet a)   = True
 finishedOrder _ ship (OrderGuardLocation a) = True
-finishedOrder _ ship (OrderCapture a)       = True
+finishedOrder _ ship (OrderCapture a)       = False
 
 (=~=) :: (Double, Double) -> (Double, Double) -> Bool
 x =~= y = magnitude (x-y) < 5
@@ -76,11 +83,12 @@ actt :: UpdateWire (Entity Ship, ShipAction, Game)
 actt = proc (entity, action, game) -> do 
 	case action of
 		ActionMove {startTime = t, startLocDir=start, endLocDir=end} -> move -< (entity, t, start, end, entitySpeed entity game)
-		(ActionMoveToEntity tID m) -> if isJust target
-			then moveToEntity -< (entity, fromJust target, m, game)
-			else id -< []
-			where
-				target = game^.gameShips.at tID
+		(ActionMoveToEntity tID m) -> case game^.gameShips.at tID of
+			Just target -> moveToEntity -< (entity, target, m, game)
+			Nothing     -> id -< []
+		--ActionOrbit {targetID = tID} = case game^.gameShips.at tID of
+		--	Just target -> move -< (entity, target, m, game)
+		--	Nothing     -> id -< []
 		_ -> id -< []
 
 entitySpeed :: Entity Ship -> Game -> Double

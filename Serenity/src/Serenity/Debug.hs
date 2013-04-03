@@ -1,4 +1,4 @@
-module Serenity.Debug
+module Serenity.Debug {-# WARNING "Please do not use this module in a production environment." #-}
 (	module Debug.Trace
 ,	trace'
 ) where

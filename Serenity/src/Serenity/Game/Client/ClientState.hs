@@ -99,7 +99,7 @@ makeLenses ''ClientState
 
 viewPortPanX sector a ((x,y),z) = ((x', y ), z ) where x' = rangeLimitAttainBounds 0 (sector^.sectorSize._1) (x+2*a/z)
 viewPortPanY sector a ((x,y),z) = ((x , y'), z ) where y' = rangeLimitAttainBounds 0 (sector^.sectorSize._2) (y+2*a/z)
-viewPortZoom sector a ((x,y),z) = ((x , y ), z') where z' = rangeLimitAttainBounds 1 12 (z*a)
+viewPortZoom sector a ((x,y),z) = ((x , y ), z') where z' = rangeLimitAttainBounds 1 30 (z*a)
 
 -- | Create the initial client state
 initClientState :: Assets -> GameBuilder -> OwnerID -> [(OwnerID, String)] -> TransportInterface -> ClientState

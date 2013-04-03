@@ -1,0 +1,66 @@
+shipName: Dreadnought
+fileName: Dreadnought
+centerOfRotation: (512, 128)
+speed: 1.0
+damageStrength:
+  hull: 200
+  shields: 200
+weaponSlots:
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Front
+  
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Side
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Side
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Side
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Side
+    
+  -
+    location: (10, 12)
+    direction: (9, 12)
+    type: Turret
+  -
+    location: (10, 12)
+    direction: (9, 12)
+    type: Turret
+  -
+    location: (10, 12)
+    direction: (9, 12)
+    type: Turret
+  -
+    location: (10, 12)
+    direction: (9, 12)
+    type: Turret
+
+systemSlots:
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)

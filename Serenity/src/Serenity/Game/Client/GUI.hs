@@ -100,7 +100,7 @@ pictureEntity game uiState assets time entity = pictures $ (shipAndHealth time) 
 	
 	shipAndHealth time = map (translate x y) $
 		selection ++ 
-		[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (getPictureSized "transparent" dim dim assets)]
+		[	rotate ((atan2 dx dy)/pi * 180) $ Pictures [shipBridge, (scale 0.015 0.015 $ getPicture entityAssetName assets)]
 		,	(translate (-boundingBoxWidth / 2) 7 $ Pictures [boundingBox , healthMeter])
 		,	(translate (-boundingBoxWidth / 2) 8 $ Pictures [boundingBox, shieldMeter])
 		] where
@@ -114,6 +114,9 @@ pictureEntity game uiState assets time entity = pictures $ (shipAndHealth time) 
 	(x,y)   = pDouble2Float $ entity^.entityData.shipLocation
 	(dx,dy) = pDouble2Float $ entity^.entityData.shipDirection
 	dim     = 10
+
+	entityAssetName = (fromJust $ Map.lookup (entity^.entityData.shipConfiguration.shipConfigurationShipClass)
+		(game^.gameBuilder.gbShipClasses))^.shipClassAssetName
 	
 	-- Background box for health and shield meters
 	boundingBox = 

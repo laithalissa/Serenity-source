@@ -127,6 +127,7 @@ data ShipClass = ShipClass
 	,	_shipClassMaxDamage        :: Damage
 	,	_shipClassWeaponSlots      :: [WeaponSlot]
 	,	_shipClassSystemSlots      :: [SystemSlot]
+	,	_shipClassAssetName        :: String
 	}
 	deriving (Show, Eq)
 

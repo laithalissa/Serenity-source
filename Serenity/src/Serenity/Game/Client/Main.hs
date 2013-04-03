@@ -118,6 +118,6 @@ handleStep delta clientState = do
 			when up'    $ viewPortL %= viewPortPanY sector ( a*4)
 			when down'  $ viewPortL %= viewPortPanY sector (-a*4)
 
-			when inn    $ viewPortL %= viewPortZoom sector (1.1)
-			when out    $ viewPortL %= viewPortZoom sector (0.9)
+			when inn    $ viewPortL %= viewPortZoom sector (1.05)
+			when out    $ viewPortL %= viewPortZoom sector (0.95)
 

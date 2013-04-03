@@ -1,11 +1,20 @@
 shipName: Destroyer
-fileName: ship1.bmp
+fileName: Destroyer
 centerOfRotation: (512, 128)
 speed: 1.5
 damageStrength:
-  hull: 50
+  hull: 100
   shields: 100
 weaponSlots:
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Front
+  
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Side
   -
     location: (1, 2)
     direction: (10, -5)
@@ -15,8 +24,21 @@ weaponSlots:
     location: (10, 12)
     direction: (9, 12)
     type: Turret
+  -
+    location: (10, 12)
+    direction: (9, 12)
+    type: Turret
 
 systemSlots:
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)
   -
     location: (18, 12)
     direction: (10, 15)

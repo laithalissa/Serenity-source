@@ -1,0 +1,20 @@
+shipName: Corvette
+fileName: Corvette
+centerOfRotation: (512, 128)
+speed: 2.0
+damageStrength:
+  hull: 50
+  shields: 75
+weaponSlots:
+  -
+    location: (1, 2)
+    direction: (10, -5)
+    type: Side
+
+systemSlots:
+  -
+    location: (18, 12)
+    direction: (10, 15)
+  -
+    location: (18, 12)
+    direction: (10, 15)

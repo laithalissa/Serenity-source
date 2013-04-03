@@ -16,6 +16,7 @@ import Serenity.Game.UI.Lobby
 import Serenity.Game.UI.Play
 import Serenity.Game.UI.End
 import Serenity.Game.Client.ClientState
+import Serenity.Model
 import Serenity.External
 
 import Control.Lens
@@ -40,6 +41,7 @@ data ApplicationController = ApplicationController
 	,	_appClientState :: Maybe ClientState
 	,	_appPort        :: String
 	,	_appNickName    :: String
+	,	_appFleet       :: Fleet
 	}
 
 makeLenses ''ApplicationController
@@ -60,6 +62,7 @@ initApplicationController assets = ApplicationController
 	,	_appClientState = Nothing
 	,	_appPort        = "9900"
 	,	_appNickName    = ""
+	,	_appFleet       = demoFleet
 	}
 
 appServerString   = appJoinData.joinAddress

@@ -8,7 +8,7 @@ module Serenity.Model
 ,	module Serenity.Model.Message
 ) where
 
-import Control.Lens
+--import Control.Lens
 
 import Serenity.Model.Entity
 import Serenity.Model.Fleet

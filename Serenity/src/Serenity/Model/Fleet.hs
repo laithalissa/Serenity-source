@@ -5,6 +5,8 @@ module Serenity.Model.Fleet where
 import Control.Lens
 
 import Serenity.Model.Ship
+import Data.Binary
+import Data.DeriveTH
 
 initFleet :: [ShipConfiguration] -> Fleet
 initFleet = Fleet 
@@ -18,4 +20,5 @@ data Fleet = Fleet
 	deriving(Show, Eq)
 makeLenses ''Fleet
 
-
+derive makeBinary ''ShipConfiguration
+derive makeBinary ''Fleet

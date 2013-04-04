@@ -87,11 +87,22 @@ data ShipConfiguration = ShipConfiguration
 	}
 	deriving (Show, Eq)
 
-demoShipConfiguration :: ShipConfiguration
-demoShipConfiguration = ShipConfiguration
-	{	_shipConfigurationShipClass="Destroyer"
-	,	_shipConfigurationWeapons=[Just "Laser", Just "Rockets"]
-	,	_shipConfigurationSystems=[Just "ShieldBoost"]
+dreadnoughtConfiguration = ShipConfiguration
+	{	_shipConfigurationShipClass = "Dreadnought"
+	,	_shipConfigurationWeapons = replicate 9 (Just "Laser")
+	,	_shipConfigurationSystems = []
+	}
+
+destroyerConfiguration = ShipConfiguration
+	{	_shipConfigurationShipClass = "Destroyer"
+	,	_shipConfigurationWeapons = replicate 5 (Just "Laser")
+	,	_shipConfigurationSystems = []
+	}
+
+corvetteConfiguration = ShipConfiguration
+	{	_shipConfigurationShipClass = "Corvette"
+	,	_shipConfigurationWeapons = [Just "Laser"]
+	,	_shipConfigurationSystems = []
 	}
 
 data Weapon = Weapon

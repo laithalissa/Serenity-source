@@ -203,7 +203,7 @@ picturePlanet game uiState assets (planetID, planet) = Pictures $ [p] where
 	p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 15 15 assets
 
 pictureEntity :: Game -> UIState ClientState -> Assets -> Double -> Entity Ship -> Picture
-pictureEntity game uiState assets time entity = rotate 90 $ Pictures [shipBridge, scale 0.015 0.015 $ getPicture entityAssetName assets] where
+pictureEntity game uiState assets time entity = rotate 90 $ Pictures [shipBridge, scale 0.012 0.012 $ getPicture entityAssetName assets] where
 	shipBridge = 
 		translate (-0.052 * dim) (-0.47 * dim) 
 		$ scale (0.105 * dim) (0.96 * dim) 

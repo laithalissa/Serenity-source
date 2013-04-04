@@ -11,6 +11,7 @@ module Serenity.Model.Message
 where
 
 import Serenity.Model.Entity
+import Serenity.Model.Fleet
 import Serenity.Model.Sector
 
 import Data.Binary
@@ -97,6 +98,10 @@ data CtlMsg =
 	|	ControlSetConnected
 	{	controlConnected :: [(Int, String)]
 	}
+	|	ControlSetFleet
+	{	controlFleetID :: Int
+	,	controlFleet :: Fleet
+	}
 	|	ControlReady
 	|	ControlStarting
 	deriving (Show, Eq)
@@ -118,6 +123,7 @@ derive makeBinary ''WeaponEffect
 derive makeBinary ''Ship
 derive makeBinary ''Goal
 derive makeBinary ''ShipAction
+derive makeBinary ''Fleet
 
 derive makeBinary ''Order
 derive makeBinary ''Update

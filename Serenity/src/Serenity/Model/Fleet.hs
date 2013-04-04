@@ -12,13 +12,10 @@ initFleet :: [ShipConfiguration] -> Fleet
 initFleet = Fleet 
 
 demoFleet :: Fleet
-demoFleet = Fleet $ replicate 8 demoShipConfiguration
+demoFleet = Fleet $ concat [[dreadnoughtConfiguration], replicate 4 destroyerConfiguration, replicate 6 corvetteConfiguration]
 	
 data Fleet = Fleet
 	{	_fleetShips :: [ShipConfiguration]
 	}
 	deriving(Show, Eq)
 makeLenses ''Fleet
-
-derive makeBinary ''ShipConfiguration
-derive makeBinary ''Fleet

@@ -16,7 +16,7 @@ import Control.Lens
 import Control.Monad.State
 import Control.Concurrent.STM
 import Control.Concurrent (threadDelay)
-import qualified Data.Map as M (fromList)
+import qualified Data.Map as M
 
 data LobbyData a = LobbyData
 	{	_lobbyTitleLabel   :: Label a
@@ -31,6 +31,7 @@ class AppState a => LobbyState a where
 	aHostName :: Simple Lens a String
 	aPort :: Simple Lens a String
 	aName :: Simple Lens a String
+	aFleet :: Simple Lens a Fleet
 
 initLobbyData :: LobbyState a => Assets -> LobbyData a
 initLobbyData assets = LobbyData
@@ -65,21 +66,27 @@ timeLobbyIO dt = do
 			serverPort <- use aPort
 			nickName <- use aName
 			(channels, ownerID) <- liftIO $ connectToServer serverHost (fromIntegral $ read serverPort) nickName
-			connected <- liftIO $ waitForStarting (channelInbox channels) []
+			fleet <- use aFleet
+			liftIO $ sendFleet channels ownerID fleet
+			(connected, fleets) <- liftIO $ waitForStart channels [] M.empty
 			assets <- liftIO initAssets
-			gameBuilder <- liftIO $ createGameBuilder connected
+			gameBuilder <- liftIO $ makeGameBuilder sectorTwo fleets
 			return $ Just $ initClientState assets gameBuilder ownerID connected channels
 		loadClientState x = return x
 
-		waitForStarting inbox connected = do
-			m <- atomically $ readTChan inbox
+		waitForStart channels connected fleets = do
+			if (M.keys fleets) == (map fst connected)
+				then atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlReady)
+				else return ()
+			m <- atomically $ readTChan (channelInbox channels)
 			case m of
-				ControlMessage (ControlSetConnected c) -> waitForStarting inbox c
-				ControlMessage ControlStarting -> return connected
-				_ -> waitForStarting inbox connected
+				ControlMessage (ControlSetConnected c) -> waitForStart channels c fleets
+				ControlMessage (ControlSetFleet id fleet) -> waitForStart channels connected (M.insert id fleet fleets)
+				ControlMessage ControlStarting -> return (connected, fleets)
+				_ -> waitForStart channels connected fleets
 
-		createGameBuilder clients = makeGameBuilder sectorTwo $
-			M.fromList $ map (\c -> (fst c, demoFleet)) clients
+		sendFleet channels ownerID fleet = do
+			atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlSetFleet ownerID fleet)
 
 connectToServer :: String -> PortNumber -> String -> IO (TransportInterface, Int)
 connectToServer host port name = do
@@ -88,7 +95,6 @@ connectToServer host port name = do
 	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlSetName name)
 	(myID, connected) <- waitForID (channelInbox channels)
 	print $ "My ID: " ++ (show myID) ++ ", Connected: " ++ (show connected)
-	atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlReady)
 	return (channels, myID)
 	where
 		waitUntilConnected connTVar = do

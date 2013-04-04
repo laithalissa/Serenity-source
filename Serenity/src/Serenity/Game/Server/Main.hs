@@ -42,7 +42,7 @@ server sector gameMode port clientCount = forever $ do
 	print "server finished"
 	where
 		createGameBuilder clients = makeGameBuilder sector $
-			M.fromList $ map (\c -> (clientID c, demoFleet)) clients
+			M.fromList $ map (\c -> (clientID c, clientFleet c)) clients
 
 -- | Wait for n clients to connect
 connectionPhase
@@ -57,6 +57,7 @@ connectionPhase port clientLimit = do
 	sendAndReceive transportVar
 	forkIO $ acceptLoop clientLimit transportVar clientChan
 	clients <- connectionPhase' clientChan clientLimit []
+	sendToClients (map (\c -> ControlMessage $ ControlSetFleet (clientID c) (clientFleet c)) clients) clients
 	waitForReadies clients []
 	transport' <- atomically $ readTVar transportVar
 	return (clients, transport')
@@ -73,12 +74,14 @@ connectionPhase port clientLimit = do
 			channels <- atomically $ readTChan chan
 			name <- getClientName (channelInbox channels)
 			let newID = length clients
+			atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlYourID newID)
+			fleet <- getClientFleet (channelInbox channels)
 			let clients' = (ClientData
 				{	clientID = newID
 				,	clientName = name
 				,	clientTransportInterface = channels
+				,	clientFleet = fleet
 				}):clients
-			atomically $ writeTChan (channelOutbox channels) (ControlMessage $ ControlYourID newID)
 			sendToClients [ControlMessage $ ControlSetConnected $ map (\c -> (clientID c, clientName c)) clients'] clients'
 			if length clients' >= limit
 				then return clients'
@@ -89,6 +92,12 @@ connectionPhase port clientLimit = do
 			case msg of
 				ControlMessage (ControlSetName name) -> return name
 				_ -> getClientName chan
+
+		getClientFleet chan = do
+			msg <- atomically $ readTChan chan
+			case msg of
+				ControlMessage (ControlSetFleet _ fleet) -> return fleet
+				_ -> getClientFleet chan
 
 		waitForReadies clients readies = do
 			messages <- mapM readTChanUntilEmpty $ map (channelInbox . clientTransportInterface) clients

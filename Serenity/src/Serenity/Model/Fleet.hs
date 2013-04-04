@@ -9,13 +9,32 @@ import Data.Binary
 import Data.DeriveTH
 
 initFleet :: [ShipConfiguration] -> Fleet
-initFleet = Fleet 
+initFleet confs = Fleet 
+	{	_fleetName = "Untitled Fleet"
+	,	_fleetShips = confs
+	}
 
 demoFleet :: Fleet
-demoFleet = Fleet $ concat [[dreadnoughtConfiguration], replicate 4 destroyerConfiguration, replicate 6 corvetteConfiguration]
+demoFleet = Fleet 
+	{	_fleetName = "Demo Fleet"
+	,	_fleetShips = 
+		[	dreadnoughtConfiguration "The Relentless"
+		,	destroyerConfiguration   "Orgu"
+		,	destroyerConfiguration   "Oenone"
+		,	destroyerConfiguration   "Beezling"
+		,	destroyerConfiguration   "The Gluian"
+		,	corvetteConfiguration    "The Falcon"
+		,	corvetteConfiguration    "The Eagle"
+		,	corvetteConfiguration    "The Osprey"
+		,	corvetteConfiguration    "The Peregrine"
+		,	corvetteConfiguration    "The Hawk"
+		,	corvetteConfiguration    "The Kestrel"
+		]
+	}
 	
 data Fleet = Fleet
-	{	_fleetShips :: [ShipConfiguration]
+	{	_fleetName :: String
+	,	_fleetShips :: [ShipConfiguration]
 	}
 	deriving(Show, Eq)
 makeLenses ''Fleet

@@ -115,7 +115,7 @@ emptySynAckPacket = setFlags [Syn, Ack] (initialPacket Message.Empty)
 emptyFinPacket = setFlags [Fin] (initialPacket Message.Empty)
 
 receivePacket sock = do
-	(mesg, client) <- recvFrom sock 1024
+	(mesg, client) <- recvFrom sock 2048
 	maybePacket <- return $ readPacket mesg
 	case maybePacket of
 		Just packet -> return (packet, client)

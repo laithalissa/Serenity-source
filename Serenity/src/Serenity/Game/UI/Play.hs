@@ -54,8 +54,9 @@ sidebarView a clientState = (initBox ((0,0),(200,750))) <++
 			& (viewBackground .~ (Just $ black))
 			& (viewDepictMode .~ ViewDepictModeViewUppermost)
 			& (viewDepict .~ (Just $ translate 100 75 $ pictures $ (if useStarBackdrop then [backdrop] else []) ++ [scale s s $ foreground]))
-	,	(initView ((0,545),(200,50))) & (viewBackground .~ (Just black)) <++
-		[	labelStatic a ((initLabel (StaticString name) (bright textColor) Nothing) & (labelScale .~ 1.2)) ((10,15), (200,50))
+	,	(initView ((0,530),(200,65))) & (viewBackground .~ (Just black)) <++
+		[	labelStatic a ((initLabel (StaticString sName) (bright textColor) Nothing) & (labelScale .~ 1.2)) ((10,30), (200,50))
+		,	labelStatic a ((initLabel (StaticString sClass) (bright textColor) Nothing) & (labelScale .~ 0.9)) ((10,10), (200,50))
 		]
 	] where
 		viewPort = clientState^.clientUIState.uiStateViewport
@@ -63,23 +64,33 @@ sidebarView a clientState = (initBox ((0,0),(200,750))) <++
 		(game, uiState, assets) = (clientState^.clientGame, clientState^.clientUIState, a^.aAssets)
 		backdrop = getPictureSized "starBackdropSidebar" 200 150 assets
 
-		((foreground, name), useStarBackdrop, textColor, s) = case (clientState^.clientUIState.uiStateSelected) of
+		((foreground, sName, sClass), useStarBackdrop, textColor, s) = case (clientState^.clientUIState.uiStateSelected) of
 			SelectionOwnShips   (shipID:_) -> (lookupShip shipID, True, bright green, 12)
 			SelectionEnemyShips (shipID:_) -> (lookupShip shipID, True, bright red, 12)
 			SelectionPlanet     planetID   -> (lookupPlanet planetID, True, dark white, 9)
-			_                              -> ((pictures [], ""), False, black, 12)
+			_                              -> (lookupShipNone, False, black, 12)
 		
 		lookupShip shipID = case game^.gameShips.(at shipID) of
-			Just ship -> (pictureEntity game uiState assets 0 ship, ship^.shipName)
-			Nothing -> (pictures [], "")
+			Just ship -> (pictureEntity game uiState assets 0 ship, ship^.shipName, ship^.shipClass ++ " Class")
+			Nothing -> lookupShipNone
 
 		lookupPlanet planetID = case game^.gameBuilder.gbSector.sectorPlanets.(at planetID) of
-			Just planet -> (picturePlanet game uiState assets (planetID, planet), planet^.planetName)
-			Nothing -> (pictures [], "")
+			Just planet -> (picturePlanet game uiState assets (planetID, planet), planet^.planetName, planetDisplayName planet)
+			Nothing -> lookupShipNone
 
-		shipName = entityData.shipConfiguration.shipConfigurationShipClass
+		lookupShipNone = (pictures [], "", "")
+
+		shipName = entityData.shipConfiguration.shipConfigurationShipName
+		shipClass = entityData.shipConfiguration.shipConfigurationShipClass
 
 		myColor = (ownerIDColor (clientState^.clientOwnerID))
+
+		planetDisplayName planet = case planet^.planetEcotype of
+			Blue   -> "Blue Planet"
+			Desert -> "Desert Planet"
+			Metal  -> "Metal Planet"
+			Ocean  -> "Ocean Planet"
+			Star   -> "Star"
 
 mainView :: PlayState a => a -> ClientState -> View a
 mainView a clientState = (initView ((0,0),(1024, 750)))

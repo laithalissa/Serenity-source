@@ -15,6 +15,7 @@ data FleetData a = FleetData
 	,	_fbSaveButton            :: Button a ApplicationMode
 	,	_fbBackButton            :: Button a ApplicationMode
 	,	_fbSquadrons             :: [String]
+	,	_fbFleetNameTextBox      :: TextBoxLabel a
 	,	_fbShowingShipAddBox     :: Bool
 	,	_fbAddShipButton         :: Button a Bool
 	,	_fbRemoveShipButton      :: Button a a
@@ -24,6 +25,7 @@ data FleetData a = FleetData
 	,	_fbShipSelectedIndex     :: Int
 	,	_fbSquadronSelectedIndex :: Int
 	,	_fbSlotSelectedIndex     :: Int
+	,	_fbShipTable             :: Table a
 	}
 makeLenses ''FleetData
 
@@ -37,7 +39,7 @@ initFBButton string action =
 	(initLabel (StaticString string) buttonColor (Just buttonPressedBackground)) {_labelScale = 1.1}
 	[(ButtonEventMouseUpInside LeftButton (Modifiers Up Up Up), action)]
 
-removeElement i list = map fst $ filter (\x -> x^._2 /= i) $ zip list [0..]
+removeElement i list = map fst $ filter (\x -> snd x /= i) $ zip list [0..]
 
 removeSelectedShip a = aFleet.fleetShips %~ (removeElement $ a^.aFleetB^.fbShipSelectedIndex) $ a
 removeSelectedSquadron fbData = fbSquadrons %~ (removeElement $ fbData^.fbSquadronSelectedIndex) $ fbData
@@ -49,6 +51,7 @@ initFleetData assets = FleetData
 	,	_fbSaveButton            = initMenuButton "Save      >>"  id
 	,	_fbBackButton            = initMenuButton "<-      Back" (\_ -> Menu)
 	,	_fbSquadrons             = []
+	,	_fbFleetNameTextBox      = (initMenuTextBoxLabel "Fleet:" (aFleet.fleetName)) & (tblPostEdit .~ fileNameValidation)
 	,	_fbShowingShipAddBox     = False
 	,	_fbAddShipButton         = initFBButton "+" (\_ -> True)
 	,	_fbRemoveShipButton      = initFBButton "-" removeSelectedShip
@@ -58,6 +61,7 @@ initFleetData assets = FleetData
 	,	_fbShipSelectedIndex     = 0
 	,	_fbSquadronSelectedIndex = 0
 	,	_fbSlotSelectedIndex     = 0
+	,	_fbShipTable             = initTable 20 Nothing
 	}
 
 viewFleet :: FleetState a => a -> View a
@@ -69,10 +73,11 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		--[	button a (aFleetB.fbLoadButton) aMode ((80,450),(185,28))
 		--,	button a (aFleetB.fbSaveButton) aMode ((80,350),(185,28))
 		[	button a (aFleetB.fbBackButton) aMode ((80, 50),(185,28))
+		,	textBoxLabel a (aFleetB.fbFleetNameTextBox) (aFleet.fleetName) ((20,700),(305,28)) 65
 		]
 	,	-- Ship list
 		(initBox ((10, 750-boxHeight), (boxWidth-5, boxHeight))) <++
-		[
+		[	table a (aFleetB.fbShipTable) (to fbShipConfs) (selectConfView a) ((0,0), (boxWidth-5, boxHeight))
 		]
 	,	-- Ship Class
 		(initBox ((15+boxWidth, 750-boxHeight), (boxWidth-5, boxHeight))) <++
@@ -106,6 +111,28 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		]
 	]
 
+fbShipConfs :: FleetState a => a -> [(Int, ShipConfiguration)]
+fbShipConfs a = zip [0..] $ a^.aFleet.fleetShips
+
+selectConfView :: FleetState a => a -> (Int, ShipConfiguration) -> View a
+selectConfView a (i, conf) = 
+	(initBox ((2,0),(boxWidth-9,18))) <++
+		[	labelStatic a 
+				(	(initLabel (StaticString $ conf^.shipConfigurationShipName) textColor Nothing) 
+					& (labelScale .~ 0.9) 
+					& (labelTextOffset .~ (3,4))
+				)
+				((0,0), (boxWidth-9,18))
+			& (viewBackground .~ background)
+			& (viewEventHandler .~ (Just eventHandler))
+		]
+	where
+		selected = a^.aFleetB.fbShipSelectedIndex
+		textColor = if i == selected then black else buttonBackground
+		background = if i == selected then Just buttonBackground else Nothing
+		eventHandler (UIEventMouseDownInside _ _ _) = aFleetB.fbShipSelectedIndex .~ i $ a
+		eventHandler _ = a
+
 boxHeight = 210
 boxWidth  = 218
 
@@ -117,7 +144,6 @@ background2 assets time = Just $ translate 500 250 $ Pictures
 		greenNebula       = getPicture "greenNebulaLayer" assets
 		blueNebula        = getPicture "blueNebulaLayer" assets
 		stars             = getPicture "starBackdropLayer" assets
-		
 		parallaxShift a = translate (-vpx/a) (- vpy/a)
 		(vpx, vpy) = (distance * (cos (time*speed)), distance * (sin (time*speed)))
 		distance = 600

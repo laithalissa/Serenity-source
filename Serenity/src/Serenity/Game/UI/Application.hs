@@ -44,6 +44,9 @@ initMenuTextBoxLabel string lens = initTextBoxLabel string lens buttonColor (Jus
 nameValidation :: String -> String
 nameValidation = filter (flip elem $ ['a'..'z']++['A'..'Z']++['0'..'9']++"_")
 
+fileNameValidation :: String -> String
+fileNameValidation = filter (flip notElem "\"*/:<>?\\|")
+
 portValidation :: String -> String
 portValidation = filter isDigit
 

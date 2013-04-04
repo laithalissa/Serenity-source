@@ -7,6 +7,7 @@ where
 
 import Serenity.External.Common
 import Serenity.Model.Fleet (Fleet)
+import Serenity.Model.Message ()
 import Paths_Serenity
 
 import Data.Binary (encodeFile, decodeFile)

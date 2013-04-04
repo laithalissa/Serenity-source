@@ -11,6 +11,7 @@ module Serenity.Model.Message
 where
 
 import Serenity.Model.Entity
+import Serenity.Model.Fleet
 import Serenity.Model.Sector
 
 import Data.Binary
@@ -118,6 +119,7 @@ derive makeBinary ''WeaponEffect
 derive makeBinary ''Ship
 derive makeBinary ''Goal
 derive makeBinary ''ShipAction
+derive makeBinary ''Fleet
 
 derive makeBinary ''Order
 derive makeBinary ''Update

@@ -19,6 +19,3 @@ data Fleet = Fleet
 	}
 	deriving(Show, Eq)
 makeLenses ''Fleet
-
-derive makeBinary ''ShipConfiguration
-derive makeBinary ''Fleet

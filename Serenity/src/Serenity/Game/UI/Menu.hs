@@ -14,6 +14,7 @@ data MenuData a = MenuData
 	,	_menuHostButton    :: Button a ApplicationMode
 	,	_menuJoinButton    :: Button a ApplicationMode
 	,	_menuDemoButton    :: Button a ApplicationMode
+	,	_menuFleetButton   :: Button a ApplicationMode
 	,	_menuCreditsButton :: Button a ApplicationMode
 	,	_menuQuitButton    :: Button a ApplicationMode
 	}
@@ -26,9 +27,10 @@ initMenuData :: MenuState a => Assets -> MenuData a
 initMenuData assets = MenuData
 	{	_menuTitleLabel    = (initLabel (StaticString "Project Serenity") (bright green) Nothing) {_labelScale = 6}
 	,	_menuVersionLabel  = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
-	,	_menuHostButton    = initMenuButton "Host      ->" (\_ -> Host)
-	,	_menuJoinButton    = initMenuButton "Join      ->" (\_ -> Join)
-	,	_menuDemoButton    = initMenuButton "Quick     ->"  (\_ -> Quick)
+	,	_menuHostButton    = initMenuButton "Host Game  ->" (\_ -> Host)
+	,	_menuJoinButton    = initMenuButton "Join Game  ->" (\_ -> Join)
+	,	_menuDemoButton    = initMenuButton "Quick Play  ->"  (\_ -> Quick)
+	,	_menuFleetButton    = initMenuButton "Fleet Design ->"  (\_ -> FleetB)
 	,	_menuCreditsButton = initMenuButton "Credits    "  (\_ -> Credits)
 	,	_menuQuitButton    = initMenuButton "Quit      -<" (\_ -> Quit)
 	}
@@ -43,6 +45,7 @@ viewMenu a = (initView ((0, 0), (1024, 750)))
 		[	button a (aMenu.menuHostButton)    aMode ((80,650),(185,28))
 		,	button a (aMenu.menuJoinButton)    aMode ((80,550),(185,28))
 		,	button a (aMenu.menuDemoButton)    aMode ((80,450),(185,28))
+		,	button a (aMenu.menuFleetButton)   aMode ((80,350),(185,28))
 		,	button a (aMenu.menuCreditsButton) aMode ((80,150),(185,28))
 		,	button a (aMenu.menuQuitButton)    aMode ((80, 50),(185,28))
 		]

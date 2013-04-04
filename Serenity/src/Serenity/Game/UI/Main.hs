@@ -12,6 +12,7 @@ import Serenity.Game.UI.Splash
 import Serenity.Game.UI.Host
 import Serenity.Game.UI.Join
 import Serenity.Game.UI.Quick
+import Serenity.Game.UI.FleetBuilder
 import Serenity.Game.UI.Lobby
 import Serenity.Game.UI.Play
 import Serenity.Game.UI.End
@@ -35,6 +36,7 @@ data ApplicationController = ApplicationController
 	,	_appHostData    :: HostData ApplicationController
 	,	_appJoinData    :: JoinData ApplicationController
 	,	_appQuickData   :: QuickData ApplicationController
+	,	_appFleetData   :: FleetData ApplicationController
 	,	_appLobbyData   :: LobbyData ApplicationController
 	,	_appPlayData    :: PlayData ApplicationController
 	,	_appEndData     :: EndData ApplicationController
@@ -56,6 +58,7 @@ initApplicationController assets = ApplicationController
 	,	_appHostData    = initHostData    assets
 	,	_appJoinData    = initJoinData    assets
 	,	_appQuickData   = initQuickData   assets
+	,	_appFleetData   = initFleetData   assets
 	,	_appLobbyData   = initLobbyData   assets
 	,	_appPlayData    = initPlayData    assets
 	,	_appEndData     = initEndData     assets
@@ -65,7 +68,7 @@ initApplicationController assets = ApplicationController
 	,	_appFleet       = demoFleet
 	}
 
-appServerString   = appJoinData.joinAddress
+appServerString = appJoinData.joinAddress
 
 instance AppState     ApplicationController where {aMode=appMode; aAssets=appAssets}
 instance SplashState  ApplicationController where {aSplash=appSplashData}
@@ -74,6 +77,7 @@ instance CreditsState ApplicationController where {aCredits=appCreditsData}
 instance HostState    ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
 instance JoinState    ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
 instance QuickState   ApplicationController where {aQuick=appQuickData; aHost=appHostData; aHostName=appServerString; aPort=appPort}
+instance FleetState   ApplicationController where {aFleetB=appFleetData; aFleet=appFleet}
 instance LobbyState   ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName}
 instance PlayState    ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
 instance EndState     ApplicationController where {aEnd=appEndData; aClientState=appClientState}
@@ -87,6 +91,7 @@ instance ViewController ApplicationController where
 		Host    -> viewHost    app
 		Join    -> viewJoin    app
 		Quick   -> viewQuick   app
+		FleetB  -> viewFleet   app
 		Lobby   -> viewLobby   app
 		Play    -> viewPlay    app 
 		End     -> viewEnd     app
@@ -98,6 +103,7 @@ instance ViewController ApplicationController where
 		Host    -> timeHost    dt app
 		Join    -> timeJoin    dt app
 		Quick   -> timeQuick   dt app
+		FleetB  -> timeFleet   dt app
 		Lobby   -> timeLobby   dt app
 		Play    -> timePlay    dt app
 		End     -> timeEnd     dt app

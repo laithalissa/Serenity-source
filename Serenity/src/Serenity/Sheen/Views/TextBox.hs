@@ -13,29 +13,33 @@ import Data.Char
 
 data TextBox a = TextBox
 	{	_tbFocus :: Bool
-	,	_tbLabel :: Label a
+	,	_tbColor :: Color
+	,	_tbBackgroundColor :: Maybe Color
 	,	_tbFocusBackground :: Color
+	,	_tbScale :: Float
 	,	_tbEnabled :: a -> Bool
 	,	_tbPostEdit :: String -> String
 	}
 makeLenses ''TextBox
 
-initTextBox :: Simple Lens a String -> Color -> Maybe Color -> Color -> Float -> TextBox a
-initTextBox valueLens color backg focusBackg scale = TextBox
+initTextBox :: Color -> Maybe Color -> Color -> Float -> TextBox a
+initTextBox color backg focusBackg scale = TextBox
 	{	_tbFocus = False
-	,	_tbLabel = (initLabel (DynamicString valueLens) color backg) {_labelScale = scale}
+	,	_tbColor = color
+	,	_tbBackgroundColor = backg
+	,	_tbScale = scale
 	,	_tbFocusBackground = focusBackg
 	,	_tbEnabled = \_ -> True
 	,	_tbPostEdit = id
 	}
 
 textBox :: a -> Simple Lens a (TextBox a) -> Simple Lens a String -> ((Int, Int), (Int, Int)) -> View a
-textBox a tb aString bounds = (label a (tb.tbLabel) bounds)
+textBox a tb aString bounds = (labelStatic a ((initLabel (DynamicString aString) (a^.tb.tbColor) (a^.tb.tbBackgroundColor)) & (labelScale .~ (a^.tb.tbScale))) bounds)
 	{	_viewBackground = if not (a^.tb.tbEnabled $ a)
 		then Just $ greyN 0.3
 		else if a^.tb.tbFocus 
 			then Just $ a^.tb.tbFocusBackground
-			else a^.tb.tbLabel.labelBackground
+			else a^.tb.tbBackgroundColor
 	,	_viewEventHandler = Just $ tbEventHandler a tb aString
 	}
 
@@ -74,10 +78,10 @@ tblPostEdit = tblTextBox . tbPostEdit
 tblEnabled :: Simple Lens (TextBoxLabel a) (a -> Bool)
 tblEnabled = tblTextBox . tbEnabled
 
-initTextBoxLabel :: String -> Simple Lens a String -> Color -> Maybe Color -> Color -> Float -> TextBoxLabel a
-initTextBoxLabel labelString valueLens color backg focusBackg scale = TextBoxLabel
+initTextBoxLabel :: String -> Color -> Maybe Color -> Color -> Float -> TextBoxLabel a
+initTextBoxLabel labelString color backg focusBackg scale = TextBoxLabel
 	{	_tblLabel   = (initLabel (StaticString labelString) color backg) {_labelScale = scale}
-	,	_tblTextBox = (initTextBox valueLens color backg focusBackg scale)
+	,	_tblTextBox = (initTextBox color backg focusBackg scale)
 	}
 
 textBoxLabel :: a -> Simple Lens a (TextBoxLabel a) -> Simple Lens a String -> ((Int, Int), (Int, Int)) -> Int -> View a

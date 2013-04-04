@@ -35,11 +35,11 @@ initMenuButton string action =
 
 initMenuLabel string = initLabel (StaticString string) buttonColor (Just buttonBackground)
 
-initMenuTextBox :: Simple Lens a String -> TextBox a
-initMenuTextBox lens = initTextBox lens buttonColor (Just buttonBackground) buttonPressedBackground 1.6
+initMenuTextBox :: TextBox a
+initMenuTextBox = initTextBox buttonColor (Just buttonBackground) buttonPressedBackground 1.6
 
-initMenuTextBoxLabel :: String -> Simple Lens a String -> TextBoxLabel a
-initMenuTextBoxLabel string lens = initTextBoxLabel string lens buttonColor (Just buttonBackground) buttonPressedBackground 1.6
+initMenuTextBoxLabel :: String -> TextBoxLabel a
+initMenuTextBoxLabel string = initTextBoxLabel string buttonColor (Just buttonBackground) buttonPressedBackground 1.6
 
 nameValidation :: String -> String
 nameValidation = filter (flip elem $ ['a'..'z']++['A'..'Z']++['0'..'9']++"_")

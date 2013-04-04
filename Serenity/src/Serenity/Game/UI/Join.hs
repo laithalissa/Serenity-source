@@ -31,9 +31,9 @@ initJoinData assets = JoinData
 	,	_joinVersionLabel = (initLabel (StaticString serenityVersionString) (white) Nothing) {_labelScale = 1}
 	,	_joinPlayButton   = initMenuButton "Play      ->" (\_ -> Lobby) & (buttonEnabled .~ playButtonEnabled)
 	,	_joinBackButton   = initMenuButton "<-      Back" (\_ -> Menu)
-	,	_joinAddressBox   = (initMenuTextBoxLabel "Server:" (aJoin.joinAddress))
-	,	_joinPortBox      = (initMenuTextBox aPort) & (tbPostEdit .~ portValidation)
-	,	_joinNickNameBox  = (initMenuTextBoxLabel "Name:" aName) & (tblPostEdit .~ nameValidation)
+	,	_joinAddressBox   = (initMenuTextBoxLabel "Server:")
+	,	_joinPortBox      = (initMenuTextBox) & (tbPostEdit .~ portValidation)
+	,	_joinNickNameBox  = (initMenuTextBoxLabel "Name:") & (tblPostEdit .~ nameValidation)
 	,	_joinAddress      = "localhost"
 	}
 

@@ -19,6 +19,7 @@ data FleetData a = FleetData
 	,	_fbShowingShipAddBox     :: Bool
 	,	_fbAddShipButton         :: Button a Bool
 	,	_fbRemoveShipButton      :: Button a a
+	,	_fbShipNameTextBox       :: TextBox a
 	,	_fbShowingSquadronAddBox :: Bool
 	,	_fbAddSquadronButton     :: Button a Bool
 	,	_fbRemoveSquadronButton  :: Button a (FleetData a)
@@ -55,6 +56,7 @@ initFleetData assets = FleetData
 	,	_fbShowingShipAddBox     = False
 	,	_fbAddShipButton         = initFBButton "+" (\_ -> True)
 	,	_fbRemoveShipButton      = initFBButton "-" removeSelectedShip
+	,	_fbShipNameTextBox       = initMenuTextBox & (tbScale .~ 1.1)
 	,	_fbShowingSquadronAddBox = False
 	,	_fbAddSquadronButton     = initFBButton "+" (\_ -> True)
 	,	_fbRemoveSquadronButton  = initFBButton "-" removeSelectedSquadron
@@ -91,6 +93,7 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		(initBox ((10, 750-boxHeight-45), (boxWidth+boxWidth, 35))) <++
 		[	button a (aFleetB.fbAddShipButton) (aFleetB.fbShowingShipAddBox) ((7, 7),(24,20))
 		,	button a (aFleetB.fbRemoveShipButton) id ((33, 7),(24,20))
+		,	textBox a (aFleetB.fbShipNameTextBox) selectedLens ((66,7),(boxWidth+boxWidth-70,20))
 		]
 	,	-- Squadron bar
 		(initBox ((10+boxWidth+boxWidth+10, 750-boxHeight-45), (boxWidth-5, 35))) <++
@@ -110,6 +113,14 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		[
 		]
 	]
+	where
+		selected = a^.aFleetB.fbShipSelectedIndex :: Int
+		selectedLens :: FleetState a => Simple Lens a String
+		selectedLens = aFleet.fleetShips.ixx selected.shipConfigurationShipName
+
+ixx :: Int -> Simple Lens [a] a
+ixx i = lens (!!i) (\list x -> replaceAtIndex i x list)
+replaceAtIndex n item ls = a ++ (item:b) where (a, (_:b)) = splitAt n ls
 
 fbShipConfs :: FleetState a => a -> [(Int, ShipConfiguration)]
 fbShipConfs a = zip [0..] $ a^.aFleet.fleetShips

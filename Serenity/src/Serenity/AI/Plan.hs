@@ -49,7 +49,7 @@ evolveShipPlan :: UpdateWire (Entity Ship, Game)
 evolveShipPlan = proc (entity@Entity{_entityData=ship}, game) -> do
 	case ship^.shipPlan of
 		[] -> id -<
-			if finishedOrder game ship (ship^.shipOrder)
+			if finishedOrder game entity (ship^.shipOrder)
 				then [UpdateShipOrder (entity^.entityID) OrderNone]
 				else if p == [] then [] else [UpdateShipGoal (entity^.entityID) g, UpdateShipPlan (entity^.entityID) p] where
 			g = goal game (ship^.shipOrder)
@@ -64,17 +64,19 @@ finishedAction game ship (ActionAttack target) = True -- not ((game^.gameShips.c
 finishedAction _ ship (ActionCapture a) = True
 finishedAction game ship (ActionMoveToEntity target _) = (not (game^.gameShips.contains target)) || ((ship^.shipLocation) =~= (game^.gameShips.(at target).(to fromJust).entityData.shipLocation))
 
-finishedOrder :: Game -> Ship -> Order -> Bool
+finishedOrder :: Game -> Entity Ship -> Order -> Bool
 finishedOrder _ _ OrderNone = False
-finishedOrder _ ship (OrderMove dest mDir) = ((ship^.shipLocation) =~= dest) && x where
+finishedOrder _ (Entity{_entityData=ship}) (OrderMove dest mDir) = ((ship^.shipLocation) =~= dest) && x where
 	x = case mDir of
 		Just dir -> ((ship^.shipDirection) =~= dir)
 		Nothing -> True
 finishedOrder game _ (OrderAttack target) = M.notMember target (game^.gameShips)
-finishedOrder _ ship (OrderGuardShip a)     = True
-finishedOrder _ ship (OrderGuardPlanet a)   = True
-finishedOrder _ ship (OrderGuardLocation a) = True
-finishedOrder _ ship (OrderCapture a)       = False
+finishedOrder _ _ (OrderGuardShip a)     = True
+finishedOrder _ _ (OrderGuardPlanet a)   = True
+finishedOrder _ _ (OrderGuardLocation a) = True
+finishedOrder game entity (OrderCapture pID)  = case game^?gamePlanets.ix pID.planetCaptured of
+	Just (player, percent) -> percent >= 100 && player == (entity^.ownerID)
+	Nothing -> True
 
 (=~=) :: (Double, Double) -> (Double, Double) -> Bool
 x =~= y = magnitude (x-y) < 5

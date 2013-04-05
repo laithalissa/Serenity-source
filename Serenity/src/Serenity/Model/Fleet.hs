@@ -25,7 +25,6 @@ demoFleet = Fleet
 		,	destroyerConfiguration   "The Gluian"
 		,	corvetteConfiguration    "The Falcon"
 		,	corvetteConfiguration    "The Eagle"
-		,	corvetteConfiguration    "The Osprey"
 		,	corvetteConfiguration    "The Peregrine"
 		,	corvetteConfiguration    "The Hawk"
 		,	corvetteConfiguration    "The Kestrel"

@@ -20,8 +20,9 @@ data FleetData a = FleetData
 	,	_fbBackButton            :: Button a ApplicationMode
 	,	_fbSquadrons             :: [String]
 	,	_fbFleetNameTextBox      :: TextBoxLabel a
+	,	_fbFleetCostTextBox      :: TextBoxLabel a
 	,	_fbShowingShipAddBox     :: Bool
-	,	_fbAddShipButton         :: Button a Bool
+	,	_fbAddShipButton         :: Button a [ShipConfiguration]
 	,	_fbRemoveShipButton      :: Button a a
 	,	_fbShipNameTextBox       :: TextBox a
 	,	_fbShowingSquadronAddBox :: Bool
@@ -67,9 +68,13 @@ initFleetData assets = FleetData
 	,	_fbBackButton            = initMenuButton "<-      Back" (\_ -> Menu)
 	,	_fbSquadrons             = []
 	,	_fbFleetNameTextBox      = (initMenuTextBoxLabel "Fleet:") & (tblPostEdit .~ fileNameValidation)
+	,	_fbFleetCostTextBox      = (initMenuTextBoxLabel "Cost:") 
+			& (tblTextBox.tbFocusBackground .~ buttonBackground) 
+			& (tblTextBox.tbDisabledBackground .~ buttonBackground)
+			& (tblEnabled .~ (\_ -> False))
 	,	_fbShowingShipAddBox     = False
-	,	_fbAddShipButton         = initFBButton "+" (\_ -> True)
-	,	_fbRemoveShipButton      = initFBButton "-" removeSelectedShip
+	,	_fbAddShipButton         = initFBButton "+" (\s -> s ++ [destroyerConfiguration "New Ship"])
+	,	_fbRemoveShipButton      = (initFBButton "-" removeSelectedShip) & (buttonEnabled .~ (\a -> length (a^.aFleet.fleetShips) > 1))
 	,	_fbShipNameTextBox       = initMenuTextBox & (tbScale .~ 1.1)
 	,	_fbShowingSquadronAddBox = False
 	,	_fbAddSquadronButton     = initFBButton "+" (\_ -> True)
@@ -79,7 +84,7 @@ initFleetData assets = FleetData
 	,	_fbSquadronSelectedIndex = 0
 	,	_fbSlotSelectedIndex     = 0
 	,	_fbShipTable             = initTable 20 Nothing
-	,	_fbClassTable             = initTable 20 Nothing
+	,	_fbClassTable            = initTable 20 Nothing
 	}
 
 viewFleet :: FleetState a => a -> View a
@@ -92,6 +97,7 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		--,	button a (aFleetB.fbSaveButton) aMode ((80,350),(185,28))
 		[	button a (aFleetB.fbBackButton) aMode ((80, 50),(185,28))
 		,	textBoxLabel a (aFleetB.fbFleetNameTextBox) (aFleet.fleetName) ((20,700),(305,28)) 65
+		,	textBoxLabel a (aFleetB.fbFleetCostTextBox) (lens (\_ -> totalCost) (\a _ -> a)) ((20,650),(305,28)) 65
 		]
 	,	-- Ship list
 		(initBox ((10, 750-boxHeight), (boxWidth-5, boxHeight))) <++
@@ -107,7 +113,7 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		]
 	,	-- Ship bar
 		(initBox ((10, 750-boxHeight-45), (boxWidth+boxWidth, 35))) <++
-		[	button a (aFleetB.fbAddShipButton) (aFleetB.fbShowingShipAddBox) ((7, 7),(24,20))
+		[	button a (aFleetB.fbAddShipButton) (aFleet.fleetShips) ((7, 7),(24,20))
 		,	button a (aFleetB.fbRemoveShipButton) id ((33, 7),(24,20))
 		,	textBox a (aFleetB.fbShipNameTextBox) selectedLens ((66,7),(boxWidth+boxWidth-70,20))
 		]
@@ -128,11 +134,18 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		(initBox ((20+boxWidth+boxWidth, 0), (boxWidth-5, boxHeight))) <++
 		[
 		]
+	,	(initView centralViewVounds) <++
+		[	(initView ((div cvw 2,div cvy 2 + 35),(200,150))) & (viewDepict .~ (Just shipImage))
+		]
 	]
 	where
 		selected = a^.aFleetB.fbShipSelectedIndex :: Int
 		selectedLens :: FleetState a => Simple Lens a String
 		selectedLens = aFleet.fleetShips.ixx selected.shipConfigurationShipName
+
+		centralViewVounds@((cvx,cvy),(cvw,cvh)) = ((10,boxHeight),(boxWidth*3+5,750-boxHeight-boxHeight-45))
+		shipImage = rotate 90 $ scale 0.4 0.4 $ getPicture (a^.aFleet.fleetShips.ixx selected.shipConfigurationShipClass) (a^.aAssets)
+		totalCost = "$" ++ (show $ foldl1 (+) (map (\s -> fromMaybe 0 $ a^?aShipClasses.ix (s^.shipConfigurationShipClass).shipClassCost) $ a^.aFleet.fleetShips))
 
 boxHeight = 210
 boxWidth  = 218
@@ -173,7 +186,7 @@ classStringTableViews :: FleetState a => a -> (Int, String) -> View a
 classStringTableViews a (i, classString) = 
 	(initBox ((2,0),(boxWidth-9,18))) <++
 		[	labelStatic a 
-				(	(initLabel (StaticString $ classString) textColor Nothing) 
+				(	(initLabel (StaticString $ classString ++ " - $" ++ classCost) textColor Nothing) 
 					& (labelScale .~ 0.9) 
 					& (labelTextOffset .~ (3,4))
 				)
@@ -190,6 +203,7 @@ classStringTableViews a (i, classString) =
 			aFleetB.fbClassSelectedIndex .= i
 			aFleet.fleetShips.ixx shipSelected.shipConfigurationShipClass .= classString
 		eventHandler _ = a
+		classCost = show $ fromMaybe (-1) $ a^?aShipClasses.ix classString.shipClassCost
 
 -- | Moving parallax background
 background2 assets time = Just $ translate 500 250 $ Pictures 

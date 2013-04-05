@@ -144,6 +144,7 @@ data ShipClass = ShipClass
 	,	_shipClassWeaponSlots      :: [WeaponSlot]
 	,	_shipClassSystemSlots      :: [SystemSlot]
 	,	_shipClassAssetName        :: String
+	,	_shipClassCost             :: Int
 	}
 	deriving (Show, Eq)
 

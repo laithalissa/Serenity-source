@@ -8,6 +8,7 @@ import Serenity.External
 import Serenity.Model
 
 import Control.Lens
+import Control.Monad.State
 
 data FleetData a = FleetData
 	{	_fbTime                  :: Float
@@ -42,7 +43,12 @@ initFBButton string action =
 
 removeElement i list = map fst $ filter (\x -> snd x /= i) $ zip list [0..]
 
-removeSelectedShip a = aFleet.fleetShips %~ (removeElement $ a^.aFleetB^.fbShipSelectedIndex) $ a
+removeSelectedShip :: FleetState a => a -> a
+removeSelectedShip = execState $ do 
+	selected <- use $ aFleetB.fbShipSelectedIndex
+	ships <- aFleet.fleetShips <%= (removeElement $ selected)
+	when (length ships <= selected) $ aFleetB.fbShipSelectedIndex -= 1
+
 removeSelectedSquadron fbData = fbSquadrons %~ (removeElement $ fbData^.fbSquadronSelectedIndex) $ fbData
 
 initFleetData :: FleetState a => Assets -> FleetData a

@@ -25,6 +25,7 @@ import Control.Monad.State
 import Data.Char
 import System.Exit
 import System.Posix.User
+import Data.Map (Map)
 
 data ApplicationController = ApplicationController
 	{	_appViewGlobals :: ViewGlobals ApplicationController
@@ -44,11 +45,14 @@ data ApplicationController = ApplicationController
 	,	_appPort        :: String
 	,	_appNickName    :: String
 	,	_appFleet       :: Fleet
+	,	_appShipClasses :: Map String ShipClass
+	,	_appWeapons     :: Map String Weapon
+	,	_appSystems     :: Map String System
 	}
 
 makeLenses ''ApplicationController
 
-initApplicationController assets = ApplicationController
+initApplicationController assets shipClasses weapons systems = ApplicationController
 	{	_appViewGlobals = initGlobals
 	,	_appMode        = Splash
 	,	_appAssets      = assets
@@ -66,6 +70,9 @@ initApplicationController assets = ApplicationController
 	,	_appPort        = "9900"
 	,	_appNickName    = ""
 	,	_appFleet       = demoFleet
+	,	_appShipClasses = shipClasses
+	,	_appWeapons     = weapons
+	,	_appSystems     = systems
 	}
 
 appServerString = appJoinData.joinAddress
@@ -77,7 +84,7 @@ instance CreditsState ApplicationController where {aCredits=appCreditsData}
 instance HostState    ApplicationController where {aHost=appHostData; aPort=appPort; aName=appNickName}
 instance JoinState    ApplicationController where {aJoin=appJoinData; aPort=appPort; aName=appNickName}
 instance QuickState   ApplicationController where {aQuick=appQuickData; aHost=appHostData; aHostName=appServerString; aPort=appPort}
-instance FleetState   ApplicationController where {aFleetB=appFleetData; aFleet=appFleet}
+instance FleetState   ApplicationController where {aFleetB=appFleetData; aFleet=appFleet; aShipClasses=appShipClasses; aWeapons=appWeapons; aSystems=appSystems}
 instance LobbyState   ApplicationController where {aLobby=appLobbyData; aClientState=appClientState; aHostName=appServerString; aPort=appPort; aName=appNickName; aFleet=appFleet}
 instance PlayState    ApplicationController where {aPlay=appPlayData; aClientState=appClientState; aName=appNickName}
 instance EndState     ApplicationController where {aEnd=appEndData; aClientState=appClientState}
@@ -113,11 +120,14 @@ gui = do
 	assets    <- initAssets
 	userEntry <- getRealUserID >>= getUserEntryForID
 	username  <- return $ _head %~ toUpper $ nameValidation $ userName userEntry
+	shipClasses <- initAddons shipClassYamlForm
+	weapons <- initAddons weaponYamlForm
+	systems <- initAddons systemYamlForm
 	playIOZero
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black
 		50
-		((initApplicationController assets) & (appNickName .~ username))
+		((initApplicationController assets shipClasses weapons systems) & (appNickName .~ username))
 		(\a -> return $ draw a)
 		(\event -> \a -> return $ handleEvent event a & correctFocus)
 		handleMainTime

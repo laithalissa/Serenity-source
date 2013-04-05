@@ -9,6 +9,9 @@ import Serenity.Model
 
 import Control.Lens
 import Control.Monad.State
+import Data.List
+import Data.Maybe
+import Data.Map (Map, keys)
 
 data FleetData a = FleetData
 	{	_fbTime                  :: Float
@@ -25,15 +28,20 @@ data FleetData a = FleetData
 	,	_fbAddSquadronButton     :: Button a Bool
 	,	_fbRemoveSquadronButton  :: Button a (FleetData a)
 	,	_fbShipSelectedIndex     :: Int
+	,	_fbClassSelectedIndex    :: Int
 	,	_fbSquadronSelectedIndex :: Int
 	,	_fbSlotSelectedIndex     :: Int
 	,	_fbShipTable             :: Table a
+	,	_fbClassTable            :: Table a
 	}
 makeLenses ''FleetData
 
 class AppState a => FleetState a where
-	aFleetB :: Simple Lens a (FleetData a)
-	aFleet  :: Simple Lens a Fleet
+	aFleetB      :: Simple Lens a (FleetData a)
+	aFleet       :: Simple Lens a Fleet
+	aShipClasses :: Simple Lens a (Map String ShipClass)
+	aWeapons     :: Simple Lens a (Map String Weapon)
+	aSystems     :: Simple Lens a (Map String System)
 
 initFBButton string action = 
 	initButton 
@@ -67,9 +75,11 @@ initFleetData assets = FleetData
 	,	_fbAddSquadronButton     = initFBButton "+" (\_ -> True)
 	,	_fbRemoveSquadronButton  = initFBButton "-" removeSelectedSquadron
 	,	_fbShipSelectedIndex     = 0
+	,	_fbClassSelectedIndex    = 0
 	,	_fbSquadronSelectedIndex = 0
 	,	_fbSlotSelectedIndex     = 0
 	,	_fbShipTable             = initTable 20 Nothing
+	,	_fbClassTable             = initTable 20 Nothing
 	}
 
 viewFleet :: FleetState a => a -> View a
@@ -85,11 +95,11 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		]
 	,	-- Ship list
 		(initBox ((10, 750-boxHeight), (boxWidth-5, boxHeight))) <++
-		[	table a (aFleetB.fbShipTable) (to fbShipConfs) (selectConfView a) ((0,0), (boxWidth-5, boxHeight))
+		[	table a (aFleetB.fbShipTable) (to shipTableObjects) (shipTableViews a) ((0,0), (boxWidth-5, boxHeight))
 		]
 	,	-- Ship Class
 		(initBox ((15+boxWidth, 750-boxHeight), (boxWidth-5, boxHeight))) <++
-		[	
+		[	table a (aFleetB.fbClassTable) (to classStringTableObjects) (classStringTableViews a) ((0,0), (boxWidth-5, boxHeight))
 		]
 	,	-- Squadron list
 		(initBox ((20+boxWidth+boxWidth, 750-boxHeight), (boxWidth-5, boxHeight))) <++
@@ -124,18 +134,20 @@ viewFleet a = (initView ((0, 0), (1024, 750)))
 		selectedLens :: FleetState a => Simple Lens a String
 		selectedLens = aFleet.fleetShips.ixx selected.shipConfigurationShipName
 
-ixx :: Int -> Simple Lens [a] a
-ixx i = lens (!!i) (\list x -> replaceAtIndex i x list)
-replaceAtIndex n item ls = a ++ (item:b) where (a, (_:b)) = splitAt n ls
+boxHeight = 210
+boxWidth  = 218
 
-fbShipConfs :: FleetState a => a -> [(Int, ShipConfiguration)]
-fbShipConfs a = zip [0..] $ a^.aFleet.fleetShips
+aClassNames :: FleetState a => Getter a [String]
+aClassNames = to (\a -> reverse.sort $ keys $ a^.aShipClasses)
 
-selectConfView :: FleetState a => a -> (Int, ShipConfiguration) -> View a
-selectConfView a (i, conf) = 
+shipTableObjects :: FleetState a => a -> [(Int, ShipConfiguration)]
+shipTableObjects a = zip [0..] $ a^.aFleet.fleetShips
+
+shipTableViews :: FleetState a => a -> (Int, ShipConfiguration) -> View a
+shipTableViews a (i, conf) = 
 	(initBox ((2,0),(boxWidth-9,18))) <++
 		[	labelStatic a 
-				(	(initLabel (StaticString $ conf^.shipConfigurationShipName) textColor Nothing) 
+				(	(initLabel (StaticString $ text) textColor Nothing) 
 					& (labelScale .~ 0.9) 
 					& (labelTextOffset .~ (3,4))
 				)
@@ -144,23 +156,50 @@ selectConfView a (i, conf) =
 			& (viewEventHandler .~ (Just eventHandler))
 		]
 	where
+		text = conf^.shipConfigurationShipClass ++ ": " ++ conf^.shipConfigurationShipName
 		selected = a^.aFleetB.fbShipSelectedIndex
+		classIndex = fromMaybe 0 $ findIndex (conf^.shipConfigurationShipClass==) (a^.aClassNames)
 		textColor = if i == selected then black else buttonBackground
 		background = if i == selected then Just buttonBackground else Nothing
-		eventHandler (UIEventMouseDownInside _ _ _) = aFleetB.fbShipSelectedIndex .~ i $ a
+		eventHandler (UIEventMouseDownInside _ _ _) = flip execState a $ do 
+			aFleetB.fbShipSelectedIndex .= i
+			aFleetB.fbClassSelectedIndex .= classIndex
 		eventHandler _ = a
 
-boxHeight = 210
-boxWidth  = 218
+classStringTableObjects :: FleetState a => a -> [(Int, String)]
+classStringTableObjects a = zip [0..] $ a^.aClassNames
 
+classStringTableViews :: FleetState a => a -> (Int, String) -> View a
+classStringTableViews a (i, classString) = 
+	(initBox ((2,0),(boxWidth-9,18))) <++
+		[	labelStatic a 
+				(	(initLabel (StaticString $ classString) textColor Nothing) 
+					& (labelScale .~ 0.9) 
+					& (labelTextOffset .~ (3,4))
+				)
+				((0,0), (boxWidth-9,18))
+			& (viewBackground .~ background)
+			& (viewEventHandler .~ (Just eventHandler))
+		]
+	where
+		selected = a^.aFleetB.fbClassSelectedIndex
+		shipSelected = a^.aFleetB.fbShipSelectedIndex
+		textColor = if i == selected then black else buttonBackground
+		background = if i == selected then Just buttonBackground else Nothing
+		eventHandler (UIEventMouseDownInside _ _ _) = flip execState a $ do 
+			aFleetB.fbClassSelectedIndex .= i
+			aFleet.fleetShips.ixx shipSelected.shipConfigurationShipClass .= classString
+		eventHandler _ = a
+
+-- | Moving parallax background
 background2 assets time = Just $ translate 500 250 $ Pictures 
 	[	translate 80 80 $ scale 0.9 0.9 $ parallaxShift 150 stars
 	,	translate 100 100 $ Pictures [parallaxShift 10 blueNebula, parallaxShift 7 greenNebula]
 	]
 	where
-		greenNebula       = getPicture "greenNebulaLayer" assets
-		blueNebula        = getPicture "blueNebulaLayer" assets
-		stars             = getPicture "starBackdropLayer" assets
+		greenNebula = getPicture "greenNebulaLayer" assets
+		blueNebula  = getPicture "blueNebulaLayer" assets
+		stars       = getPicture "starBackdropLayer" assets
 		parallaxShift a = translate (-vpx/a) (- vpy/a)
 		(vpx, vpy) = (distance * (cos (time*speed)), distance * (sin (time*speed)))
 		distance = 600
@@ -168,3 +207,9 @@ background2 assets time = Just $ translate 500 250 $ Pictures
 
 timeFleet :: FleetState a => Float -> a -> a
 timeFleet dt = aFleetB.fbTime +~ dt
+
+-- Utility
+
+ixx :: Int -> Simple Lens [a] a
+ixx i = lens (!!i) (\list x -> replaceAtIndex i x list)
+replaceAtIndex n item ls = a ++ (item:b) where (a, (_:b)) = splitAt n ls

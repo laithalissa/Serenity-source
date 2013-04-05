@@ -68,14 +68,20 @@ render game uiState assets = Pictures
 			]
 
 picturePlanet :: Game -> UIState ClientState -> Assets -> (Int, Planet) -> Picture
-picturePlanet game uiState assets (planetID, planet) = translate x y $ Pictures $ [p, name] ++ selectBox where
+picturePlanet game uiState assets (planetID, planet) = translate x y $ Pictures $ [p, name] ++ capture ++ selectBox where
 	planetSelected = isSelectedPlanet uiState planetID
 	selectBox = if planetSelected then [planetSelectionArc 16.5 (double2Float (game^.gameTime))] else []
 	(x,y) = pDouble2Float $ planet^.planetLocation
 	p = getPictureSized (planet^.planetEcotype.ecotypeAssetName) 32 32 assets
-	name = if planetSelected
-		then color (greyN 0.7) $ translate (13) (-15) $ scale 0.03 0.03 $ Text (planet^.planetName)
-		else color (greyN 0.7) $ translate (11) (-13) $ scale 0.02 0.02 $ Text (planet^.planetName)
+	playerCapturing = fst $ planet^.planetCaptured
+	nameOffset
+		| planetSelected && playerCapturing /= -1 = (15, -17)
+		| planetSelected || playerCapturing /= -1 = (13, -15)
+		| otherwise = (11, -13)
+	nameScale = if planetSelected then (0.03, 0.03) else (0.02, 0.02)
+	name = color (greyN 0.7) $ uncurry translate nameOffset $ uncurry scale nameScale $ Text (planet^.planetName)
+	captureArcRadius = if planetSelected then 18 else 16.5
+	capture = planetCaptureArc (planet^.planetCaptured) captureArcRadius
 
 pictureSpaceLane :: Game -> UIState ClientState -> Assets -> (Int, Int) -> Picture
 pictureSpaceLane game uiState assets (p1, p2) = 
@@ -178,7 +184,7 @@ drawSelectionArcGreen radius time = color (selectionColour time) $ rotate (time 
 
 drawSelectionArcRed :: Float -> Float -> Picture
 drawSelectionArcRed radius time = color (selectionColour time) $ rotate (time * 10) $ circle where
-		circle = Pictures $ map (\x -> (ThickArc x (x + arcLength) radius) arcThickness) 
+		circle = Pictures $ map (\x -> ThickArc x (x + arcLength) radius arcThickness)
 			[0, arcLength*2..(360 - arcLength*2)]
 		selectionColour time    = (makeColor8 (pulsingColour redBase time) green blue alpha)
 		pulsingColour base time = (base + (round (oscLimit * (sin $ 2 * time))))
@@ -192,7 +198,7 @@ drawSelectionArcRed radius time = color (selectionColour time) $ rotate (time * 
 
 planetSelectionArc :: Float -> Float -> Picture
 planetSelectionArc radius time = color (selectionColour time) $ rotate (time * 10) $ circle where
-		circle = Pictures $ map (\x -> (ThickArc x (x + arcLength) radius) arcThickness) 
+		circle = Pictures $ map (\x -> ThickArc x (x + arcLength) radius arcThickness)
 			[0, arcLength*2..(360 - arcLength*2)]
 		selectionColour time    = (makeColor8 (pulsingColour redBase time) green blue alpha)
 		pulsingColour base time = (base + (round (oscLimit * (sin $ 2 * time))))
@@ -203,6 +209,14 @@ planetSelectionArc radius time = color (selectionColour time) $ rotate (time * 1
 		green        = 255
 		blue         = 255
 		alpha        = 220
+
+planetCaptureArc :: (Int, Int) -> Float -> [Picture]
+planetCaptureArc (player, percent) radius = if player /= -1
+	then [color (ownerIDColor player) $ thickArc 0 arcLength radius arcThickness]
+	else []
+	where
+		arcLength = (fromIntegral percent) / 100.0 * 360.0
+		arcThickness = 0.8
 
 healthColor :: Float -> Color 
 healthColor health 

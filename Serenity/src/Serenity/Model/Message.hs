@@ -74,6 +74,10 @@ data Update =
 	{	updateEntityID :: EntityID
 	,	updateShipDamage :: Damage
 	}
+	|	UpdatePlanetCapture
+	{	updatePlanetID :: Int
+	,	updateCaptured :: (Int, Int)
+	}
 	|	UpdateGameRanks
 	{	updateGameRanks :: [(OwnerID, Int)]
 	}

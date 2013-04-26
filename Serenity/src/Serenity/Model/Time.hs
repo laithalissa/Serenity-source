@@ -18,12 +18,14 @@ import Serenity.Maths.Util
 import Serenity.Model.Game
 import Serenity.Model.Entity
 import Serenity.Model.Message
+import Serenity.Model.Sector
 import Serenity.Model.Wire
 
 import Control.Lens
 import Data.List (nub)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, fromJust)
+import Data.VectorSpace
 import Prelude hiding (id, (.))
 
 class Updateable a where
@@ -72,6 +74,9 @@ instance Updateable Game where
 	update UpdateShipTargets{updateEntityID=eID, updateShipTargets=targets} game =
 		gameShips.(at eID).traverse.entityData.shipTargets .~ targets $ game
 
+	update UpdatePlanetCapture{updatePlanetID=pID, updateCaptured=captured} game =
+		gamePlanets.(at pID).traverse.planetCaptured .~ captured $ game
+
 	update UpdateGameRanks{updateGameRanks=ranks} game = gameRanks .~ ranks $ game
 
 	update UpdateGameOver game = game
@@ -79,10 +84,11 @@ instance Updateable Game where
 instance Evolvable Game where
 	evolve = proc (game, _) -> do
 		x <- mapEvolve -< (M.elems $ game^.gameShips, game)
-		arr concat -< x ++ [checkGameEnd game]
+		y <- mapEvolve -< (M.elems $ game^.gamePlanets, game)
+		arr concat -< x ++ y ++ [checkGameEnd game]
 
-mapEvolve = proc (ents, game) -> do
-	case ents of
+mapEvolve = proc (evolvables, game) -> do
+	case evolvables of
 		(e:es) -> do
 			u  <-    evolve -< (e, game)
 			us <- mapEvolve -< (es, game)
@@ -105,7 +111,31 @@ instance Evolvable (Entity Ship) where
 		upD <- evolveShipDamage -< (entity, game)
 		id -< (upT ++ upP ++ upD)
 
+instance Updateable Planet where
+	update _ = id
 
+instance Evolvable Planet where
+	evolve = proc (planet@Planet{_planetLocation=loc}, game) -> do
+		let ships = filter (capturingPlanet loc . (^.entityData.shipLocation)) (M.elems $ game^.gameShips)
+		let players = nub $ map _ownerID ships
+		if length players == 1
+			then id -< updatePlanetCaptured (_planetID planet) (_planetCaptured planet) (head players)
+			else id -< decayPlanetCapture (_planetID planet) (_planetCaptured planet)
+
+capturingPlanet loc ship = magnitude (ship - loc) <= 25
+
+updatePlanetCaptured :: Int -> (Int, Int) -> Int -> [Update]
+updatePlanetCaptured planet (player, percent) player'
+	| player == player' && percent < 100 = [UpdatePlanetCapture planet (player, percent + 2)]
+	| player /= player' && percent > 0 = [UpdatePlanetCapture planet (player, percent - 2)]
+	| player /= player' = [UpdatePlanetCapture planet (player', 0)]
+	| otherwise = []
+
+decayPlanetCapture :: Int -> (Int, Int) -> [Update]
+decayPlanetCapture planet (player, percent)
+	| percent <= 0 && player /= -1 = [UpdatePlanetCapture planet (-1, 0)]
+	| percent < 100 && player /= -1 = [UpdatePlanetCapture planet (player, percent - 1)]
+	| otherwise = []
 
 filteredUpdates :: [Update] -> [Update]
 filteredUpdates updates' = resultUpdates

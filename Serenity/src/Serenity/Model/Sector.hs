@@ -27,6 +27,7 @@ data Planet = Planet
 	,	_planetEcotype   :: Ecotype
 	,	_planetLocation  :: (Double, Double)
 	,	_planetResources :: Resources
+	,	_planetCaptured  :: (Int, Int) -- ^ Who is capturing the planet and by how much.
 	}
 	deriving (Show, Eq)
 
@@ -79,9 +80,9 @@ sectorOne = Sector
 	,	_sectorSize        = (200, 200)
 	,	_sectorSpawnPoints = [(50,50), (50,150), (150,150), (150,50)]
 	,	_sectorPlanets     = Map.fromList $ zip [1..] $ zipWith (planetID .~ ) [1..]
-		[	Planet 1 "Splearth"  Blue  (30 , 40)  (makeRes 10 10 0)
-		,	Planet 2 "Karida"    Star  (120, 50)  (makeRes 10 10 0)
-		,	Planet 3 "Qoruscant" Metal (170, 170) (makeRes 10 0 10)
+		[	Planet 1 "Splearth"  Blue  (30 , 40)  (makeRes 10 10 0) (-1, 0)
+		,	Planet 2 "Karida"    Star  (120, 50)  (makeRes 10 10 0) (-1, 0)
+		,	Planet 3 "Qoruscant" Metal (170, 170) (makeRes 10 0 10) (-1, 0)
 		]
 	,	_sectorSpaceLanes  = [(1,2), (2,3)]
 	}
@@ -91,15 +92,15 @@ sectorTwo = Sector
 	,	_sectorSize        = (1000, 1000)
 	,	_sectorSpawnPoints = [(40,40), (960,40), (40,960), (960,960)]
 	,	_sectorPlanets     = Map.fromList $ zip [1..] $ zipWith (planetID .~ ) [1..]
-		[	Planet 1 "Thoria"              Star   (500, 500) (makeRes 5  5  20)
-		,	Planet 2 "2955 Volantis Prime" Metal  (500, 300) (makeRes 10 20 0 )
-		,	Planet 3 "7200 Araetis"        Metal  (500, 700) (makeRes 10 20 0 )
-		,	Planet 4 "Derida"              Desert (200, 500) (makeRes 5  5  0 )
-		,	Planet 5 "Arietis"             Desert (800, 500) (makeRes 5  5  0 )
-		,	Planet 6 "Castillon"           Blue   (50 , 50 ) (makeRes 10 0  0 )
-		,	Planet 7 "Elden Kennett"       Blue   (950, 950) (makeRes 10 0  0 )
-		,	Planet 8 "Alcantar"            Ocean  (50 , 950) (makeRes 10 0  0 )
-		,	Planet 9 "New Zaldi"           Ocean  (950, 50)  (makeRes 10 0  0 )
+		[	Planet 1 "Thoria"              Star   (500, 500) (makeRes 5  5  20) (-1, 0)
+		,	Planet 2 "2955 Volantis Prime" Metal  (500, 300) (makeRes 10 20 0 ) (-1, 0)
+		,	Planet 3 "7200 Araetis"        Metal  (500, 700) (makeRes 10 20 0 ) (-1, 0)
+		,	Planet 4 "Derida"              Desert (200, 500) (makeRes 5  5  0 ) (-1, 0)
+		,	Planet 5 "Arietis"             Desert (800, 500) (makeRes 5  5  0 ) (-1, 0)
+		,	Planet 6 "Castillon"           Blue   (50 , 50 ) (makeRes 10 0  0 ) (-1, 0)
+		,	Planet 7 "Elden Kennett"       Blue   (950, 950) (makeRes 10 0  0 ) (-1, 0)
+		,	Planet 8 "Alcantar"            Ocean  (50 , 950) (makeRes 10 0  0 ) (-1, 0)
+		,	Planet 9 "New Zaldi"           Ocean  (950, 50)  (makeRes 10 0  0 ) (-1, 0)
 		]
 	,	_sectorSpaceLanes = [(1,2),(1,3),(4,6),(4,8),(2,6),(2,9),(5,9),(5,7),(3,7),(3,8)]
 	}

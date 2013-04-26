@@ -44,14 +44,14 @@ initHostData assets    = HostData
 	,	_hostBackButton      = (initMenuButton "<-      Back" (\_ -> Menu))
 	,	_hostPlayButton      = (initMenuButton "Play      ->" (\_ -> Lobby)) & (buttonEnabled .~ playButtonEnabled)
 	,	_hostNumPlayersBox   = 
-			(initMenuTextBoxLabel "Players:" (aHost.hostNumPlayers)) 
+			(initMenuTextBoxLabel "Players:") 
 			& (tblPostEdit .~ numPlayersValidation) 
 			& (tblEnabled .~ not.serverRunning)
 	,	_hostNumPlayers      = "2"
 	,	_hostServerGame      = Stopped
-	,	_hostNickNameBox     = (initMenuTextBoxLabel "Name:" aName) & (tblPostEdit .~ nameValidation)
+	,	_hostNickNameBox     = (initMenuTextBoxLabel "Name:") & (tblPostEdit .~ nameValidation)
 	,	_hostPortBox         = 
-			(initMenuTextBoxLabel "Port:" aPort) 
+			(initMenuTextBoxLabel "Port:") 
 			& (tblPostEdit .~ portValidation) 
 			& (tblEnabled .~ not.serverRunning)
 	}

@@ -20,6 +20,7 @@ data Ship = Ship
 	,	_shipGoal :: Goal
 	,	_shipPlan :: Plan
 	,	_shipTargets :: Map Int [Int] -- ^ Map from weapon ID to list of targets
+	,	_shipName :: String
 	}
 	deriving (Show, Eq)
 
@@ -33,6 +34,7 @@ initShip conf location direction = Ship
 	,	_shipGoal=GoalNone
 	,	_shipPlan=[]
 	,	_shipTargets = M.empty
+	,	_shipName = _shipConfigurationShipName conf
 	}
 
 data Damage = Damage 
@@ -84,25 +86,29 @@ data ShipConfiguration = ShipConfiguration
 	{	_shipConfigurationShipClass :: String
 	,	_shipConfigurationWeapons   :: [Maybe String]
 	,	_shipConfigurationSystems   :: [Maybe String]
+	,	_shipConfigurationShipName  :: String
 	}
 	deriving (Show, Eq)
 
-dreadnoughtConfiguration = ShipConfiguration
+dreadnoughtConfiguration name = ShipConfiguration
 	{	_shipConfigurationShipClass = "Dreadnought"
 	,	_shipConfigurationWeapons = replicate 9 (Just "Laser")
 	,	_shipConfigurationSystems = []
+	,	_shipConfigurationShipName = name
 	}
 
-destroyerConfiguration = ShipConfiguration
+destroyerConfiguration name = ShipConfiguration
 	{	_shipConfigurationShipClass = "Destroyer"
 	,	_shipConfigurationWeapons = replicate 5 (Just "Laser")
 	,	_shipConfigurationSystems = []
+	,	_shipConfigurationShipName = name
 	}
 
-corvetteConfiguration = ShipConfiguration
+corvetteConfiguration name = ShipConfiguration
 	{	_shipConfigurationShipClass = "Corvette"
 	,	_shipConfigurationWeapons = [Just "Laser"]
 	,	_shipConfigurationSystems = []
+	,	_shipConfigurationShipName = name
 	}
 
 data Weapon = Weapon
@@ -138,6 +144,7 @@ data ShipClass = ShipClass
 	,	_shipClassWeaponSlots      :: [WeaponSlot]
 	,	_shipClassSystemSlots      :: [SystemSlot]
 	,	_shipClassAssetName        :: String
+	,	_shipClassCost             :: Int
 	}
 	deriving (Show, Eq)
 

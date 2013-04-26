@@ -14,7 +14,7 @@ class AppState a where
 
 serenityVersionString = "Alpha 1.2"
 
-data ApplicationMode = Splash | Menu | Credits | Host| Join | Quick | Lobby | Play | End | Quit deriving Eq
+data ApplicationMode = Splash | Menu | Credits | Host| Join | Quick | FleetB | Lobby | Play | End | Quit deriving Eq
 
 background assets = Just $ translate 0 60 $ getPicture "background" assets
 
@@ -35,14 +35,17 @@ initMenuButton string action =
 
 initMenuLabel string = initLabel (StaticString string) buttonColor (Just buttonBackground)
 
-initMenuTextBox :: Simple Lens a String -> TextBox a
-initMenuTextBox lens = initTextBox lens buttonColor (Just buttonBackground) buttonPressedBackground 1.6
+initMenuTextBox :: TextBox a
+initMenuTextBox = initTextBox buttonColor (Just buttonBackground) buttonPressedBackground 1.6
 
-initMenuTextBoxLabel :: String -> Simple Lens a String -> TextBoxLabel a
-initMenuTextBoxLabel string lens = initTextBoxLabel string lens buttonColor (Just buttonBackground) buttonPressedBackground 1.6
+initMenuTextBoxLabel :: String -> TextBoxLabel a
+initMenuTextBoxLabel string = initTextBoxLabel string buttonColor (Just buttonBackground) buttonPressedBackground 1.6
 
 nameValidation :: String -> String
 nameValidation = filter (flip elem $ ['a'..'z']++['A'..'Z']++['0'..'9']++"_")
+
+fileNameValidation :: String -> String
+fileNameValidation = filter (flip notElem "\"*/:<>?\\|")
 
 portValidation :: String -> String
 portValidation = filter isDigit

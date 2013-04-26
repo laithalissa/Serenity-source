@@ -40,7 +40,7 @@ handleMessage _ uiState = uiState
 render :: Game -> UIState ClientState -> Assets -> Picture
 render game uiState assets = Pictures
 	[	translate 80 80 $ scale 0.9 0.9 $ parallaxShift 150 stars
-	,	 translate 100 100 $ Pictures [parallaxShift 10 blueNebula, parallaxShift 7 greenNebula]
+	,	translate 100 100 $ Pictures [parallaxShift 10 blueNebula, parallaxShift 7 greenNebula]
 	,	(drawWorldToWindow. renderInWorld) game
 	]
 	where

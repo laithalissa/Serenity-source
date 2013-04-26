@@ -2,6 +2,7 @@ shipName: Corvette
 fileName: Corvette
 centerOfRotation: (512, 128)
 speed: 2.0
+cost: 1000
 damageStrength:
   hull: 50
   shields: 75

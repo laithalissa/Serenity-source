@@ -48,6 +48,7 @@ data ApplicationController = ApplicationController
 	,	_appShipClasses :: Map String ShipClass
 	,	_appWeapons     :: Map String Weapon
 	,	_appSystems     :: Map String System
+	,	_appMusicTID    :: Maybe ThreadId
 	}
 
 makeLenses ''ApplicationController
@@ -73,6 +74,7 @@ initApplicationController assets shipClasses weapons systems = ApplicationContro
 	,	_appShipClasses = shipClasses
 	,	_appWeapons     = weapons
 	,	_appSystems     = systems
+	,	_appMusicTID    = Nothing
 	}
 
 appServerString = appJoinData.joinAddress
@@ -117,6 +119,7 @@ instance ViewController ApplicationController where
 		Quit    -> app -- Quit handled by handleMainTime below
 
 gui = do
+	mTid      <- forkIO music
 	assets    <- initAssets
 	userEntry <- getRealUserID >>= getUserEntryForID
 	username  <- return $ _head %~ toUpper $ nameValidation $ userName userEntry
@@ -127,7 +130,7 @@ gui = do
 		(InWindow "Project Serenity" (1024, 750) (0, 0))
 		black
 		50
-		((initApplicationController assets shipClasses weapons systems) & (appNickName .~ username))
+		((initApplicationController assets shipClasses weapons systems) & (appNickName .~ username) & (appMusicTID .~ (Just mTid)))
 		(\a -> return $ draw a)
 		(\event -> \a -> return $ handleEvent event a & correctFocus)
 		handleMainTime
@@ -146,5 +149,9 @@ handleMainTime dt = execStateT $ do
 		Quick   -> timeQuickIO dt
 		Lobby   -> timeLobbyIO dt
 		Play    -> timePlayIO  dt
-		Quit    -> liftIO exitSuccess
+		Quit    -> do
+			case app^.appMusicTID of
+				Just tid -> liftIO $ killThread tid
+				Nothing -> return ()
+			liftIO exitSuccess
 		_       -> return ()

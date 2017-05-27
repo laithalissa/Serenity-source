@@ -1,0 +1,9 @@
+README
+
+Included on this CD is the full source code for Project Serenity. Compiling the code requires GHC-7.6.2, and a number of dependencies available via Hackage. Compiling and installing the dependancies and the project itself can be achieved in one step using Cabal. Once GHC and Cabal are installed, run
+
+# cabal install
+
+inside the code directory. 
+
+It is planned for pre-built binaries, and further isntructions and videos to be available on addictivelavachills.co.uk.
